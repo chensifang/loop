@@ -1,0 +1,414 @@
+/* 通用样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 12px;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
+}
+
+.container.wide {
+    max-width: 1000px;
+}
+
+/* 标题样式 */
+h1 {
+    color: #1a1a1a;
+    margin-bottom: 14px;
+    margin-top: 0;
+    font-size: 24px;
+    font-weight: 600;
+    border-bottom: 1px solid #e1e4e8;
+    padding-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+h2 {
+    color: #1a1a1a;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 20px;
+    font-weight: 600;
+    padding-left: 0;
+    border-left: none;
+    letter-spacing: -0.01em;
+}
+
+h3 {
+    color: #1a1a1a;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+
+p {
+    margin-bottom: 10px;
+    color: #1a1a1a;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.subtitle {
+    color: #586069;
+    font-size: 14px;
+    margin-bottom: 16px;
+    font-style: normal;
+    line-height: 1.6;
+}
+
+/* 表格样式 - 简单网格线 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    border: 1px solid #d1d5da;
+}
+
+thead {
+    background: #f9fafb;
+}
+
+th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1a1a1a;
+    border: 1px solid #d1d5da;
+}
+
+td {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #1a1a1a;
+    border: 1px solid #d1d5da;
+    vertical-align: top;
+}
+
+tbody tr:hover {
+    background: #f9fafb;
+}
+
+.category {
+    font-weight: 600;
+    color: #1a1a1a;
+    background-color: #f6f8fa;
+    letter-spacing: 0.01em;
+}
+
+.subcategory {
+    color: #1a1a1a;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+}
+
+.questions {
+    color: #1a1a1a;
+    line-height: 1.6;
+}
+
+/* 代码块样式 */
+.code-block {
+    background: #f6f8fa;
+    color: #1a1a1a;
+    padding: 10px 14px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0;
+    font-family: 'SFMono-Regular', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    border: 1px solid #d1d5da;
+    white-space: pre;
+}
+
+/* Mermaid 图表样式 */
+pre.mermaid {
+    margin: 12px 0;
+}
+
+/* Mermaid 图表紧凑样式 */
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+    rx: 4px;
+    ry: 4px;
+}
+
+.mermaid .edgeLabel {
+    font-size: 12px;
+}
+
+.mermaid .label {
+    font-size: 13px;
+}
+
+pre.mermaid {
+    background: #f6f8fa;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #d1d5da;
+    margin: 10px 0;
+    overflow-x: auto;
+    text-align: center;
+}
+
+/* Mermaid 图表紧凑样式 */
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+    rx: 4px;
+    ry: 4px;
+}
+
+.mermaid .edgeLabel {
+    font-size: 12px;
+}
+
+.mermaid .label {
+    font-size: 13px;
+}
+
+.code-block code {
+    color: #1a1a1a;
+    white-space: pre;
+    display: block;
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+}
+
+/* highlight.js 样式覆盖 */
+.code-block pre code.hljs {
+    background: transparent;
+    padding: 0;
+}
+
+.keyword {
+    color: #d73a49;
+    font-weight: 500;
+}
+
+.string {
+    color: #032f62;
+}
+
+.comment {
+    color: #6a737d;
+    font-style: italic;
+}
+
+.type {
+    color: #6f42c1;
+    font-weight: 500;
+}
+
+.function {
+    color: #005cc5;
+}
+
+/* 文本样式 */
+ul, ol {
+    margin-left: 20px;
+    margin-bottom: 10px;
+    padding-left: 0;
+}
+
+li {
+    margin-bottom: 6px;
+    color: #1a1a1a;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+strong {
+    color: #1a1a1a;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+/* 行内代码样式 */
+code {
+    background-color: rgba(27, 31, 35, 0.05);
+    padding: 2.5px 6px;
+    border-radius: 6px;
+    font-family: 'SFMono-Regular', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 85%;
+    color: #d73a49;
+    border: none;
+    font-weight: normal;
+}
+
+/* 即使有 highlight 类，code 标签也使用行内代码样式 */
+code.highlight {
+    background-color: rgba(27, 31, 35, 0.05);
+    padding: 2.5px 6px;
+    border-radius: 6px;
+    font-family: 'SFMono-Regular', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 85%;
+    color: #d73a49;
+    border: none;
+    font-weight: normal;
+}
+
+/* 代码块内的 code 标签不使用行内样式 */
+.code-block code {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    color: #1a1a1a;
+    white-space: pre;
+    display: block;
+    font-size: 13px;
+}
+
+.code-block code.highlight {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    color: #1a1a1a;
+    white-space: pre;
+    display: block;
+    font-size: 13px;
+}
+
+/* highlight 类用于非 code 标签的高亮场景 */
+.highlight:not(code) {
+    background-color: #f6f8fa;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+/* 特殊区块 */
+.analogy {
+    background: #fffdef;
+    border-left: 3px solid #f9c513;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.warning {
+    background: #fffdef;
+    border-left: 3px solid #f9c513;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.tip {
+    background: #fffdef;
+    border-left: 3px solid #f9c513;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* 更新日志 */
+.changelog {
+    margin-top: 24px;
+    padding-top: 14px;
+    border-top: 1px solid #eaecef;
+}
+
+.changelog h2 {
+    color: #1a1a1a;
+    margin-bottom: 10px;
+    font-size: 20px;
+    border-left: none;
+    padding-left: 0;
+}
+
+.changelog ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.changelog li {
+    padding: 5px 0;
+    color: #586069;
+    border-left: 2px solid #d1d5da;
+    padding-left: 12px;
+    margin-bottom: 5px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    body {
+        padding: 12px;
+        font-size: 13px;
+    }
+    
+    .container {
+        padding: 16px;
+    }
+    
+    h1 {
+        font-size: 20px;
+    }
+    
+    h2 {
+        font-size: 18px;
+    }
+    
+    h3 {
+        font-size: 16px;
+    }
+    
+    table {
+        font-size: 13px;
+    }
+    
+    th, td {
+        padding: 6px 8px;
+    }
+    
+    .code-block {
+        font-size: 12px;
+        padding: 10px 12px;
+    }
+}

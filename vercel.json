@@ -1,5 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "cd interview-viewer && npm run build",
-  "outputDirectory": "interview-viewer/public"
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
 }

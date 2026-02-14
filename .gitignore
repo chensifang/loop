@@ -11,3 +11,28 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
+
+# 前端构建
+dist/
+.vite/
+
+# 笔记文件（通过符号链接或复制到 src/notes，不需要提交）
+src/notes/
+
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 环境变量
+.env
+.env.local
