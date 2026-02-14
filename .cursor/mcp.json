@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "feishu": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@larksuiteoapi/lark-mcp",
+        "mcp",
+        "-a",
+        "cli_a90773abd1b85ccd",
+        "-s",
+        "ABAGrWEY9ydKCc154U0Dfrc6mPwfpyhN",
+        "--oauth",
+        "--token-mode",
+        "user_access_token"
+      ]
+    }
+  }
+}
