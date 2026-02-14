@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SideTable</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+    </script>
+    <script type="module" src="/mermaid-zoom.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>SideTable</h1>
+        
+        <h2>概述</h2>
+        <p>Side Table 是 iOS Runtime 中的一个辅助数据结构，用于存储对象的额外信息。当对象的 ISA 指针无法存储所有信息时（比如引用计数过大、需要 weak 引用等），系统会创建 Side Table 来存储这些信息。</p>
+        
+        <h2>实际存储结构</h2>
+        <p><strong>假设场景</strong>：对象 p1（地址 0x1，引用计数=3，2个weak指针），对象 p2（地址 0x2，引用计数=5，2个weak指针）</p>
+        
+        <div class="mermaid">
+flowchart LR
+    subgraph ST["SideTable"]
+        direction TB
+        ST1["RefcountMap<br/>引用计数表"]
+        ST2["weak_table_t<br/>weak表"]
+    end
+    
+    subgraph RC["RefcountMap"]
+        direction TB
+        RC1["RefcountEntry[0]"]
+        RC2["RefcountEntry[1]"]
+    end
+    
+    subgraph RC0E["RefcountEntry[0]"]
+        direction TB
+        RC0K["Key: 对象地址<br/>= 0x1<br/>对象p1地址"]
+        RC0V["Value: 引用计数<br/>= 3"]
+    end
+    
+    subgraph RC1E["RefcountEntry[1]"]
+        direction TB
+        RC1K["Key: 对象地址<br/>= 0x2<br/>对象p2地址"]
+        RC1V["Value: 引用计数<br/>= 5"]
+    end
+    
+    subgraph WT["weak_table_t"]
+        direction TB
+        WT1["weak_entry_t[0]"]
+        WT2["weak_entry_t[1]"]
+    end
+    
+    subgraph EN0["weak_entry_t[0]"]
+        direction TB
+        EN0K["Key: referent<br/>= 0x1<br/>对象p1地址"]
+        EN0V["Value:<br/>weak1地址<br/>weak2地址"]
+    end
+    
+    subgraph EN1["weak_entry_t[1]"]
+        direction TB
+        EN1K["Key: referent<br/>= 0x2<br/>对象p2地址"]
+        EN1V["Value:<br/>weak3地址<br/>weak4地址"]
+    end
+    
+    ST1 --> RC
+    ST2 --> WT
+    RC1 --> RC0E
+    RC2 --> RC1E
+    WT1 --> EN0
+    WT2 --> EN1
+    
+    style ST fill:#e1f5ff,stroke:#333,stroke-width:2px
+    style ST1 fill:#fff4e1,stroke:#333,stroke-width:1px
+    style ST2 fill:#fff4e1,stroke:#333,stroke-width:1px
+    style RC fill:#e8f4f8,stroke:#333,stroke-width:2px
+    style RC1 fill:#d4edda,stroke:#333,stroke-width:1px
+    style RC2 fill:#d4edda,stroke:#333,stroke-width:1px
+    style RC0E fill:#d4edda,stroke:#333,stroke-width:2px
+    style RC1E fill:#d4edda,stroke:#333,stroke-width:2px
+    style RC0K fill:#ffcccc,stroke:#333,stroke-width:1px
+    style RC0V fill:#cce5ff,stroke:#333,stroke-width:1px
+    style RC1K fill:#ffcccc,stroke:#333,stroke-width:1px
+    style RC1V fill:#cce5ff,stroke:#333,stroke-width:1px
+    style WT fill:#fff4e1,stroke:#333,stroke-width:2px
+    style WT1 fill:#ccffcc,stroke:#333,stroke-width:1px
+    style WT2 fill:#ccffcc,stroke:#333,stroke-width:1px
+    style EN0 fill:#ccffcc,stroke:#333,stroke-width:2px
+    style EN1 fill:#ccffcc,stroke:#333,stroke-width:2px
+    style EN0K fill:#ffcccc,stroke:#333,stroke-width:1px
+    style EN0V fill:#ffffcc,stroke:#333,stroke-width:1px
+    style EN1K fill:#ffcccc,stroke:#333,stroke-width:1px
+    style EN1V fill:#ffffcc,stroke:#333,stroke-width:1px
+        </div>
+        
+        <h2>各层结构说明</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>结构名称</th>
+                    <th>类型</th>
+                    <th>作用</th>
+                    <th>Key-Value关系</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>SideTable</strong></td>
+                    <td>结构体</td>
+                    <td>存储对象的额外信息</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><strong>RefcountMap</strong></td>
+                    <td>哈希表</td>
+                    <td>存储引用计数</td>
+                    <td>Key: 对象地址, Value: 引用计数值</td>
+                </tr>
+                <tr>
+                    <td><strong>RefcountEntry</strong></td>
+                    <td>键值对</td>
+                    <td>RefcountMap 中的一个条目</td>
+                    <td>Key: 对象地址, Value: 引用计数值</td>
+                </tr>
+                <tr>
+                    <td><strong>weak_table_t</strong></td>
+                    <td>哈希表</td>
+                    <td>存储所有对象的 weak 引用</td>
+                    <td>Key: 对象地址, Value: weak_entry_t</td>
+                </tr>
+                <tr>
+                    <td><strong>weak_entry_t</strong></td>
+                    <td>键值对</td>
+                    <td>存储单个对象的所有 weak 引用</td>
+                    <td>Key: 对象地址, Value: weak 指针地址数组</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>存储位置</h2>
+        <p>Side Table 存储在全局的 <strong>StripedMap</strong> 中（包含多个 SideTable 的数组），通过对象地址的哈希值选择使用哪个 SideTable。多个对象可以共享同一个 SideTable（通过 SideTable 内的哈希表区分）。</p>
+    </div>
+</body>
+</html>
