@@ -87,15 +87,34 @@
     width: 0;
     overflow: hidden;
     border-right: none;
+    min-width: 0;
+}
+
+.sidebar.collapsed .sidebar-header h2,
+.sidebar.collapsed .file-tree {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    background: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    padding: 12px 6px;
 }
 
 .sidebar.collapsed .sidebar-toggle svg {
     transform: rotate(180deg);
 }
 
-/* 侧边栏收起时，调整内容区域 */
-.app-container:has(.sidebar.collapsed) .content-area {
-    margin-left: 0;
+.sidebar-toggle svg {
+    transition: transform 0.2s;
 }
 
 /* 文件树 */
