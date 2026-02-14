@@ -1,0 +1,21 @@
+{
+  // HTML 预览配置
+  "files.associations": {
+    "*.html": "html"
+  },
+  
+  // Live Server 配置 - 在编辑器内预览
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.root": "/html-version",
+  "liveServer.settings.CustomBrowser": "default",
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveServer.settings.NoBrowser": false,
+  
+  // 编辑器配置
+  "editor.formatOnSave": false,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  
+  // 文件浏览器配置
+  "workbench.editor.enablePreview": false
+}

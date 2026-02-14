@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试题笔记浏览器</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/viewer.css">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        // 设置为不自动加载，因为内容是动态加载的
+        // 配置紧凑样式
+        mermaid.initialize({ 
+            startOnLoad: false,
+            flowchart: {
+                nodeSpacing: 50,
+                rankSpacing: 50,
+                curve: 'basis'
+            }
+        });
+        // 将 mermaid 暴露到全局，供 viewer.js 使用
+        window.mermaid = mermaid;
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 左侧文件树 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 笔记目录</h2>
+            </div>
+            <div class="file-tree" id="fileTree">
+                <!-- 文件树将通过 JavaScript 动态生成 -->
+            </div>
+        </aside>
+
+        <!-- 右侧内容区域 -->
+        <main class="content-area">
+            <div class="content-body" id="contentBody">
+                <div class="welcome-message">
+                    <p>👈 从左侧文件树中选择文件开始浏览</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/viewer.js"></script>
+</body>
+</html>

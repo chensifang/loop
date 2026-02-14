@@ -1,0 +1,60 @@
+# HTML 代码块格式规范
+
+## 代码块格式要求
+
+**代码块不要在开头和结尾加换行**
+
+### 正确格式
+
+```html
+<div class="code-block"><code>代码内容</code></div>
+```
+
+### 错误格式
+
+```html
+<div class="code-block">
+<code>代码内容</code>
+</div>
+```
+
+或者
+
+```html
+        <div class="code-block">
+<code>代码内容</code>
+        </div>
+```
+
+## 原因
+
+- HTML 中的换行会被渲染为空白字符
+- 导致代码块上下有额外的空白间距
+- 影响视觉效果和紧凑性
+
+## 规范
+
+1. `<div class="code-block">` 和 `<code>` 之间**不要有换行**
+2. `</code>` 和 `</div>` 之间**不要有换行**
+3. 代码块前后**不要有空行**
+4. 代码块应该紧贴前后内容
+
+## 示例
+
+**正确：**
+```html
+<p>示例代码：</p>
+<div class="code-block"><code>let person = Person()</code></div>
+<p>这是说明。</p>
+```
+
+**错误：**
+```html
+<p>示例代码：</p>
+
+<div class="code-block">
+<code>let person = Person()</code>
+</div>
+
+<p>这是说明。</p>
+```

@@ -1,0 +1,7 @@
+[
+  {
+    "key": "cmd+shift+h",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Preview HTML"
+  }
+]

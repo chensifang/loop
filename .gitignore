@@ -1,0 +1,13 @@
+# npm/npx cache directories
+cache/
+**/cache/
+node_modules/
+.npm/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db

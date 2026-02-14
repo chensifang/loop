@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Preview HTML",
+      "type": "shell",
+      "command": "open",
+      "args": ["${file}"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared",
+        "close": true
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
