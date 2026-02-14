@@ -25,7 +25,9 @@ export default defineConfig({
       name: 'generate-files-json',
       configureServer(server) {
         server.middlewares.use('/files.json', (req, res, next) => {
-          const notesDir = resolve(__dirname, '../../interview/html-version');
+          // __dirname 是 vite.config.js 所在目录（interview-viewer/）
+          // 需要向上两级到项目根目录，然后进入 interview/html-version
+          const notesDir = resolve(__dirname, '../interview/html-version');
           const htmlFiles = [];
           
           function scanDir(dir, basePath = '') {
@@ -62,7 +64,7 @@ export default defineConfig({
         
         // 提供笔记文件的静态服务
         server.middlewares.use('/notes', (req, res, next) => {
-          const notesDir = resolve(__dirname, '../../interview/html-version');
+          const notesDir = resolve(__dirname, '../interview/html-version');
           // req.url 可能是 "/notes/xxx.html" 或 "/xxx.html"，需要去掉 /notes 前缀
           const relativePath = req.url.replace(/^\/notes/, '').replace(/^\//, '');
           const filePath = resolve(notesDir, relativePath);
@@ -89,7 +91,7 @@ export default defineConfig({
         
         // 提供 style.css（从 notes 目录）
         server.middlewares.use('/style.css', (req, res, next) => {
-          const stylePath = resolve(__dirname, '../../interview/html-version/style.css');
+          const stylePath = resolve(__dirname, '../interview/html-version/style.css');
           if (fs.existsSync(stylePath)) {
             const content = fs.readFileSync(stylePath);
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
