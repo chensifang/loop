@@ -55,12 +55,13 @@ export default defineConfig({
         });
       }
     },
-    // 构建时复制 notes 目录到 dist
+    // 构建时复制 notes 目录到 dist 并生成 files.json
     {
-      name: 'copy-notes',
+      name: 'copy-notes-and-generate-files',
       closeBundle() {
         const notesDir = resolve(__dirname, 'src/notes');
         const distNotesDir = resolve(__dirname, 'dist/notes');
+        const distFilesJson = resolve(__dirname, 'dist/files.json');
         
         function copyDir(src, dest) {
           if (!fs.existsSync(src)) {
@@ -85,9 +86,41 @@ export default defineConfig({
           });
         }
         
+        function scanDir(dir, basePath = '') {
+          const htmlFiles = [];
+          
+          function scan(dir, basePath) {
+            try {
+              const files = fs.readdirSync(dir);
+              files.forEach(file => {
+                const fullPath = resolve(dir, file);
+                const stat = fs.statSync(fullPath);
+                
+                if (stat.isDirectory()) {
+                  scan(fullPath, basePath ? `${basePath}/${file}` : file);
+                } else if (file.endsWith('.html') && file !== 'index.html') {
+                  const relPath = basePath ? `${basePath}/${file}` : file;
+                  htmlFiles.push(relPath);
+                }
+              });
+            } catch (e) {
+              console.error(`Error scanning ${dir}:`, e);
+            }
+          }
+          
+          scan(dir, basePath);
+          return htmlFiles;
+        }
+        
         if (fs.existsSync(notesDir)) {
           copyDir(notesDir, distNotesDir);
           console.log('✓ Copied notes directory to dist');
+          
+          // 生成 files.json
+          const htmlFiles = scanDir(distNotesDir);
+          htmlFiles.sort();
+          fs.writeFileSync(distFilesJson, JSON.stringify(htmlFiles));
+          console.log('✓ Generated files.json');
         }
       }
     }
