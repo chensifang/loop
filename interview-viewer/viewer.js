@@ -1,7 +1,8 @@
 // 自动获取文件列表（从 files.json 读取）
 async function getFileList() {
     try {
-        const response = await fetch('/files.json');
+        // 添加时间戳防止缓存
+        const response = await fetch(`/files.json?t=${Date.now()}`);
         if (!response.ok) {
             throw new Error('无法获取文件列表');
         }
