@@ -245,9 +245,32 @@ function refreshCurrentFile() {
     }
 }
 
+// 侧边栏收起/展开功能
+function initSidebarToggle() {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    
+    if (!sidebar || !toggleBtn) return;
+    
+    // 从 localStorage 读取收起状态
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+    }
+    
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        // 保存状态到 localStorage
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
     const fileTreeContainer = document.getElementById('fileTree');
+    
+    // 初始化侧边栏收起功能
+    initSidebarToggle();
     
     // 获取文件列表
     const htmlFiles = await getFileList();
