@@ -16,8 +16,8 @@ Thumbs.db
 dist/
 .vite/
 
-# 笔记文件（通过符号链接或复制到 src/notes，不需要提交）
-src/notes/
+# 笔记文件（已提交到 git，用于 vercel 部署）
+# src/notes/
 
 
 # Python

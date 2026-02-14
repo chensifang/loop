@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>weak 关键字是如何实现的？</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        // 代码高亮
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+        
+        // 代码高亮
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>weak 关键字是如何实现的？</h1>
+        
+        <h2>核心概念</h2>
+        <p>weak 关键字的实现依赖于 <strong>Side Table</strong> 和 <strong>weak 表</strong>。当对象被 weak 引用时，系统会在 Side Table 中记录这个引用关系，对象释放时自动将所有 weak 引用置为 nil。</p>
+        
+        <h2>Side Table 的结构</h2>
+        <p>Side Table 是一个辅助数据结构，用于存储对象的额外信息：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>存储位置</th>
+                    <th>存储内容</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>对象本身</strong></td>
+                    <td>ISA 指针、成员变量</td>
+                    <td>对象的基本信息</td>
+                </tr>
+                <tr>
+                    <td><strong>Side Table</strong></td>
+                    <td>引用计数、weak 表</td>
+                    <td>当 ISA 存不下引用计数时，或需要 weak 引用时使用</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="code-block"><pre><code>// Side Table 的结构（简化版）
+struct SideTable {
+    spinlock_t slock;           // 自旋锁，保证线程安全
+    RefcountMap refcnts;        // 引用计数表（当 ISA 存不下时）
+    weak_table_t weak_table;    // weak 表
+};
+
+// weak 表的结构
+struct weak_table_t {
+    weak_entry_t *weak_entries;  // weak 条目数组
+    size_t num_entries;          // 条目数量
+    uintptr_t mask;              // 哈希表的掩码
+    uintptr_t max_hash_displacement; // 最大哈希冲突距离
+};</code></pre></div>
+        <h2>weak 表的工作原理</h2>
+        <p>weak 表是一个哈希表，记录所有指向某个对象的 weak 引用：</p>
+        
+        <div class="mermaid">
+graph LR
+    A[对象地址] --> B[weak 表查找]
+    B --> C[weak_entry_t]
+    C --> D[weak 引用1的地址]
+    C --> E[weak 引用2的地址]
+    C --> F[weak 引用3的地址]
+    
+    style A fill:#e1f5ff
+    style C fill:#fff4e1
+    style D fill:#f3e5f5
+    style E fill:#f3e5f5
+    style F fill:#f3e5f5
+        </div>
+        
+        <p><strong>简单理解</strong>：weak 表就像一个"登记簿"，记录"哪些 weak 变量指向了某个对象"。</p>
+        
+        <h2>weak 引用的完整流程</h2>
+        
+        <h3>1. 创建 weak 引用时</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant Code as 代码
+    participant Compiler as 编译器
+    participant Runtime as Runtime
+    participant WeakTable as weak 表
+    
+    Code->>Compiler: var weakVar: Person? = person
+    Compiler->>Runtime: objc_initWeak(&weakVar, person)
+    Runtime->>WeakTable: 查找 person 的 weak_entry
+    WeakTable-->>Runtime: 返回或创建 entry
+    Runtime->>WeakTable: 将 weakVar 地址添加到列表
+    Note over Runtime: 不增加 person 的引用计数
+        </div>
+        
+        <div class="code-block"><pre><code>// 编译器生成的代码（简化）
+id obj1;
+objc_initWeak(&obj1, person);  // 创建 weak 引用
+
+// Runtime 内部实现（简化）
+void objc_initWeak(id *location, id newObj) {
+    if (newObj) {
+        // 1. 找到或创建 weak_entry
+        weak_entry_t *entry = weak_entry_for_referent(weak_table, newObj);
+        
+        // 2. 将 weak 引用的地址添加到列表中
+        append_referrer(entry, location);
+    }
+    
+    // 3. 将 location 指向 newObj（但不增加引用计数）
+    *location = newObj;
+}</code></pre></div>
+        <h3>2. 对象释放时</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant Object as 对象
+    participant Runtime as Runtime
+    participant WeakTable as weak 表
+    participant WeakRefs as weak 引用列表
+    
+    Object->>Runtime: 引用计数 = 0
+    Runtime->>Runtime: 调用 dealloc
+    Runtime->>WeakTable: 查找对象的 weak_entry
+    WeakTable-->>Runtime: 返回 weak 引用列表
+    Runtime->>WeakRefs: 遍历所有 weak 引用
+    Runtime->>WeakRefs: 将所有 weak 引用置为 nil
+    Runtime->>WeakTable: 删除 weak_entry
+        </div>
+        
+        <div class="code-block"><pre><code>// 对象释放时的处理（简化）
+void objc_destructInstance(id obj) {
+    // 1. 查找 weak 表
+    weak_entry_t *entry = weak_entry_for_referent(weak_table, obj);
+    
+    if (entry) {
+        // 2. 遍历所有 weak 引用
+        for (weak_referrer_t *referrer = entry->referrers; 
+             referrer != NULL; 
+             referrer++) {
+            // 3. 将每个 weak 引用置为 nil
+            *referrer = nil;
+        }
+        
+        // 4. 从 weak 表中删除该条目
+        remove_referrer(entry);
+    }
+    
+    // 5. 释放对象内存
+    object_dispose(obj);
+}</code></pre></div>
+        <h2>三层哈希查找</h2>
+        <p>weak 表的查找采用三层哈希结构，保证快速定位：</p>
+        
+        <div class="mermaid">
+graph TD
+    A[对象地址] --> B[第一层: Side Tables 数组]
+    B --> C[根据地址哈希值<br/>找到对应的 Side Table]
+    C --> D[第二层: weak_table 哈希表]
+    D --> E[根据对象地址<br/>找到 weak_entry_t]
+    E --> F[第三层: weak_entry_t]
+    F --> G[存储所有 weak 引用地址]
+    
+    style A fill:#e1f5ff
+    style C fill:#fff4e1
+    style E fill:#f3e5f5
+    style G fill:#e8f5e9
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>层级</th>
+                    <th>数据结构</th>
+                    <th>查找方式</th>
+                    <th>作用</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>第一层</strong></td>
+                    <td>Side Tables（数组）</td>
+                    <td>对象地址的哈希值取模</td>
+                    <td>定位到对应的 Side Table</td>
+                </tr>
+                <tr>
+                    <td><strong>第二层</strong></td>
+                    <td>weak_table（哈希表）</td>
+                    <td>对象地址作为 key</td>
+                    <td>定位到 weak_entry_t</td>
+                </tr>
+                <tr>
+                    <td><strong>第三层</strong></td>
+                    <td>weak_entry_t（数组或哈希表）</td>
+                    <td>线性查找或哈希查找</td>
+                    <td>存储所有指向该对象的 weak 引用地址</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>为什么 weak 必须是可选类型？</h2>
+        <p>weak 引用在对象释放时会被自动置为 nil，所以必须是可选类型（Optional），否则无法表示"没有值"的状态。</p>
+        
+        <div class="code-block"><pre><code>// ✅ 正确：weak 必须是可选类型
+weak var person: Person? = Person()
+
+// ❌ 错误：编译不通过
+weak var person: Person = Person()  // 错误：weak 变量必须是可选类型
+
+// 对象释放后
+person = nil  // 自动置为 nil，可以安全访问
+if let p = person {
+    // 不会执行，因为 person 已经是 nil
+}</code></pre></div>
+        <h2>与 unowned 的区别</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>weak</th>
+                    <th>unowned</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>存储位置</strong></td>
+                    <td>Side Table 的 weak 表</td>
+                    <td>直接存储对象地址（不记录）</td>
+                </tr>
+                <tr>
+                    <td><strong>自动置 nil</strong></td>
+                    <td>✅ 是</td>
+                    <td>❌ 否</td>
+                </tr>
+                <tr>
+                    <td><strong>对象释放后访问</strong></td>
+                    <td>安全（返回 nil）</td>
+                    <td>崩溃（野指针）</td>
+                </tr>
+                <tr>
+                    <td><strong>性能开销</strong></td>
+                    <td>需要查找 weak 表</td>
+                    <td>几乎无开销</td>
+                </tr>
+                <tr>
+                    <td><strong>类型要求</strong></td>
+                    <td>必须是可选类型</td>
+                    <td>可以是非可选类型</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p><strong>unowned 的实现更简单</strong>：只是不增加引用计数，不记录在 weak 表中，所以对象释放时无法自动置 nil。如果对象释放后访问 unowned 引用，就会访问野指针导致崩溃。</p>
+        
+        <h2>性能考虑</h2>
+        <table>
+            <thead>
+                <tr>
+                <th>操作</th>
+                <th>性能影响</th>
+                <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>创建 weak 引用</strong></td>
+                    <td>需要查找 Side Table 和 weak 表</td>
+                    <td>比强引用稍慢，但影响很小</td>
+                </tr>
+                <tr>
+                    <td><strong>访问 weak 引用</strong></td>
+                    <td>需要从 weak 表中读取</td>
+                    <td>比强引用稍慢</td>
+                </tr>
+                <tr>
+                    <td><strong>对象释放时</strong></td>
+                    <td>需要遍历 weak 表，置 nil</td>
+                    <td>有额外开销，但保证了内存安全</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>总结</h2>
+        <p>weak 关键字的实现核心：</p>
+        <ol>
+            <li><strong>使用 Side Table 存储 weak 表</strong>：weak 表记录所有指向某个对象的 weak 引用</li>
+            <li><strong>三层哈希查找</strong>：通过 Side Tables → weak_table → weak_entry_t 快速定位</li>
+            <li><strong>对象释放时自动置 nil</strong>：遍历 weak 表，将所有 weak 引用置为 nil</li>
+            <li><strong>必须是可选类型</strong>：因为需要表示 nil 状态</li>
+        </ol>
+        
+        <p><strong>关键点</strong>：weak 的实现保证了内存安全，即使对象被释放，weak 引用也不会变成野指针，而是自动变成 nil，可以安全访问。</p>
+    </div>
+</body>
+</html>

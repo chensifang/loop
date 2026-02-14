@@ -54,6 +54,42 @@ export default defineConfig({
           }
         });
       }
+    },
+    // 构建时复制 notes 目录到 dist
+    {
+      name: 'copy-notes',
+      closeBundle() {
+        const notesDir = resolve(__dirname, 'src/notes');
+        const distNotesDir = resolve(__dirname, 'dist/notes');
+        
+        function copyDir(src, dest) {
+          if (!fs.existsSync(src)) {
+            return;
+          }
+          
+          if (!fs.existsSync(dest)) {
+            fs.mkdirSync(dest, { recursive: true });
+          }
+          
+          const files = fs.readdirSync(src);
+          files.forEach(file => {
+            const srcPath = resolve(src, file);
+            const destPath = resolve(dest, file);
+            const stat = fs.statSync(srcPath);
+            
+            if (stat.isDirectory()) {
+              copyDir(srcPath, destPath);
+            } else {
+              fs.copyFileSync(srcPath, destPath);
+            }
+          });
+        }
+        
+        if (fs.existsSync(notesDir)) {
+          copyDir(notesDir, distNotesDir);
+          console.log('✓ Copied notes directory to dist');
+        }
+      }
     }
   ]
 });

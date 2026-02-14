@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Side Table 的结构</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            mindmap: {
+                maxNodeWidth: 200
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Side Table 的结构</h1>
+        
+        <h2>概述</h2>
+        <p>Side Table 是 iOS Runtime 中的一个辅助数据结构，用于存储对象的额外信息。当对象的 ISA 指针无法存储所有信息时（比如引用计数过大、需要 weak 引用等），系统会创建 Side Table 来存储这些信息。</p>
+        
+        <h2>Side Table 的结构图</h2>
+        <div class="mermaid">
+classDiagram
+    direction LR
+    class SideTable {
+        +RefcountMap refcnts : 引用计数表
+        +weak_table_t : weak 表
+    }
+    class RefcountMap {
+        +哈希表结构
+        +键(Key): 对象指针
+        +值(Value): 引用计数
+    }
+    class weak_table_t {
+        +哈希表结构
+        +键(Key): 对象地址
+        +值(Value): weak_entry_t
+        +weak_entry_t[] weak_entries : weak 条目数组
+    }
+    class weak_entry_t {
+        +referent : 对象地址(Key)
+        +inline_referrers[4] : 内联数组(≤4个引用时,union作为Value)
+        +referrers : 哈希表(>4个引用时,union作为Value)
+    }
+    
+    SideTable --> RefcountMap
+    SideTable --> weak_table_t
+    weak_table_t --> weak_entry_t
+        </div>
+        
+        
+        <h2>Side Table 的结构</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>结构名称</th>
+                    <th>类型</th>
+                    <th>作用</th>
+                    <th>包含的子结构</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>SideTable</strong></td>
+                    <td>结构体</td>
+                    <td>存储对象的额外信息</td>
+                    <td>RefcountMap, weak_table_t</td>
+                </tr>
+                <tr>
+                    <td><strong>RefcountMap</strong></td>
+                    <td>哈希表</td>
+                    <td>存储引用计数</td>
+                    <td>键: 对象指针, 值: 引用计数</td>
+                </tr>
+                <tr>
+                    <td><strong>weak_table_t</strong></td>
+                    <td>哈希表</td>
+                    <td>存储所有对象的 weak 引用</td>
+                    <td>weak_entry_t 数组</td>
+                </tr>
+                <tr>
+                    <td><strong>weak_entry_t</strong></td>
+                    <td>结构体</td>
+                    <td>存储单个对象的所有 weak 引用</td>
+                    <td>inline_referrers 或 referrers</td>
+                </tr>
+                <tr>
+                    <td><strong>inline_referrers[4]</strong></td>
+                    <td>内联数组</td>
+                    <td>存储 weak 引用（≤4个）</td>
+                    <td>直接存储指针</td>
+                </tr>
+                <tr>
+                    <td><strong>referrers</strong></td>
+                    <td>哈希表</td>
+                    <td>存储 weak 引用（>4个）</td>
+                    <td>支持动态扩容</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>Side Table 的数据结构</h2>
+        <p>Side Table 的核心结构定义如下：</p>
+        
+        <div class="code-block"><pre><code>struct SideTable {
+    RefcountMap refcnts;        // 引用计数表（当 ISA 存不下时）
+    weak_table_t;               // weak 表
+};</code></pre></div>
+        
+        <h3>1. 引用计数表（refcnts）</h3>
+        <p><strong>作用</strong>：存储对象的引用计数（当 ISA 指针中的引用计数位存不下时）。</p>
+        <p><strong>结构</strong>：哈希表，键是对象的指针（经过伪装），值是引用计数的值。</p>
+        <p><strong>数据结构</strong>：</p>
+        
+        <div class="code-block"><pre><code>// RefcountMap 是一个哈希表
+typedef objc::DenseMap&lt;DisguisedPtr&lt;objc_object&gt;*, size_t&gt; RefcountMap;
+
+// 键：对象的指针（经过伪装）
+// 值：引用计数的值</code></pre></div>
+        
+        <p><strong>特点</strong>：</p>
+        <ul>
+            <li>只有当引用计数超过 ISA 能存储的范围时才会使用</li>
+            <li>使用哈希表存储，查找效率为 O(1)</li>
+            <li>对象的指针会被"伪装"（DisguisedPtr），避免被其他机制误识别</li>
+        </ul>
+        
+        <h3>3. weak 表（weak_table）</h3>
+        <p><strong>作用</strong>：存储所有指向该对象的 weak 引用。</p>
+        <p><strong>数据结构</strong>：</p>
+        
+        <div class="code-block"><pre><code>struct weak_table_t {
+    weak_entry_t *weak_entries;      // weak 条目数组
+};</code></pre></div>
+        
+        <h4>weak_entry_t 结构</h4>
+        <p><strong>核心理解</strong>：<code>weak_entry_t</code> 是一个 <code>Key-Value</code> 存储结构，<code>Key = 对象地址（referent）</code>，<code>Value = weak 变量地址数组（referrers/inline_referrers）</code>。</p>
+        
+        <div class="code-block"><pre><code>struct weak_entry_t {
+    // Key: 对象地址
+    DisguisedPtr&lt;objc_object&gt; referent;  
+    
+    union {
+        struct {
+            // Value: weak 变量地址数组（哈希表形式，>4个时使用）
+            weak_referrer_t *referrers;           
+            uintptr_t        out_of_line_ness;
+            uintptr_t        num_refs;
+            uintptr_t        mask;
+            uintptr_t        max_hash_displacement;
+        };
+        struct {
+            // Value: weak 变量地址数组（内联数组形式，≤4个时使用）
+            weak_referrer_t  inline_referrers[4];  
+        };
+    };
+};</code></pre></div>
+        
+        <p><strong>存储结构示意</strong>：</p>
+        <div class="mermaid">
+graph LR
+    A[对象地址<br/>0x1000] --> B[weak_entry_t<br/>Key-Value]
+    B --> C["Key: referent<br/>0x1000"]
+    B --> D["Value: referrers<br/>[0x2000, 0x2004, 0x2008]"]
+    D --> E[weak变量地址数组]
+    
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#ffcccc
+    style D fill:#ccffcc
+        </div>
+        
+        <p><strong>为什么存储 weak 变量地址而不是对象地址？</strong></p>
+        <p>因为需要在对象释放时修改 weak 变量的值（置为 nil），所以必须存储 weak 变量的地址。</p>
+        
+        <p><strong>字段说明</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>字段名</th>
+                    <th>类型</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>referent</strong></td>
+                    <td>DisguisedPtr&lt;objc_object&gt;</td>
+                    <td>被引用的对象指针（经过伪装，避免被其他机制误识别）</td>
+                </tr>
+                <tr>
+                    <td><strong>out_of_line_ness</strong></td>
+                    <td>uintptr_t</td>
+                    <td>标志位，用于区分使用内联存储还是哈希表存储</td>
+                </tr>
+                <tr>
+                    <td><strong>num_refs</strong></td>
+                    <td>uintptr_t</td>
+                    <td>weak 引用的数量（当使用哈希表时）</td>
+                </tr>
+                <tr>
+                    <td><strong>mask</strong></td>
+                    <td>uintptr_t</td>
+                    <td>哈希表的掩码，用于计算哈希值（当使用哈希表时）</td>
+                </tr>
+                <tr>
+                    <td><strong>max_hash_displacement</strong></td>
+                    <td>uintptr_t</td>
+                    <td>最大哈希冲突距离，用于优化查找（当使用哈希表时）</td>
+                </tr>
+                <tr>
+                    <td><strong>referrers</strong></td>
+                    <td>weak_referrer_t*</td>
+                    <td>哈希表指针，存储 weak 引用地址（当引用数量 > 4 时）</td>
+                </tr>
+                <tr>
+                    <td><strong>inline_referrers[4]</strong></td>
+                    <td>weak_referrer_t[4]</td>
+                    <td>内联数组，直接存储 weak 引用地址（当引用数量 ≤ 4 时）</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4>关联关系</h4>
+        <p><strong>整体映射关系</strong>：</p>
+        <div class="code-block"><pre><code>// weak_table_t: Key = 对象地址, Value = weak_entry_t
+// weak_entry_t: Key = referent(对象地址), Value = weak变量地址数组
+
+对象地址 → weak变量地址数组
+0x1000  → [0x2000, 0x2004, 0x2008]</code></pre></div>
+        
+        <h4>存储优化</h4>
+        <p>weak_entry_t 使用了两种存储方式：</p>
+        <ul>
+            <li><strong>内联存储</strong>：当 weak 引用数量 ≤ 4 时，使用内联数组（inline_referrers），避免动态分配内存</li>
+            <li><strong>哈希表存储</strong>：当 weak 引用数量 > 4 时，使用哈希表（referrers），支持动态扩容</li>
+        </ul>
+        
+        <h2>Side Table 的存储位置</h2>
+        <p>Side Table 并不是直接存储在对象中，而是：</p>
+        <ul>
+            <li>对象中只存储一个指向 Side Table 的指针（存储在 ISA 指针的某些位中）</li>
+            <li>Side Table 本身存储在全局的 Side Table 池中</li>
+            <li>多个对象可以共享同一个 Side Table（通过哈希表区分）</li>
+        </ul>
+        
+        <h2>总结</h2>
+        <p>Side Table 是一个三层结构：</p>
+        <ol>
+            <li><strong>Side Table</strong>：包含引用计数表、weak 表</li>
+            <li><strong>weak_table_t</strong>：哈希表，存储所有对象的 weak 条目</li>
+            <li><strong>weak_entry_t</strong>：单个对象的所有 weak 引用，使用内联或哈希表存储</li>
+        </ol>
+        <p>这种设计既保证了性能（内联存储小数据），又保证了扩展性（哈希表存储大数据）。</p>
+    </div>
+</body>
+</html>
