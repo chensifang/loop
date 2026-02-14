@@ -170,21 +170,25 @@ async function loadFile(filePath) {
         if (bodyMatch) {
             let bodyContent = bodyMatch[1];
             
-            // 移除 script 标签
+            // 移除 script 标签和 head 中的 link 标签（样式会在后面统一处理）
             bodyContent = bodyContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-            
-            // 修复 CSS 路径：将相对路径改为绝对路径
-            // 例如：../../style.css -> /notes/style.css
-            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const cssBasePath = isLocalDev ? '' : '/notes';
-            bodyContent = bodyContent.replace(
-                /href=["']([^"']*style\.css[^"']*)["']/gi,
-                `href="${cssBasePath}/style.css"`
-            );
+            bodyContent = bodyContent.replace(/<link[^>]*rel=["']stylesheet["'][^>]*>/gi, '');
             
             // 更新内容
             const contentBody = document.getElementById('contentBody');
             contentBody.innerHTML = bodyContent;
+            
+            // 确保 style.css 已加载（如果还没有）
+            // 检查是否已经有 style.css 的 link 标签
+            const existingStyleLink = document.querySelector('link[href*="style.css"]');
+            if (!existingStyleLink) {
+                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const cssPath = isLocalDev ? '/style.css' : '/notes/style.css';
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssPath;
+                document.head.appendChild(link);
+            }
             
             // 重新渲染 Mermaid 图表
             setTimeout(() => {
