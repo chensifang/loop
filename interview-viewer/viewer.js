@@ -15,7 +15,8 @@ async function getFileList() {
             '01-问题合集.html',
             '内存管理/ARC内存管理与循环引用/01-简述ARC的工作原理.html',
             '内存管理/ARC内存管理与循环引用/02-循环引用的产生与解决.html',
-            '内存管理/ARC内存管理与循环引用/03-weak和unowned的区别和使用场景.html'
+            '内存管理/ARC内存管理与循环引用/03-weak和unowned的区别和使用场景.html',
+            '内存管理/weak属性的实现原理/01-weak关键字是如何实现的.html'
         ];
     }
 }
