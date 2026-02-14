@@ -1,5 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "python3 interview-viewer/build.py",
+  "buildCommand": "cd interview-viewer && npm run build",
   "outputDirectory": "interview-viewer/public"
 }

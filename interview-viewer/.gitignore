@@ -3,6 +3,9 @@ public/
 dist/
 node_modules/
 
+# Vite
+.vite/
+
 # Python
 __pycache__/
 *.pyc

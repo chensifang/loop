@@ -3,21 +3,20 @@ import { resolve } from 'path';
 import fs from 'fs';
 
 export default defineConfig({
-  root: '.',
+  root: 'src',
   server: {
     port: 8000,
-    open: '/index.html',
+    open: '/',
     // 允许访问父目录的文件（笔记文件）
     fs: {
       allow: ['..']
     }
   },
   build: {
-    outDir: 'dist',
+    outDir: '../dist',
+    emptyOutDir: true,
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html')
-      }
+      input: resolve(__dirname, 'src/index.html')
     }
   },
   plugins: [
@@ -26,7 +25,7 @@ export default defineConfig({
       name: 'generate-files-json',
       configureServer(server) {
         server.middlewares.use('/files.json', (req, res, next) => {
-          const notesDir = resolve(__dirname, '../interview/html-version');
+          const notesDir = resolve(__dirname, '../../interview/html-version');
           const htmlFiles = [];
           
           function scanDir(dir, basePath = '') {
@@ -63,7 +62,7 @@ export default defineConfig({
         
         // 提供笔记文件的静态服务
         server.middlewares.use('/notes', (req, res, next) => {
-          const notesDir = resolve(__dirname, '../interview/html-version');
+          const notesDir = resolve(__dirname, '../../interview/html-version');
           // req.url 可能是 "/notes/xxx.html" 或 "/xxx.html"，需要去掉 /notes 前缀
           const relativePath = req.url.replace(/^\/notes/, '').replace(/^\//, '');
           const filePath = resolve(notesDir, relativePath);
@@ -90,7 +89,7 @@ export default defineConfig({
         
         // 提供 style.css（从 notes 目录）
         server.middlewares.use('/style.css', (req, res, next) => {
-          const stylePath = resolve(__dirname, '../interview/html-version/style.css');
+          const stylePath = resolve(__dirname, '../../interview/html-version/style.css');
           if (fs.existsSync(stylePath)) {
             const content = fs.readFileSync(stylePath);
             res.setHeader('Content-Type', 'text/css; charset=utf-8');

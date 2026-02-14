@@ -97,14 +97,23 @@ def main():
     print(f"\n📄 生成文件列表: {files_json_path}")
     print(f"   共 {len(html_files)} 个文件")
     
-    # 复制 viewer 文件到 public
-    viewer_files = ['index.html', 'viewer.js', 'viewer.css']
-    for file in viewer_files:
-        src = Path(__file__).parent / file
-        if src.exists():
-            dst = public_dir / file
-            shutil.copy2(src, dst)
-            print(f"  ✓ {file}")
+    # 复制构建后的文件（从 dist 目录）
+    dist_dir = script_dir / 'dist'
+    if dist_dir.exists():
+        # 复制 dist 目录下的所有文件到 public
+        for item in dist_dir.iterdir():
+            if item.is_file():
+                dst = public_dir / item.name
+                shutil.copy2(item, dst)
+                print(f"  ✓ {item.name}")
+            elif item.is_dir():
+                dst = public_dir / item.name
+                if dst.exists():
+                    shutil.rmtree(dst)
+                shutil.copytree(item, dst)
+                print(f"  ✓ {item.name}/")
+    else:
+        print("⚠️  警告: dist 目录不存在，请先运行 npm run build")
     
     print("\n✅ 构建完成！")
 
