@@ -36,9 +36,38 @@ def check_files_changed():
 
 class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
+        # 规范化路径（必须在最开始处理）
+        original_path = self.path
+        if self.path == '/':
+            self.path = '/index.html'
+        
+        # 如果是请求 index.html，优先处理
+        if self.path == '/index.html':
+            # 获取 server.py 的绝对路径
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            index_path = os.path.join(script_dir, 'index.html')
+            print(f"Loading index.html from: {index_path}")
+            print(f"File exists: {os.path.exists(index_path)}")
+            try:
+                with open(index_path, 'rb') as f:
+                    content = f.read()
+                print(f"Loaded {len(content)} bytes")
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            except Exception as e:
+                print(f"Error loading index.html: {e}")
+                import traceback
+                traceback.print_exc()
+                self.send_error(404)
+                return
+        
         # 如果是请求 files.json（用于文件列表）
-        if self.path == '/files.json':
-            # 尝试从 public 目录读取（如果存在）
+        if self.path == '/files.json' or self.path.startswith('/files.json'):
+            # 优先从 public 目录读取（如果存在且较新）
             script_dir = os.path.dirname(os.path.abspath(__file__))
             public_files_json = os.path.join(script_dir, 'public', 'files.json')
             
@@ -50,29 +79,35 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header('Content-type', 'application/json')
                     self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Cache-Control', 'no-cache')
                     self.end_headers()
                     self.wfile.write(content)
                     return
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Error reading public/files.json: {e}")
             
-            # 否则动态生成文件列表
+            # 否则动态生成文件列表（从当前工作目录，即 html-version）
             html_files = []
-            for root, dirs, files in os.walk('.'):
-                for file in files:
-                    if file.endswith('.html') and file != 'index.html':
-                        rel_path = os.path.join(root, file)
-                        rel_path = rel_path.replace('\\', '/').lstrip('./')
-                        html_files.append(rel_path)
-            
-            html_files.sort()
-            import json
-            response = json.dumps(html_files, ensure_ascii=False)
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(response.encode('utf-8'))
+            try:
+                for root, dirs, files in os.walk('.'):
+                    for file in files:
+                        if file.endswith('.html') and file != 'index.html':
+                            rel_path = os.path.join(root, file)
+                            rel_path = rel_path.replace('\\', '/').lstrip('./')
+                            html_files.append(rel_path)
+                
+                html_files.sort()
+                import json
+                response = json.dumps(html_files, ensure_ascii=False)
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                self.wfile.write(response.encode('utf-8'))
+            except Exception as e:
+                print(f"Error generating files.json: {e}")
+                self.send_error(500)
         # 如果是请求文件列表 API（兼容旧版本）
         elif self.path == '/api/files':
             self.send_response(200)
@@ -107,19 +142,6 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 'timestamp': time.time()
             })
             self.wfile.write(response.encode('utf-8'))
-        elif self.path == '/index.html' or self.path == '/':
-            # 返回 interview-viewer 目录下的 index.html
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            index_path = os.path.join(script_dir, 'index.html')
-            try:
-                with open(index_path, 'rb') as f:
-                    content = f.read()
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.end_headers()
-                self.wfile.write(content)
-            except:
-                self.send_error(404)
         elif self.path.startswith('/viewer.'):
             # 返回 interview-viewer 目录下的 viewer.js 或 viewer.css
             script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -132,9 +154,11 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_header('Content-type', 'application/javascript')
                 elif file_path.endswith('.css'):
                     self.send_header('Content-type', 'text/css')
+                self.send_header('Content-Length', str(len(content)))
                 self.end_headers()
                 self.wfile.write(content)
-            except:
+            except Exception as e:
+                print(f"Error loading {self.path}: {e}")
                 self.send_error(404)
         elif self.path == '/files.json':
             # 提供 files.json（本地开发时动态生成）
@@ -156,15 +180,17 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             response = json.dumps(html_files, ensure_ascii=False)
             self.wfile.write(response.encode('utf-8'))
         elif self.path == '/style.css':
-            # 提供 style.css（从当前目录）
+            # 提供 style.css（从当前目录，即 html-version 目录）
             try:
                 with open('style.css', 'rb') as f:
                     content = f.read()
                 self.send_response(200)
                 self.send_header('Content-type', 'text/css')
+                self.send_header('Content-Length', str(len(content)))
                 self.end_headers()
                 self.wfile.write(content)
-            except:
+            except Exception as e:
+                print(f"Error loading style.css: {e}")
                 self.send_error(404)
         else:
             # 其他请求使用默认的文件服务（从 html-version 目录）
