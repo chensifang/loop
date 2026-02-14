@@ -72,12 +72,20 @@ def main():
                 shutil.copy2(file_path, target_path)
                 print(f"  ✓ {rel_path_str}")
     
-    # 复制 style.css
+    # 复制 style.css 到两个位置：
+    # 1. public/notes/style.css（保持笔记文件中的相对路径引用）
+    # 2. public/style.css（供主页面使用）
     style_css = notes_dir / 'style.css'
     if style_css.exists():
-        target_style = notes_public_dir / 'style.css'
-        shutil.copy2(style_css, target_style)
-        print(f"  ✓ style.css")
+        # 复制到 notes 目录
+        target_style_notes = notes_public_dir / 'style.css'
+        shutil.copy2(style_css, target_style_notes)
+        print(f"  ✓ notes/style.css")
+        
+        # 复制到 public 根目录
+        target_style_root = public_dir / 'style.css'
+        shutil.copy2(style_css, target_style_root)
+        print(f"  ✓ style.css (根目录)")
     
     # 排序文件列表
     html_files.sort()

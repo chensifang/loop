@@ -173,6 +173,15 @@ async function loadFile(filePath) {
             // 移除 script 标签
             bodyContent = bodyContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
             
+            // 修复 CSS 路径：将相对路径改为绝对路径
+            // 例如：../../style.css -> /notes/style.css
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const cssBasePath = isLocalDev ? '' : '/notes';
+            bodyContent = bodyContent.replace(
+                /href=["']([^"']*style\.css[^"']*)["']/gi,
+                `href="${cssBasePath}/style.css"`
+            );
+            
             // 更新内容
             const contentBody = document.getElementById('contentBody');
             contentBody.innerHTML = bodyContent;
