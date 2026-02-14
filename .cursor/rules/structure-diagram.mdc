@@ -1,0 +1,39 @@
+# 结构图绘制规则
+
+## 重要原则
+
+**只写关键结构，不要写不重要的数据结构字段**
+
+### 不重要的字段示例
+- `size_t num_entries` - 条目数量（实现细节）
+- `uintptr_t mask` - 哈希表的掩码（实现细节）
+- `uintptr_t max_hash_displacement` - 最大哈希冲突距离（实现细节）
+- 其他用于内部实现的辅助字段
+
+### 应该写的关键结构
+- 结构体的名称
+- 关键的字段（表示主要功能或数据存储）
+- 字段的类型和作用说明
+
+### 示例
+
+**❌ 错误写法：**
+```cpp
+class weak_table_t {
+    +weak_entry_t[] weak_entries
+    +size_t num_entries          // 不要写
+    +uintptr_t mask              // 不要写
+    +uintptr_t max_hash_displacement  // 不要写
+}
+```
+
+**✅ 正确写法：**
+```cpp
+class weak_table_t {
+    +weak_entry_t[] weak_entries : weak 条目数组
+}
+```
+
+## 绘制方式
+
+使用 Mermaid 类图（classDiagram），横向布局（direction LR），字段后面用冒号说明作用。
