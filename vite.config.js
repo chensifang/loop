@@ -122,6 +122,14 @@ export default defineConfig({
           fs.writeFileSync(distFilesJson, JSON.stringify(htmlFiles));
           console.log('✓ Generated files.json');
         }
+        
+        // 复制 style.css 到 dist
+        const styleCss = resolve(__dirname, 'src/style.css');
+        const distStyleCss = resolve(__dirname, 'dist/style.css');
+        if (fs.existsSync(styleCss)) {
+          fs.copyFileSync(styleCss, distStyleCss);
+          console.log('✓ Copied style.css to dist');
+        }
       }
     }
   ]
