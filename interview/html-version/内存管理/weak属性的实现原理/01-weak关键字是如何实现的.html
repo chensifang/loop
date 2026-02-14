@@ -41,9 +41,7 @@
                 </tr>
             </tbody>
         </table>
-        
-        <div class="code-block">
-<pre><code>// Side Table 的结构（简化版）
+        <div class="code-block"><pre><code>// Side Table 的结构（简化版）
 struct SideTable {
     spinlock_t slock;           // 自旋锁，保证线程安全
     RefcountMap refcnts;        // 引用计数表（当 ISA 存不下时）
@@ -56,9 +54,7 @@ struct weak_table_t {
     size_t num_entries;          // 条目数量
     uintptr_t mask;              // 哈希表的掩码
     uintptr_t max_hash_displacement; // 最大哈希冲突距离
-};</code></pre>
-        </div>
-        
+};</code></pre></div>
         <h2>weak 表的工作原理</h2>
         <p>weak 表是一个哈希表，记录所有指向某个对象的 weak 引用：</p>
         
@@ -97,8 +93,7 @@ sequenceDiagram
     Note over Runtime: 不增加 person 的引用计数
         </div>
         
-        <div class="code-block">
-<pre><code>// 编译器生成的代码（简化）
+        <div class="code-block"><pre><code>// 编译器生成的代码（简化）
 id obj1;
 objc_initWeak(&obj1, person);  // 创建 weak 引用
 
@@ -114,9 +109,7 @@ void objc_initWeak(id *location, id newObj) {
     
     // 3. 将 location 指向 newObj（但不增加引用计数）
     *location = newObj;
-}</code></pre>
-        </div>
-        
+}</code></pre></div>
         <h3>2. 对象释放时</h3>
         <div class="mermaid">
 sequenceDiagram
@@ -134,8 +127,7 @@ sequenceDiagram
     Runtime->>WeakTable: 删除 weak_entry
         </div>
         
-        <div class="code-block">
-<pre><code>// 对象释放时的处理（简化）
+        <div class="code-block"><pre><code>// 对象释放时的处理（简化）
 void objc_destructInstance(id obj) {
     // 1. 查找 weak 表
     weak_entry_t *entry = weak_entry_for_referent(weak_table, obj);
@@ -155,9 +147,7 @@ void objc_destructInstance(id obj) {
     
     // 5. 释放对象内存
     object_dispose(obj);
-}</code></pre>
-        </div>
-        
+}</code></pre></div>
         <h2>三层哈希查找</h2>
         <p>weak 表的查找采用三层哈希结构，保证快速定位：</p>
         
@@ -210,8 +200,7 @@ graph TD
         <h2>为什么 weak 必须是可选类型？</h2>
         <p>weak 引用在对象释放时会被自动置为 nil，所以必须是可选类型（Optional），否则无法表示"没有值"的状态。</p>
         
-        <div class="code-block">
-<pre><code>// ✅ 正确：weak 必须是可选类型
+        <div class="code-block"><pre><code>// ✅ 正确：weak 必须是可选类型
 weak var person: Person? = Person()
 
 // ❌ 错误：编译不通过
@@ -221,9 +210,7 @@ weak var person: Person = Person()  // 错误：weak 变量必须是可选类型
 person = nil  // 自动置为 nil，可以安全访问
 if let p = person {
     // 不会执行，因为 person 已经是 nil
-}</code></pre>
-        </div>
-        
+}</code></pre></div>
         <h2>与 unowned 的区别</h2>
         <table>
             <thead>
