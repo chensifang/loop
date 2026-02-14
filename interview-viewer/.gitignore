@@ -1,5 +1,7 @@
 # 构建输出目录
 public/
+dist/
+node_modules/
 
 # Python
 __pycache__/

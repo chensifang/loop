@@ -151,12 +151,12 @@ async function loadFile(filePath) {
     // 记住当前文件路径
     currentFilePath = filePath;
     try {
-        // 判断是本地开发环境还是生产环境
-        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        // 判断环境
+        const isViteDev = import.meta.env?.DEV || false;
         
-        // 本地开发：文件通过服务器提供（server.py 从 html-version 目录提供）
+        // Vite 开发环境：通过 /notes/ 路径访问（由 Vite 插件提供）
         // 生产环境（Vercel）：文件在 /notes/ 目录下
-        const basePath = isLocalDev ? '' : '/notes';
+        const basePath = '/notes';
         const url = `${basePath}/${filePath}?t=${Date.now()}`;
         
         const response = await fetch(url);
@@ -184,8 +184,7 @@ async function loadFile(filePath) {
             // 检查是否已经有 style.css 的 link 标签
             const existingStyleLink = document.querySelector('link[href*="style.css"]');
             if (!existingStyleLink) {
-                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                const cssPath = isLocalDev ? '/style.css' : '/notes/style.css';
+                const cssPath = '/notes/style.css';
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
                 link.href = cssPath;
