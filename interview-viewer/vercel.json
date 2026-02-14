@@ -1,15 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "python3 build.py",
-  "outputDirectory": "public",
-  "routes": [
-    {
-      "src": "/(.*\\.(html|css|js|json|png|jpg|jpeg|gif|svg|ico))",
-      "dest": "/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    }
-  ]
+  "buildCommand": "python3 interview-viewer/build.py",
+  "outputDirectory": "interview-viewer/public"
 }

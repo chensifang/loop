@@ -9,13 +9,43 @@ Vercel 构建脚本：
 import os
 import json
 import shutil
+import sys
 from pathlib import Path
 
 def main():
-    # 项目根目录
-    project_root = Path(__file__).parent.parent
-    notes_dir = project_root / 'interview' / 'html-version'
-    public_dir = Path(__file__).parent / 'public'
+    # 获取当前脚本所在目录
+    script_dir = Path(__file__).parent
+    current_dir = Path.cwd()
+    
+    print(f"📂 脚本目录: {script_dir}")
+    print(f"📂 当前工作目录: {current_dir}")
+    
+    # 尝试找到 interview/html-version 目录
+    # 可能的位置：
+    # 1. 从脚本目录向上查找（如果脚本在 interview-viewer/）
+    # 2. 从当前工作目录查找（Vercel 可能在项目根目录）
+    possible_notes_dirs = [
+        script_dir.parent / 'interview' / 'html-version',  # 从脚本目录向上
+        current_dir / 'interview' / 'html-version',         # 从当前目录
+        current_dir.parent / 'interview' / 'html-version',  # 从当前目录向上
+    ]
+    
+    notes_dir = None
+    for test_dir in possible_notes_dirs:
+        if test_dir.exists():
+            notes_dir = test_dir
+            print(f"✅ 找到笔记目录: {notes_dir}")
+            break
+    
+    if not notes_dir:
+        print("❌ 错误: 找不到 interview/html-version 目录")
+        print("   尝试的路径:")
+        for test_dir in possible_notes_dirs:
+            print(f"     - {test_dir} (存在: {test_dir.exists()})")
+        sys.exit(1)
+    
+    # public 目录应该在脚本所在目录
+    public_dir = script_dir / 'public'
     notes_public_dir = public_dir / 'notes'
     
     # 创建 public 目录
@@ -24,29 +54,30 @@ def main():
     
     # 扫描笔记文件
     html_files = []
-    if notes_dir.exists():
-        print(f"📁 扫描笔记文件: {notes_dir}")
-        for root, dirs, files in os.walk(notes_dir):
-            for file in files:
-                if file.endswith('.html') and file != 'index.html':
-                    file_path = Path(root) / file
-                    # 计算相对于 notes_dir 的路径
-                    rel_path = file_path.relative_to(notes_dir)
-                    rel_path_str = str(rel_path).replace('\\', '/')
-                    html_files.append(rel_path_str)
-                    
-                    # 复制文件到 public/notes/，保持目录结构
-                    target_path = notes_public_dir / rel_path
-                    target_path.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(file_path, target_path)
-                    print(f"  ✓ {rel_path_str}")
-        
-        # 复制 style.css
-        style_css = notes_dir / 'style.css'
-        if style_css.exists():
-            target_style = notes_public_dir / 'style.css'
-            shutil.copy2(style_css, target_style)
-            print(f"  ✓ style.css")
+    print(f"📁 扫描笔记文件: {notes_dir}")
+    print(f"📁 输出目录: {public_dir}")
+    
+    for root, dirs, files in os.walk(notes_dir):
+        for file in files:
+            if file.endswith('.html') and file != 'index.html':
+                file_path = Path(root) / file
+                # 计算相对于 notes_dir 的路径
+                rel_path = file_path.relative_to(notes_dir)
+                rel_path_str = str(rel_path).replace('\\', '/')
+                html_files.append(rel_path_str)
+                
+                # 复制文件到 public/notes/，保持目录结构
+                target_path = notes_public_dir / rel_path
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(file_path, target_path)
+                print(f"  ✓ {rel_path_str}")
+    
+    # 复制 style.css
+    style_css = notes_dir / 'style.css'
+    if style_css.exists():
+        target_style = notes_public_dir / 'style.css'
+        shutil.copy2(style_css, target_style)
+        print(f"  ✓ style.css")
     
     # 排序文件列表
     html_files.sort()
