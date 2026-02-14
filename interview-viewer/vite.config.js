@@ -65,12 +65,20 @@ export default defineConfig({
         // 提供笔记文件的静态服务
         server.middlewares.use('/notes', (req, res, next) => {
           const notesDir = resolve(__dirname, '../interview/html-version');
-          // req.url 可能是 "/notes/xxx.html" 或 "/xxx.html"，需要去掉 /notes 前缀
-          const relativePath = req.url.replace(/^\/notes/, '').replace(/^\//, '');
+          // req.url 可能是 "/notes/xxx.html"，需要去掉 /notes 前缀并解码 URL
+          let relativePath = req.url.replace(/^\/notes/, '').replace(/^\//, '');
+          // 解码 URL 编码（处理中文文件名）
+          try {
+            relativePath = decodeURIComponent(relativePath);
+          } catch (e) {
+            // 如果解码失败，使用原始路径
+          }
           const filePath = resolve(notesDir, relativePath);
           
           // 安全检查：确保文件在 notesDir 内
-          if (!filePath.startsWith(notesDir + '/') && filePath !== notesDir) {
+          const normalizedNotesDir = notesDir + '/';
+          const normalizedFilePath = filePath + '/';
+          if (!normalizedFilePath.startsWith(normalizedNotesDir) && filePath !== notesDir) {
             res.statusCode = 403;
             res.end('Forbidden');
             return;
@@ -85,7 +93,7 @@ export default defineConfig({
             res.end(content);
           } else {
             res.statusCode = 404;
-            res.end('File not found');
+            res.end(`File not found: ${relativePath}`);
           }
         });
         
