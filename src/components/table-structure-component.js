@@ -108,7 +108,7 @@ function drawPaths(svg, container) {
 
 function renderTableStructure(data, containerId, options) {
     options = options || {};
-    const layout = options.layout || 'auto'; // 'row', 'column', 'auto', 'hierarchical'
+    const layout = options.layout || 'hierarchical'; // 默认使用层级布局
     
     const container = document.getElementById(containerId) || document.querySelector(containerId);
     if (!container) {
@@ -351,30 +351,19 @@ function createStructureBlock(block, index) {
         if (hasContent) {
             const contentCell = document.createElement('div');
             contentCell.className = 'table-content';
-            let hasContentData = false;
-            if (row.name) {
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'var-name';
-                nameSpan.textContent = row.name;
-                contentCell.appendChild(nameSpan);
-                hasContentData = true;
+            let contentText = [];
+            // 按照习惯：类型 变量名 描述
+            if (row.name && row.type) {
+                contentText.push(`${row.type} ${row.name}`);
+            } else if (row.name) {
+                contentText.push(row.name);
+            } else if (row.type) {
+                contentText.push(row.type);
             }
-            if (row.type) {
-                const typeSpan = document.createElement('span');
-                typeSpan.className = 'var-type';
-                typeSpan.textContent = row.type;
-                contentCell.appendChild(typeSpan);
-                hasContentData = true;
-            }
-            if (row.desc) {
-                const descSpan = document.createElement('span');
-                descSpan.className = 'var-desc';
-                descSpan.textContent = row.desc;
-                contentCell.appendChild(descSpan);
-                hasContentData = true;
-            }
+            if (row.desc) contentText.push(row.desc);
+            contentCell.textContent = contentText.join(' ');
             // 只有当有内容数据时才添加单元格
-            if (hasContentData || (block.headers && block.headers.some(h => h.type === 'content'))) {
+            if (contentText.length > 0 || (block.headers && block.headers.some(h => h.type === 'content'))) {
                 rowEl.appendChild(contentCell);
             }
         }

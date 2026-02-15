@@ -695,21 +695,3 @@ code.highlight {
     font-weight: 600;
 }
 
-.table-content .var-name {
-    font-weight: 600;
-    color: #005cc5;
-    margin-right: 6px;
-}
-
-.table-content .var-type {
-    color: #6f42c1;
-    font-family: 'SFMono-Regular', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 11px;
-    margin-right: 6px;
-}
-
-.table-content .var-desc {
-    color: #24292e;
-    font-size: 11px;
-    font-style: italic;
-}

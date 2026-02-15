@@ -29,26 +29,16 @@
                     {
                         id: 'dog-structure',
                         title: 'Dog 对象内存布局',
-                        headers: [
-                            { type: 'offset', text: '偏移' },
-                            { type: 'content', text: '变量名/类型' },
-                            { type: 'size', text: '大小' }
-                        ],
                         rows: [
-                            { offset: '偏移 0', name: 'isa', type: '指针', size: '8 字节', linkTo: 'isa-structure', linkFrom: 'right' },
-                            { offset: '偏移 8', name: '_name', type: 'NSString *', desc: '来自 Animal', size: '8 字节' },
-                            { offset: '偏移 16', name: '_age', type: 'int', desc: '来自 Dog', size: '4 字节' },
+                            { offset: '偏移 0', name: 'isa', type: '指针', size: '8 字节', linkTo: 'isa-structure' },
+                            { offset: '偏移 8', name: '_name', type: 'NSString *', size: '8 字节' },
+                            { offset: '偏移 16', name: '_age', type: 'int', size: '4 字节' },
                             { offset: '偏移 20', desc: '对齐填充', size: '4 字节' }
                         ]
                     },
                     {
                         id: 'isa-structure',
                         title: 'isa 指针结构（NONPOINTER_ISA）',
-                        headers: [
-                            { type: 'offset', text: '位位置' },
-                            { type: 'content', text: '字段名' },
-                            { type: 'size', text: '说明' }
-                        ],
                         rows: [
                             { offset: '位 0', name: 'nonpointer', size: '1=存储额外信息' },
                             { offset: '位 1', name: 'has_assoc', size: '是否有关联对象' },
@@ -120,88 +110,6 @@
                     <td>对齐填充</td>
                     <td>4 字节</td>
                     <td>使对象总大小为 24 字节（8 的倍数）</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <h2>isa 指针结构说明</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>位范围</th>
-                    <th>用途</th>
-                    <th>说明</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>第 0 位</strong></td>
-                    <td>nonpointer</td>
-                    <td>1 表示 isa 存储了额外信息，0 表示纯指针</td>
-                </tr>
-                <tr>
-                    <td><strong>第 1 位</strong></td>
-                    <td>has_assoc</td>
-                    <td>是否有关联对象</td>
-                </tr>
-                <tr>
-                    <td><strong>第 2 位</strong></td>
-                    <td>has_cxx_dtor</td>
-                    <td>是否有 C++ 析构函数</td>
-                </tr>
-                <tr>
-                    <td><strong>第 3-35 位</strong></td>
-                    <td>shiftcls</td>
-                    <td>类对象地址（33位）</td>
-                </tr>
-                <tr>
-                    <td><strong>第 36-47 位</strong></td>
-                    <td>magic</td>
-                    <td>魔数（用于验证）</td>
-                </tr>
-                <tr>
-                    <td><strong>第 48 位</strong></td>
-                    <td>weakly_referenced</td>
-                    <td>是否有弱引用</td>
-                </tr>
-                <tr>
-                    <td><strong>第 49 位</strong></td>
-                    <td>deallocating</td>
-                    <td>是否正在释放</td>
-                </tr>
-                <tr>
-                    <td><strong>第 50 位</strong></td>
-                    <td>has_sidetable_rc</td>
-                    <td>引用计数是否在 SideTable</td>
-                </tr>
-                <tr>
-                    <td><strong>第 51-63 位</strong></td>
-                    <td>extra_rc</td>
-                    <td>额外引用计数（19位）</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <h2>内存对齐规则</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>规则</th>
-                    <th>说明</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>结构体对齐</strong></td>
-                    <td>结构体的起始地址必须是其最大成员大小的整数倍</td>
-                </tr>
-                <tr>
-                    <td><strong>成员对齐</strong></td>
-                    <td>每个成员的偏移量必须是其大小的整数倍</td>
-                </tr>
-                <tr>
-                    <td><strong>整体大小</strong></td>
-                    <td>结构体的总大小必须是最大成员大小的整数倍</td>
                 </tr>
             </tbody>
         </table>
