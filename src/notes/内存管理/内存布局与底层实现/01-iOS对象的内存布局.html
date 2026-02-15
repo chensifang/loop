@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS对象的内存布局</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script type="module" src="/mermaid-zoom.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function drawMemoryLinks() {
+                const container = document.querySelector('.memory-structure-container');
+                if (!container) return;
+                
+                const svg = container.querySelector('.memory-link-svg');
+                if (!svg) return;
+                
+                // 清除之前的路径
+                svg.querySelectorAll('path').forEach(path => path.remove());
+                
+                // 获取容器位置
+                const containerRect = container.getBoundingClientRect();
+                
+                // 查找所有需要连接的行
+                const linkRows = container.querySelectorAll('.memory-row-link[data-link-to]');
+                
+                linkRows.forEach(row => {
+                    const linkTo = row.getAttribute('data-link-to');
+                    const linkFrom = row.getAttribute('data-link-from') || 'right';
+                    const target = document.getElementById(linkTo);
+                    
+                    if (!target) return;
+                    
+                    // 获取源行和目标块的位置
+                    const rowRect = row.getBoundingClientRect();
+                    const targetRect = target.getBoundingClientRect();
+                    
+                    // 计算起点（行的左边或右边边缘的中心）
+                    let startX, startY;
+                    if (linkFrom === 'left') {
+                        startX = rowRect.left - containerRect.left;
+                    } else {
+                        startX = rowRect.right - containerRect.left;
+                    }
+                    startY = rowRect.top + rowRect.height / 2 - containerRect.top;
+                    
+                    // 计算终点（目标块的 title 行的左边中心）
+                    const targetTitle = target.querySelector('.memory-structure-title');
+                    let endX, endY;
+                    
+                    if (targetTitle) {
+                        const titleRect = targetTitle.getBoundingClientRect();
+                        endX = titleRect.left - containerRect.left;
+                        endY = titleRect.top + titleRect.height / 2 - containerRect.top;
+                    } else {
+                        // 如果没有找到 title，使用目标块的左边中心
+                        endX = targetRect.left - containerRect.left;
+                        endY = targetRect.top + targetRect.height / 2 - containerRect.top;
+                    }
+                    
+                    // 判断是否需要用曲线
+                    // 如果起点和终点基本在一条直线上（水平或垂直），用直线
+                    const deltaX = Math.abs(endX - startX);
+                    const deltaY = Math.abs(endY - startY);
+                    const isHorizontal = deltaY < 10; // 垂直方向差异小于10px认为是水平线
+                    const isVertical = deltaX < 10; // 水平方向差异小于10px认为是垂直线
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    let d;
+                    
+                    if (isHorizontal || isVertical) {
+                        // 使用直线
+                        d = `M ${startX} ${startY} L ${endX} ${endY}`;
+                    } else {
+                        // 使用曲线，控制点要绕过块
+                        // 获取第一个块的位置，避免线条穿过它
+                        const firstBlock = row.closest('.memory-structure');
+                        const firstBlockRect = firstBlock ? firstBlock.getBoundingClientRect() : null;
+                        
+                        // 计算中间控制点，让曲线绕过块
+                        let controlX, controlY;
+                        
+                        if (linkFrom === 'right') {
+                            // 从右边出发，向右延伸再向下/上
+                            controlX = startX + Math.max(30, deltaX * 0.3);
+                            // 如果目标在下方，控制点稍微向下；如果在上方，稍微向上
+                            controlY = startY + (endY > startY ? Math.min(30, deltaY * 0.3) : Math.max(-30, deltaY * 0.3));
+                        } else {
+                            // 从左边出发，向左延伸再向下/上
+                            controlX = startX - Math.max(30, deltaX * 0.3);
+                            controlY = startY + (endY > startY ? Math.min(30, deltaY * 0.3) : Math.max(-30, deltaY * 0.3));
+                        }
+                        
+                        // 使用二次贝塞尔曲线
+                        d = `M ${startX} ${startY} Q ${controlX} ${controlY}, ${endX} ${endY}`;
+                    }
+                    
+                    path.setAttribute('d', d);
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('stroke', '#005cc5');
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('marker-end', 'url(#arrowhead)');
+                    svg.appendChild(path);
+                });
+                
+                // 更新 SVG 尺寸
+                svg.setAttribute('width', containerRect.width);
+                svg.setAttribute('height', containerRect.height);
+            }
+            
+            // 初始绘制
+            setTimeout(drawMemoryLinks, 100);
+            
+            // 窗口大小改变时重新绘制
+            window.addEventListener('resize', drawMemoryLinks);
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>iOS 对象的内存布局</h1>
+        
+        <h2>对象内存布局结构</h2>
+        
+        <div class="code-block"><code><span class="keyword">@interface</span> <span class="type">Animal</span> : <span class="type">NSObject</span> {
+    <span class="type">NSString</span> *_name;
+}
+<span class="keyword">@end</span>
+
+<span class="keyword">@interface</span> <span class="type">Dog</span> : <span class="type">Animal</span> {
+    <span class="type">int</span> _age;
+}
+<span class="keyword">@end</span></code></div>
+        
+        <div class="memory-structure-container">
+            <svg class="memory-link-svg" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <marker id="arrowhead" markerWidth="4" markerHeight="4" refX="3.5" refY="2" orient="auto">
+                        <polygon points="0 0, 4 2, 0 4" fill="#005cc5" />
+                    </marker>
+                </defs>
+            </svg>
+            <div class="memory-structure">
+                <div class="memory-structure-title">Dog 对象内存布局</div>
+                <div class="memory-block">
+                    <div class="memory-row memory-row-link" data-link-from="right" data-link-to="isa-structure">
+                        <div class="memory-offset">偏移 0</div>
+                        <div class="memory-content">
+                            <span class="var-name">isa</span>
+                            <span class="var-type">指针</span>
+                            <span class="link-indicator">→</span>
+                        </div>
+                        <div class="memory-size">8 字节</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">偏移 8</div>
+                        <div class="memory-content">
+                            <span class="var-name">_name</span>
+                            <span class="var-type">NSString *</span>
+                            <span class="var-desc">来自 Animal</span>
+                        </div>
+                        <div class="memory-size">8 字节</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">偏移 16</div>
+                        <div class="memory-content">
+                            <span class="var-name">_age</span>
+                            <span class="var-type">int</span>
+                            <span class="var-desc">来自 Dog</span>
+                        </div>
+                        <div class="memory-size">4 字节</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">偏移 20</div>
+                        <div class="memory-content">
+                            <span class="var-desc">对齐填充</span>
+                        </div>
+                        <div class="memory-size">4 字节</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="memory-structure" id="isa-structure">
+                <div class="memory-structure-title">isa 指针结构（NONPOINTER_ISA）</div>
+                <div class="memory-block">
+                    <div class="memory-row">
+                        <div class="memory-offset">位 0</div>
+                        <div class="memory-content">
+                            <span class="var-name">nonpointer</span>
+                        </div>
+                        <div class="memory-size">1=存储额外信息</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 1</div>
+                        <div class="memory-content">
+                            <span class="var-name">has_assoc</span>
+                        </div>
+                        <div class="memory-size">是否有关联对象</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 2</div>
+                        <div class="memory-content">
+                            <span class="var-name">has_cxx_dtor</span>
+                        </div>
+                        <div class="memory-size">是否有C++析构函数</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 3-35</div>
+                        <div class="memory-content">
+                            <span class="var-name">shiftcls</span>
+                        </div>
+                        <div class="memory-size">类对象地址（33位）</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 36-47</div>
+                        <div class="memory-content">
+                            <span class="var-name">magic</span>
+                        </div>
+                        <div class="memory-size">魔数（用于验证）</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 48</div>
+                        <div class="memory-content">
+                            <span class="var-name">weakly_referenced</span>
+                        </div>
+                        <div class="memory-size">是否有弱引用</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 49</div>
+                        <div class="memory-content">
+                            <span class="var-name">deallocating</span>
+                        </div>
+                        <div class="memory-size">是否正在释放</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 50</div>
+                        <div class="memory-content">
+                            <span class="var-name">has_sidetable_rc</span>
+                        </div>
+                        <div class="memory-size">引用计数是否在SideTable</div>
+                    </div>
+                    <div class="memory-row">
+                        <div class="memory-offset">位 51-63</div>
+                        <div class="memory-content">
+                            <span class="var-name">extra_rc</span>
+                        </div>
+                        <div class="memory-size">额外引用计数（19位）</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h2>内存布局说明</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>位置</th>
+                    <th>内容</th>
+                    <th>大小</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>偏移 0</strong></td>
+                    <td><code class="highlight">isa</code> 指针</td>
+                    <td>8 字节</td>
+                    <td>指向类对象，所有对象都有，偏移量固定为 0</td>
+                </tr>
+                <tr>
+                    <td><strong>偏移 8</strong></td>
+                    <td><code class="highlight">_name</code> (NSString *)</td>
+                    <td>8 字节</td>
+                    <td>来自 Animal 父类的实例变量</td>
+                </tr>
+                <tr>
+                    <td><strong>偏移 16</strong></td>
+                    <td><code class="highlight">_age</code> (int)</td>
+                    <td>4 字节</td>
+                    <td>来自 Dog 子类的实例变量</td>
+                </tr>
+                <tr>
+                    <td><strong>偏移 20</strong></td>
+                    <td>对齐填充</td>
+                    <td>4 字节</td>
+                    <td>使对象总大小为 24 字节（8 的倍数）</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>isa 指针结构说明</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>位范围</th>
+                    <th>用途</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>第 0 位</strong></td>
+                    <td>nonpointer</td>
+                    <td>1 表示 isa 存储了额外信息，0 表示纯指针</td>
+                </tr>
+                <tr>
+                    <td><strong>第 1 位</strong></td>
+                    <td>has_assoc</td>
+                    <td>是否有关联对象</td>
+                </tr>
+                <tr>
+                    <td><strong>第 2 位</strong></td>
+                    <td>has_cxx_dtor</td>
+                    <td>是否有 C++ 析构函数</td>
+                </tr>
+                <tr>
+                    <td><strong>第 3-35 位</strong></td>
+                    <td>shiftcls</td>
+                    <td>类对象地址（33位）</td>
+                </tr>
+                <tr>
+                    <td><strong>第 36-47 位</strong></td>
+                    <td>magic</td>
+                    <td>魔数（用于验证）</td>
+                </tr>
+                <tr>
+                    <td><strong>第 48 位</strong></td>
+                    <td>weakly_referenced</td>
+                    <td>是否有弱引用</td>
+                </tr>
+                <tr>
+                    <td><strong>第 49 位</strong></td>
+                    <td>deallocating</td>
+                    <td>是否正在释放</td>
+                </tr>
+                <tr>
+                    <td><strong>第 50 位</strong></td>
+                    <td>has_sidetable_rc</td>
+                    <td>引用计数是否在 SideTable</td>
+                </tr>
+                <tr>
+                    <td><strong>第 51-63 位</strong></td>
+                    <td>extra_rc</td>
+                    <td>额外引用计数（19位）</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>内存对齐规则</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>规则</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>结构体对齐</strong></td>
+                    <td>结构体的起始地址必须是其最大成员大小的整数倍</td>
+                </tr>
+                <tr>
+                    <td><strong>成员对齐</strong></td>
+                    <td>每个成员的偏移量必须是其大小的整数倍</td>
+                </tr>
+                <tr>
+                    <td><strong>整体大小</strong></td>
+                    <td>结构体的总大小必须是最大成员大小的整数倍</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>面试题：一个 NSObject 对象占用多少字节？</h2>
+        <p><strong>注意</strong>：这个问题特指 <code class="highlight">NSObject</code> 这个基类对象，<strong>不是所有继承自 NSObject 的对象</strong>。</p>
+        
+        <h3>答案</h3>
+        <p>需要区分两个概念：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>概念</th>
+                    <th>API</th>
+                    <th>NSObject 的结果</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>对象实例大小</strong></td>
+                    <td><code class="highlight">class_getInstanceSize</code></td>
+                    <td>8 字节</td>
+                    <td>对象实例变量实际占用的内存大小（只有 isa 指针）</td>
+                </tr>
+                <tr>
+                    <td><strong>系统分配大小</strong></td>
+                    <td><code class="highlight">malloc_size</code></td>
+                    <td>16 字节</td>
+                    <td>系统实际分配的内存大小（最小分配单位）</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>代码示例</h3>
+        <div class="code-block"><code><span class="type">NSObject</span> *obj = [[<span class="type">NSObject</span> <span class="keyword">alloc</span>] <span class="keyword">init</span>];
+<span class="type">size_t</span> instanceSize = <span class="function">class_getInstanceSize</span>([<span class="type">NSObject</span> <span class="keyword">class</span>]);
+<span class="type">size_t</span> mallocSize = <span class="function">malloc_size</span>((__bridge <span class="type">const</span> <span class="type">void</span> *)obj);
+<span class="function">NSLog</span>(<span class="string">@"实例大小: %zu, 分配大小: %zu"</span>, instanceSize, mallocSize);
+<span class="comment">// 输出：实例大小: 8, 分配大小: 16</span></code></div>
+        
+        <h3>重要说明</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>对象类型</th>
+                    <th>实例大小</th>
+                    <th>系统分配大小</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>NSObject</strong></td>
+                    <td>8 字节</td>
+                    <td>16 字节</td>
+                </tr>
+                <tr>
+                    <td><strong>有实例变量的对象</strong>（如 Dog）</td>
+                    <td>8 + 实例变量大小</td>
+                    <td>≥ 实例大小（取决于分配器）</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="warning">
+            <p><strong>常见误解</strong>：认为所有继承自 NSObject 的对象都是 16 字节。</p>
+            <p><strong>正确理解</strong>：只有 NSObject 本身是 8 字节（实例）/ 16 字节（分配）。有实例变量的对象大小会根据实例变量变化。</p>
+        </div>
+        
+    </div>
+</body>
+</html>
