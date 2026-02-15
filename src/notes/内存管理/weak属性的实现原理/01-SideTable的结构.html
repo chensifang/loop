@@ -30,6 +30,20 @@
             const sideTableData = {
                 blocks: [
                     {
+                        id: 'stripedmap',
+                        title: 'StripedMap<SideTable>',
+                        subtitle: '模板类：全局容器，包含64个SideTable的数组，通过对象地址哈希选择',
+                        headers: [
+                            { type: 'offset', text: '字段名' },
+                            { type: 'size', text: '类型/说明' }
+                        ],
+                        rows: [
+                            { offset: 'array', size: 'SideTable[64] - 固定大小数组，包含64个SideTable对象', linkTo: 'sidetable' },
+                            { offset: 'count', size: 'static const size_t = 64（静态常量：数组大小）' },
+                            { offset: 'get(p)', size: '方法：根据指针p计算索引，返回array[index]的引用' }
+                        ]
+                    },
+                    {
                         id: 'sidetable',
                         title: 'SideTable',
                         rows: [
@@ -82,11 +96,7 @@
                         id: 'weakentry1',
                         title: 'weak_entry_t[1]（对象p2）',
                         rows: [
-                            { offset: 'referent', size: 'DisguisedPtr<objc_object> - 对象地址 = 0x2（对象p2地址）' },
-                            { offset: 'inline_referrers', size: 'WEAK_INLINE_COUNT - 内联数组（存储 weak 指针地址）' },
-                            { offset: 'referrers', size: 'weak_referrer_t* - 动态分配的数组（当内联不够时）' },
-                            { offset: 'out_of_line', size: 'uintptr_t - 标志位：是否使用动态数组' },
-                            { offset: 'num_refs', size: 'uintptr_t - weak 引用数量' }
+                            { offset: '', size: '同上' }
                         ]
                     }
                 ]
@@ -184,8 +194,155 @@
             </li>
         </ul>
         
-        <h2>存储位置</h2>
+        <h2>StripedMap：SideTable 的存储容器</h2>
+        
+        <h3>为什么需要 StripedMap？</h3>
+        <p>如果所有对象共享一个全局的 SideTable，那么每次访问 SideTable 都需要加锁，这会成为性能瓶颈。StripedMap 通过将多个 SideTable 分散存储，减少锁竞争，提高并发性能。</p>
+        
+        <h3>StripedMap 的结构</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>属性</th>
+                    <th>类型</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>array</strong></td>
+                    <td>SideTable[64]</td>
+                    <td>包含 64 个 SideTable 的数组（iOS 中通常是 8 或 64 个）</td>
+                </tr>
+                <tr>
+                    <td><strong>count</strong></td>
+                    <td>静态常量</td>
+                    <td>SideTable 的数量（通常是 8 或 64）</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>如何找到对象的 SideTable？</h3>
+        <p>通过对象地址计算哈希值，从 StripedMap 中选择对应的 SideTable。具体流程如下：</p>
+        
+        <h4>查找步骤</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>步骤</th>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. 获取对象地址</strong></td>
+                    <td><code class="highlight">void *p = (__bridge void *)obj</code></td>
+                    <td>将对象指针转换为 void*</td>
+                </tr>
+                <tr>
+                    <td><strong>2. 地址转整数</strong></td>
+                    <td><code class="highlight">uintptr_t addr = (uintptr_t)p</code></td>
+                    <td>将指针地址转换为无符号整数</td>
+                </tr>
+                <tr>
+                    <td><strong>3. 计算索引</strong></td>
+                    <td><code class="highlight">index = (addr >> 4) & 63</code></td>
+                    <td>右移4位后取低6位（64个SideTable需要6位）</td>
+                </tr>
+                <tr>
+                    <td><strong>4. 获取 SideTable</strong></td>
+                    <td><code class="highlight">SideTable& table = stripedMap.array[index]</code></td>
+                    <td>从数组中取出对应索引的 SideTable</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4>代码实现</h4>
+        <div class="code-block"><code><span class="comment">// 实际实现（简化版）</span>
+<span class="type">SideTable</span>& <span class="function">tableForPointer</span>(<span class="type">const</span> <span class="type">void</span> *p) {
+    <span class="comment">// 1. 将对象地址转换为整数</span>
+    <span class="type">uintptr_t</span> addr = <span class="function">reinterpret_cast</span>&lt;<span class="type">uintptr_t</span>&gt;(p);
+    
+    <span class="comment">// 2. 计算索引：右移4位，然后与63（0x3F）做与运算</span>
+    <span class="comment">//    这样可以得到 0-63 之间的索引值</span>
+    <span class="type">size_t</span> index = (addr >> <span class="number">4</span>) & (STRIPED_MAP_COUNT - <span class="number">1</span>);
+    <span class="comment">// 等价于：index = (addr >> 4) & 63;</span>
+    
+    <span class="comment">// 3. 返回对应的 SideTable 引用</span>
+    <span class="keyword">return</span> SideTablesMap.array[index];
+}</code></div>
+        
+        <h4>示例</h4>
+        <p>假设对象地址为 <code class="highlight">0x100012340</code>：</p>
+        <ul>
+            <li>地址转整数：<code class="highlight">addr = 0x100012340</code></li>
+            <li>右移4位：<code class="highlight">addr >> 4 = 0x10001234</code></li>
+            <li>与63做与运算：<code class="highlight">0x10001234 & 0x3F = 0x34 = 52</code></li>
+            <li>结果：使用 <code class="highlight">SideTable[52]</code></li>
+        </ul>
+        
+        <h4>为什么右移4位？</h4>
+        <ul>
+            <li>对象地址通常是8字节对齐的（最低3位为0）</li>
+            <li>右移4位可以去除对齐位，同时保留足够的地址信息用于哈希</li>
+            <li>这样可以让不同对象更均匀地分布到64个 SideTable 中</li>
+        </ul>
+        
+        <h3>工作原理</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>步骤</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. 计算索引</strong></td>
+                    <td>根据对象地址计算哈希值，取模得到 SideTable 的索引（0 到 63）</td>
+                </tr>
+                <tr>
+                    <td><strong>2. 获取 SideTable</strong></td>
+                    <td>从 StripedMap 的数组中取出对应索引的 SideTable</td>
+                </tr>
+                <tr>
+                    <td><strong>3. 加锁操作</strong></td>
+                    <td>只对选中的 SideTable 加锁，其他 SideTable 不受影响</td>
+                </tr>
+                <tr>
+                    <td><strong>4. 查找数据</strong></td>
+                    <td>在 SideTable 内部的哈希表中查找对象的数据（引用计数、weak 引用等）</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>优势</h3>
+        <ul>
+            <li><strong>减少锁竞争</strong>：不同对象可能使用不同的 SideTable，可以并发访问</li>
+            <li><strong>提高性能</strong>：多个线程可以同时操作不同的 SideTable，减少等待时间</li>
+            <li><strong>简单高效</strong>：通过地址哈希快速定位，O(1) 时间复杂度</li>
+        </ul>
+        
+        <h3>示例</h3>
+        <p>假设有 3 个对象：</p>
+        <ul>
+            <li>对象 A（地址 0x1000）：索引 = (0x1000 >> 4) & 63 = 0，使用 SideTable[0]</li>
+            <li>对象 B（地址 0x2000）：索引 = (0x2000 >> 4) & 63 = 0，使用 SideTable[0]（与 A 共享）</li>
+            <li>对象 C（地址 0x3000）：索引 = (0x3000 >> 4) & 63 = 0，使用 SideTable[0]（与 A、B 共享）</li>
+        </ul>
+        <p>虽然多个对象可能共享同一个 SideTable，但 SideTable 内部使用哈希表存储，仍然可以快速区分不同对象的数据。</p>
+        
+        <h2>完整存储结构</h2>
         <p>Side Table 存储在全局的 <strong>StripedMap</strong> 中（包含多个 SideTable 的数组），通过对象地址的哈希值选择使用哪个 SideTable。多个对象可以共享同一个 SideTable（通过 SideTable 内的哈希表区分）。</p>
+        
+        <div class="code-block"><code><span class="comment">// 全局 StripedMap 实例</span>
+<span class="type">static</span> <span class="type">StripedMap</span>&lt;<span class="type">SideTable</span>&gt; SideTablesMap;
+
+<span class="comment">// 获取对象的 SideTable</span>
+<span class="type">SideTable</span>& <span class="function">tableForPointer</span>(<span class="type">const</span> <span class="type">void</span> *p) {
+    <span class="keyword">return</span> SideTablesMap.<span class="function">get</span>(p);
+}</code></div>
     </div>
 </body>
 </html>

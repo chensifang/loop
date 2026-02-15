@@ -268,6 +268,14 @@ function createStructureBlock(block, index) {
         title.textContent = block.title;
         scrollWrapper.appendChild(title);
         
+        // 子标题（如果有）
+        if (block.subtitle) {
+            const subtitle = document.createElement('div');
+            subtitle.className = 'table-structure-subtitle';
+            subtitle.textContent = block.subtitle;
+            scrollWrapper.appendChild(subtitle);
+        }
+        
         // 表格块
         const tableBlock = document.createElement('div');
         tableBlock.className = 'table-block';
@@ -284,6 +292,14 @@ function createStructureBlock(block, index) {
     title.className = 'table-structure-title';
     title.textContent = block.title;
     structure.appendChild(title);
+    
+    // 子标题（如果有）
+    if (block.subtitle) {
+        const subtitle = document.createElement('div');
+        subtitle.className = 'table-structure-subtitle';
+        subtitle.textContent = block.subtitle;
+        structure.appendChild(subtitle);
+    }
     
     // 表格块
     const tableBlock = document.createElement('div');

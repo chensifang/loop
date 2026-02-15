@@ -628,6 +628,19 @@ code.highlight {
     box-sizing: border-box;
 }
 
+.table-structure-subtitle {
+    display: block;
+    padding: 2px 6px;
+    background: #f6f8fa;
+    border-bottom: 1px solid #e1e4e8;
+    font-weight: normal;
+    font-size: 11px;
+    color: #586069;
+    width: 100%;
+    box-sizing: border-box;
+    font-style: italic;
+}
+
 .table-block {
     display: table;
     width: 100%;
