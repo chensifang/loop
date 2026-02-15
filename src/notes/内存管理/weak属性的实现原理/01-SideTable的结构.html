@@ -23,6 +23,78 @@
         });
     </script>
     <script type="module" src="/mermaid-zoom.js"></script>
+    <script src="/components/table-structure-component.js"></script>
+    <script src="/table-structure-zoom.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sideTableData = {
+                blocks: [
+                    {
+                        id: 'sidetable',
+                        title: 'SideTable',
+                        rows: [
+                            { offset: 'refcnts', size: '引用计数表', linkTo: 'refcountmap' },
+                            { offset: 'weak_table', size: 'weak表', linkTo: 'weaktable' }
+                        ]
+                    },
+                    {
+                        id: 'refcountmap',
+                        title: 'refcnts（引用计数表）',
+                        headers: [
+                            { type: 'offset', text: 'Key（对象地址）' },
+                            { type: 'size', text: 'Value（引用计数）' }
+                        ],
+                        rows: [
+                            { offset: '0x1', size: '3' },
+                            { offset: '0x2', size: '5' }
+                        ]
+                    },
+                    {
+                        id: 'weaktable',
+                        title: 'weak_table（weak表）',
+                        rows: [
+                            { offset: 'weak_entries', size: '指向 weak_entry_t 数组的指针', linkTo: 'weakentries' },
+                            { offset: 'num_entries', size: '条目数量 = 2' },
+                            { offset: 'mask', size: '哈希表的掩码' },
+                            { offset: 'max_hash_displacement', size: '最大哈希位移' }
+                        ]
+                    },
+                    {
+                        id: 'weakentries',
+                        title: 'weak_entries 数组',
+                        rows: [
+                            { offset: 'weak_entry_t[0]', size: '对象p1的weak引用', linkTo: 'weakentry0' },
+                            { offset: 'weak_entry_t[1]', size: '对象p2的weak引用', linkTo: 'weakentry1' }
+                        ]
+                    },
+                    {
+                        id: 'weakentry0',
+                        title: 'weak_entry_t[0]（对象p1）',
+                        rows: [
+                            { offset: 'referent', size: 'DisguisedPtr<objc_object> - 对象地址 = 0x1（对象p1地址）' },
+                            { offset: 'inline_referrers', size: 'WEAK_INLINE_COUNT - 内联数组（存储 weak 指针地址）' },
+                            { offset: 'referrers', size: 'weak_referrer_t* - 动态分配的数组（当内联不够时）' },
+                            { offset: 'out_of_line', size: 'uintptr_t - 标志位：是否使用动态数组' },
+                            { offset: 'num_refs', size: 'uintptr_t - weak 引用数量' }
+                        ]
+                    },
+                    {
+                        id: 'weakentry1',
+                        title: 'weak_entry_t[1]（对象p2）',
+                        rows: [
+                            { offset: 'referent', size: 'DisguisedPtr<objc_object> - 对象地址 = 0x2（对象p2地址）' },
+                            { offset: 'inline_referrers', size: 'WEAK_INLINE_COUNT - 内联数组（存储 weak 指针地址）' },
+                            { offset: 'referrers', size: 'weak_referrer_t* - 动态分配的数组（当内联不够时）' },
+                            { offset: 'out_of_line', size: 'uintptr_t - 标志位：是否使用动态数组' },
+                            { offset: 'num_refs', size: 'uintptr_t - weak 引用数量' }
+                        ]
+                    }
+                ]
+            };
+            
+            renderTableStructure(sideTableData, 'sidetable-container', { layout: 'hierarchical' });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -34,79 +106,7 @@
         <h2>实际存储结构</h2>
         <p><strong>假设场景</strong>：对象 p1（地址 0x1，引用计数=3，2个weak指针），对象 p2（地址 0x2，引用计数=5，2个weak指针）</p>
         
-        <div class="mermaid">
-flowchart LR
-    subgraph ST["SideTable"]
-        direction TB
-        ST1["RefcountMap<br/>引用计数表"]
-        ST2["weak_table_t<br/>weak表"]
-    end
-    
-    subgraph RC["RefcountMap"]
-        direction TB
-        RC1["RefcountEntry[0]"]
-        RC2["RefcountEntry[1]"]
-    end
-    
-    subgraph RC0E["RefcountEntry[0]"]
-        direction TB
-        RC0K["Key: 对象地址<br/>= 0x1<br/>对象p1地址"]
-        RC0V["Value: 引用计数<br/>= 3"]
-    end
-    
-    subgraph RC1E["RefcountEntry[1]"]
-        direction TB
-        RC1K["Key: 对象地址<br/>= 0x2<br/>对象p2地址"]
-        RC1V["Value: 引用计数<br/>= 5"]
-    end
-    
-    subgraph WT["weak_table_t"]
-        direction TB
-        WT1["weak_entry_t[0]"]
-        WT2["weak_entry_t[1]"]
-    end
-    
-    subgraph EN0["weak_entry_t[0]"]
-        direction TB
-        EN0K["Key: referent<br/>= 0x1<br/>对象p1地址"]
-        EN0V["Value:<br/>weak1地址<br/>weak2地址"]
-    end
-    
-    subgraph EN1["weak_entry_t[1]"]
-        direction TB
-        EN1K["Key: referent<br/>= 0x2<br/>对象p2地址"]
-        EN1V["Value:<br/>weak3地址<br/>weak4地址"]
-    end
-    
-    ST1 --> RC
-    ST2 --> WT
-    RC1 --> RC0E
-    RC2 --> RC1E
-    WT1 --> EN0
-    WT2 --> EN1
-    
-    style ST fill:#e1f5ff,stroke:#333,stroke-width:2px
-    style ST1 fill:#fff4e1,stroke:#333,stroke-width:1px
-    style ST2 fill:#fff4e1,stroke:#333,stroke-width:1px
-    style RC fill:#e8f4f8,stroke:#333,stroke-width:2px
-    style RC1 fill:#d4edda,stroke:#333,stroke-width:1px
-    style RC2 fill:#d4edda,stroke:#333,stroke-width:1px
-    style RC0E fill:#d4edda,stroke:#333,stroke-width:2px
-    style RC1E fill:#d4edda,stroke:#333,stroke-width:2px
-    style RC0K fill:#ffcccc,stroke:#333,stroke-width:1px
-    style RC0V fill:#cce5ff,stroke:#333,stroke-width:1px
-    style RC1K fill:#ffcccc,stroke:#333,stroke-width:1px
-    style RC1V fill:#cce5ff,stroke:#333,stroke-width:1px
-    style WT fill:#fff4e1,stroke:#333,stroke-width:2px
-    style WT1 fill:#ccffcc,stroke:#333,stroke-width:1px
-    style WT2 fill:#ccffcc,stroke:#333,stroke-width:1px
-    style EN0 fill:#ccffcc,stroke:#333,stroke-width:2px
-    style EN1 fill:#ccffcc,stroke:#333,stroke-width:2px
-    style EN0K fill:#ffcccc,stroke:#333,stroke-width:1px
-    style EN0V fill:#ffffcc,stroke:#333,stroke-width:1px
-    style EN1K fill:#ffcccc,stroke:#333,stroke-width:1px
-    style EN1V fill:#ffffcc,stroke:#333,stroke-width:1px
-        </div>
+        <div id="sidetable-container"></div>
         
         <h2>各层结构说明</h2>
         <table>
@@ -115,6 +115,7 @@ flowchart LR
                     <th>结构名称</th>
                     <th>类型</th>
                     <th>作用</th>
+                    <th>层级</th>
                     <th>Key-Value关系</th>
                 </tr>
             </thead>
@@ -123,34 +124,65 @@ flowchart LR
                     <td><strong>SideTable</strong></td>
                     <td>结构体</td>
                     <td>存储对象的额外信息</td>
+                    <td>第1层</td>
                     <td>-</td>
                 </tr>
                 <tr>
-                    <td><strong>RefcountMap</strong></td>
-                    <td>哈希表</td>
+                    <td><strong>refcnts</strong></td>
+                    <td>RefcountMap（哈希表）</td>
                     <td>存储引用计数</td>
-                    <td>Key: 对象地址, Value: 引用计数值</td>
+                    <td>第2层</td>
+                    <td>Key: 对象地址, Value: size_t（简单整数）</td>
                 </tr>
                 <tr>
-                    <td><strong>RefcountEntry</strong></td>
-                    <td>键值对</td>
-                    <td>RefcountMap 中的一个条目</td>
-                    <td>Key: 对象地址, Value: 引用计数值</td>
+                    <td><strong>weak_table</strong></td>
+                    <td>weak_table_t（结构体）</td>
+                    <td>哈希表结构，包含 weak_entries 数组指针和元数据</td>
+                    <td>第2层</td>
+                    <td>包含 weak_entries、num_entries、mask、max_hash_displacement 字段</td>
                 </tr>
                 <tr>
-                    <td><strong>weak_table_t</strong></td>
-                    <td>哈希表</td>
-                    <td>存储所有对象的 weak 引用</td>
-                    <td>Key: 对象地址, Value: weak_entry_t</td>
+                    <td><strong>weak_entries</strong></td>
+                    <td>weak_entry_t*（数组）</td>
+                    <td>存储所有 weak_entry_t 的数组</td>
+                    <td>第3层</td>
+                    <td>数组元素为 weak_entry_t 结构体</td>
                 </tr>
                 <tr>
                     <td><strong>weak_entry_t</strong></td>
-                    <td>键值对</td>
+                    <td>结构体</td>
                     <td>存储单个对象的所有 weak 引用</td>
-                    <td>Key: 对象地址, Value: weak 指针地址数组</td>
+                    <td>第4层</td>
+                    <td>包含 referent、inline_referrers、referrers 等字段</td>
                 </tr>
             </tbody>
         </table>
+        
+        <h3>结构层级说明</h3>
+        <ul>
+            <li><strong>refcnts</strong>：
+                <ul>
+                    <li>SideTable → refcnts（类型为 RefcountMap，哈希表）</li>
+                    <li>refcnts 中直接存储 Key-Value 对，Value 是简单的 size_t（整数）</li>
+                    <li>不需要单独展示 RefcountEntry，因为它只是哈希表中的一个条目概念</li>
+                </ul>
+            </li>
+            <li><strong>weak_table</strong>：
+                <ul>
+                    <li>SideTable → weak_table（类型为 weak_table_t，结构体）→ weak_entries（数组）→ weak_entry_t（结构体）</li>
+                    <li>weak_table_t 是哈希表结构体，包含：
+                        <ul>
+                            <li>weak_entries：指向 weak_entry_t 数组的指针</li>
+                            <li>num_entries：条目数量</li>
+                            <li>mask：哈希表的掩码</li>
+                            <li>max_hash_displacement：最大哈希位移</li>
+                        </ul>
+                    </li>
+                    <li>weak_entries 数组存储所有 weak_entry_t 结构体</li>
+                    <li>weak_entry_t 是一个独立的结构体，包含字段：referent（对象地址）、inline_referrers（内联数组）、referrers（动态数组）、out_of_line（标志位）、num_refs（引用数量）等</li>
+                </ul>
+            </li>
+        </ul>
         
         <h2>存储位置</h2>
         <p>Side Table 存储在全局的 <strong>StripedMap</strong> 中（包含多个 SideTable 的数组），通过对象地址的哈希值选择使用哪个 SideTable。多个对象可以共享同一个 SideTable（通过 SideTable 内的哈希表区分）。</p>

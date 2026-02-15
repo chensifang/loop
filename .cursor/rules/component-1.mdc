@@ -1,0 +1,177 @@
+# 组件 1: Excel 风格表格结构可视化组件
+
+## 重要说明
+
+**当用户说"用组件 1"、"组件 1"、"使用组件 1"时，指的就是这个 table-structure 组件。**
+
+- **文件路径**: `/src/components/table-structure-component.js`
+- **函数名**: `renderTableStructure(data, containerId)`
+- **CSS 类名前缀**: `table-*` (如 `table-structure`, `table-row`, `table-link-svg` 等)
+
+## 组件说明
+
+组件 1 是一个 Excel 风格的表格布局组件，用于可视化结构化数据。支持：
+- 表格布局（类似 Excel，带网格线）
+- 表头行
+- 精确的行级连接（某一行指向另一个块）
+- 自动绘制连接线（直线或曲线）
+
+## 使用方法
+
+### 1. 引入组件
+
+在 HTML 文件的 `<head>` 中引入：
+
+```html
+<script src="/components/table-structure-component.js"></script>
+```
+
+### 2. 准备数据
+
+数据格式：
+
+```javascript
+const data = {
+    blocks: [
+        {
+            id: 'block-id-1',  // 可选，用于连接
+            title: '块标题',
+            headers: [  // 可选，表头
+                { type: 'offset', text: '偏移' },
+                { type: 'content', text: '变量名/类型' },
+                { type: 'size', text: '大小' }
+            ],
+            rows: [
+                {
+                    offset: '偏移 0',
+                    name: 'isa',
+                    type: '指针',
+                    size: '8 字节',
+                    linkTo: 'block-id-2',  // 可选，连接到另一个块
+                    linkFrom: 'right'  // 可选，'left' 或 'right'，默认 'right'
+                },
+                {
+                    offset: '偏移 8',
+                    name: '_name',
+                    type: 'NSString *',
+                    desc: '来自 Animal',  // 可选，描述
+                    size: '8 字节'
+                }
+            ]
+        },
+        {
+            id: 'block-id-2',
+            title: '另一个块',
+            headers: [
+                { type: 'offset', text: '位位置' },
+                { type: 'content', text: '字段名' },
+                { type: 'size', text: '说明' }
+            ],
+            rows: [
+                {
+                    offset: '位 0',
+                    name: 'nonpointer',
+                    size: '1=存储额外信息'
+                }
+            ]
+        }
+    ]
+};
+```
+
+### 3. 调用渲染
+
+在 HTML 中创建一个容器：
+
+```html
+<div id="memory-container"></div>
+```
+
+在 JavaScript 中调用：
+
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    renderTableStructure(data, 'memory-container');
+});
+```
+
+## 数据字段说明
+
+### block（块）
+- `id` (可选): 块的唯一标识，用于连接
+- `title` (必需): 块的标题
+- `headers` (可选): 表头数组
+- `rows` (必需): 数据行数组
+
+### header（表头）
+- `type` (可选): 'offset' | 'content' | 'size'
+- `text` (必需): 表头文本
+
+### row（行）
+- `offset` (可选): 偏移量文本
+- `name` (可选): 变量名
+- `type` (可选): 类型
+- `desc` (可选): 描述
+- `size` (可选): 大小文本
+- `linkTo` (可选): 连接到的块 ID
+- `linkFrom` (可选): 连接起点位置，'left' 或 'right'，默认 'right'
+
+## 示例
+
+完整示例：
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/components/table-structure-component.js"></script>
+</head>
+<body>
+    <div id="demo"></div>
+    <script>
+        const data = {
+            blocks: [
+                {
+                    id: 'dog',
+                    title: 'Dog 对象内存布局',
+                    headers: [
+                        { type: 'offset', text: '偏移' },
+                        { type: 'content', text: '变量名/类型' },
+                        { type: 'size', text: '大小' }
+                    ],
+                    rows: [
+                        { offset: '偏移 0', name: 'isa', type: '指针', size: '8 字节', linkTo: 'isa', linkFrom: 'right' },
+                        { offset: '偏移 8', name: '_name', type: 'NSString *', desc: '来自 Animal', size: '8 字节' },
+                        { offset: '偏移 16', name: '_age', type: 'int', desc: '来自 Dog', size: '4 字节' }
+                    ]
+                },
+                {
+                    id: 'isa',
+                    title: 'isa 指针结构',
+                    headers: [
+                        { type: 'offset', text: '位位置' },
+                        { type: 'content', text: '字段名' },
+                        { type: 'size', text: '说明' }
+                    ],
+                    rows: [
+                        { offset: '位 0', name: 'nonpointer', size: '1=存储额外信息' }
+                    ]
+                }
+            ]
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTableStructure(data, 'demo');
+        });
+    </script>
+</body>
+</html>
+```
+
+## 注意事项
+
+1. 确保引入了 `/style.css`，组件依赖其中的样式
+2. 连接线的起点是行的边缘中心，终点是目标块的标题中心
+3. 连接线会自动判断使用直线还是曲线
+4. 组件会自动处理窗口大小变化，重新绘制连接线

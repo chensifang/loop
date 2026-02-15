@@ -20,113 +20,51 @@
         mermaid.initialize({ startOnLoad: true });
     </script>
     <script type="module" src="/mermaid-zoom.js"></script>
+    <script src="/components/table-structure-component.js"></script>
+    <script src="/table-structure-zoom.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            function drawMemoryLinks() {
-                const container = document.querySelector('.memory-structure-container');
-                if (!container) return;
-                
-                const svg = container.querySelector('.memory-link-svg');
-                if (!svg) return;
-                
-                // 清除之前的路径
-                svg.querySelectorAll('path').forEach(path => path.remove());
-                
-                // 获取容器位置
-                const containerRect = container.getBoundingClientRect();
-                
-                // 查找所有需要连接的行
-                const linkRows = container.querySelectorAll('.memory-row-link[data-link-to]');
-                
-                linkRows.forEach(row => {
-                    const linkTo = row.getAttribute('data-link-to');
-                    const linkFrom = row.getAttribute('data-link-from') || 'right';
-                    const target = document.getElementById(linkTo);
-                    
-                    if (!target) return;
-                    
-                    // 获取源行和目标块的位置
-                    const rowRect = row.getBoundingClientRect();
-                    const targetRect = target.getBoundingClientRect();
-                    
-                    // 计算起点（行的左边或右边边缘的中心）
-                    let startX, startY;
-                    if (linkFrom === 'left') {
-                        startX = rowRect.left - containerRect.left;
-                    } else {
-                        startX = rowRect.right - containerRect.left;
+            const memoryData = {
+                blocks: [
+                    {
+                        id: 'dog-structure',
+                        title: 'Dog 对象内存布局',
+                        headers: [
+                            { type: 'offset', text: '偏移' },
+                            { type: 'content', text: '变量名/类型' },
+                            { type: 'size', text: '大小' }
+                        ],
+                        rows: [
+                            { offset: '偏移 0', name: 'isa', type: '指针', size: '8 字节', linkTo: 'isa-structure', linkFrom: 'right' },
+                            { offset: '偏移 8', name: '_name', type: 'NSString *', desc: '来自 Animal', size: '8 字节' },
+                            { offset: '偏移 16', name: '_age', type: 'int', desc: '来自 Dog', size: '4 字节' },
+                            { offset: '偏移 20', desc: '对齐填充', size: '4 字节' }
+                        ]
+                    },
+                    {
+                        id: 'isa-structure',
+                        title: 'isa 指针结构（NONPOINTER_ISA）',
+                        headers: [
+                            { type: 'offset', text: '位位置' },
+                            { type: 'content', text: '字段名' },
+                            { type: 'size', text: '说明' }
+                        ],
+                        rows: [
+                            { offset: '位 0', name: 'nonpointer', size: '1=存储额外信息' },
+                            { offset: '位 1', name: 'has_assoc', size: '是否有关联对象' },
+                            { offset: '位 2', name: 'has_cxx_dtor', size: '是否有C++析构函数' },
+                            { offset: '位 3-35', name: 'shiftcls', size: '类对象地址（33位）' },
+                            { offset: '位 36-47', name: 'magic', size: '魔数（用于验证）' },
+                            { offset: '位 48', name: 'weakly_referenced', size: '是否有弱引用' },
+                            { offset: '位 49', name: 'deallocating', size: '是否正在释放' },
+                            { offset: '位 50', name: 'has_sidetable_rc', size: '引用计数是否在SideTable' },
+                            { offset: '位 51-63', name: 'extra_rc', size: '额外引用计数（19位）' }
+                        ]
                     }
-                    startY = rowRect.top + rowRect.height / 2 - containerRect.top;
-                    
-                    // 计算终点（目标块的 title 行的左边中心）
-                    const targetTitle = target.querySelector('.memory-structure-title');
-                    let endX, endY;
-                    
-                    if (targetTitle) {
-                        const titleRect = targetTitle.getBoundingClientRect();
-                        endX = titleRect.left - containerRect.left;
-                        endY = titleRect.top + titleRect.height / 2 - containerRect.top;
-                    } else {
-                        // 如果没有找到 title，使用目标块的左边中心
-                        endX = targetRect.left - containerRect.left;
-                        endY = targetRect.top + targetRect.height / 2 - containerRect.top;
-                    }
-                    
-                    // 判断是否需要用曲线
-                    // 如果起点和终点基本在一条直线上（水平或垂直），用直线
-                    const deltaX = Math.abs(endX - startX);
-                    const deltaY = Math.abs(endY - startY);
-                    const isHorizontal = deltaY < 10; // 垂直方向差异小于10px认为是水平线
-                    const isVertical = deltaX < 10; // 水平方向差异小于10px认为是垂直线
-                    
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    let d;
-                    
-                    if (isHorizontal || isVertical) {
-                        // 使用直线
-                        d = `M ${startX} ${startY} L ${endX} ${endY}`;
-                    } else {
-                        // 使用曲线，控制点要绕过块
-                        // 获取第一个块的位置，避免线条穿过它
-                        const firstBlock = row.closest('.memory-structure');
-                        const firstBlockRect = firstBlock ? firstBlock.getBoundingClientRect() : null;
-                        
-                        // 计算中间控制点，让曲线绕过块
-                        let controlX, controlY;
-                        
-                        if (linkFrom === 'right') {
-                            // 从右边出发，向右延伸再向下/上
-                            controlX = startX + Math.max(30, deltaX * 0.3);
-                            // 如果目标在下方，控制点稍微向下；如果在上方，稍微向上
-                            controlY = startY + (endY > startY ? Math.min(30, deltaY * 0.3) : Math.max(-30, deltaY * 0.3));
-                        } else {
-                            // 从左边出发，向左延伸再向下/上
-                            controlX = startX - Math.max(30, deltaX * 0.3);
-                            controlY = startY + (endY > startY ? Math.min(30, deltaY * 0.3) : Math.max(-30, deltaY * 0.3));
-                        }
-                        
-                        // 使用二次贝塞尔曲线
-                        d = `M ${startX} ${startY} Q ${controlX} ${controlY}, ${endX} ${endY}`;
-                    }
-                    
-                    path.setAttribute('d', d);
-                    path.setAttribute('fill', 'none');
-                    path.setAttribute('stroke', '#005cc5');
-                    path.setAttribute('stroke-width', '2');
-                    path.setAttribute('marker-end', 'url(#arrowhead)');
-                    svg.appendChild(path);
-                });
-                
-                // 更新 SVG 尺寸
-                svg.setAttribute('width', containerRect.width);
-                svg.setAttribute('height', containerRect.height);
-            }
+                ]
+            };
             
-            // 初始绘制
-            setTimeout(drawMemoryLinks, 100);
-            
-            // 窗口大小改变时重新绘制
-            window.addEventListener('resize', drawMemoryLinks);
+            renderTableStructure(memoryData, 'memory-container');
         });
     </script>
 </head>
@@ -146,123 +84,7 @@
 }
 <span class="keyword">@end</span></code></div>
         
-        <div class="memory-structure-container">
-            <svg class="memory-link-svg" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <marker id="arrowhead" markerWidth="4" markerHeight="4" refX="3.5" refY="2" orient="auto">
-                        <polygon points="0 0, 4 2, 0 4" fill="#005cc5" />
-                    </marker>
-                </defs>
-            </svg>
-            <div class="memory-structure">
-                <div class="memory-structure-title">Dog 对象内存布局</div>
-                <div class="memory-block">
-                    <div class="memory-row memory-row-link" data-link-from="right" data-link-to="isa-structure">
-                        <div class="memory-offset">偏移 0</div>
-                        <div class="memory-content">
-                            <span class="var-name">isa</span>
-                            <span class="var-type">指针</span>
-                            <span class="link-indicator">→</span>
-                        </div>
-                        <div class="memory-size">8 字节</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">偏移 8</div>
-                        <div class="memory-content">
-                            <span class="var-name">_name</span>
-                            <span class="var-type">NSString *</span>
-                            <span class="var-desc">来自 Animal</span>
-                        </div>
-                        <div class="memory-size">8 字节</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">偏移 16</div>
-                        <div class="memory-content">
-                            <span class="var-name">_age</span>
-                            <span class="var-type">int</span>
-                            <span class="var-desc">来自 Dog</span>
-                        </div>
-                        <div class="memory-size">4 字节</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">偏移 20</div>
-                        <div class="memory-content">
-                            <span class="var-desc">对齐填充</span>
-                        </div>
-                        <div class="memory-size">4 字节</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="memory-structure" id="isa-structure">
-                <div class="memory-structure-title">isa 指针结构（NONPOINTER_ISA）</div>
-                <div class="memory-block">
-                    <div class="memory-row">
-                        <div class="memory-offset">位 0</div>
-                        <div class="memory-content">
-                            <span class="var-name">nonpointer</span>
-                        </div>
-                        <div class="memory-size">1=存储额外信息</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 1</div>
-                        <div class="memory-content">
-                            <span class="var-name">has_assoc</span>
-                        </div>
-                        <div class="memory-size">是否有关联对象</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 2</div>
-                        <div class="memory-content">
-                            <span class="var-name">has_cxx_dtor</span>
-                        </div>
-                        <div class="memory-size">是否有C++析构函数</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 3-35</div>
-                        <div class="memory-content">
-                            <span class="var-name">shiftcls</span>
-                        </div>
-                        <div class="memory-size">类对象地址（33位）</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 36-47</div>
-                        <div class="memory-content">
-                            <span class="var-name">magic</span>
-                        </div>
-                        <div class="memory-size">魔数（用于验证）</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 48</div>
-                        <div class="memory-content">
-                            <span class="var-name">weakly_referenced</span>
-                        </div>
-                        <div class="memory-size">是否有弱引用</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 49</div>
-                        <div class="memory-content">
-                            <span class="var-name">deallocating</span>
-                        </div>
-                        <div class="memory-size">是否正在释放</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 50</div>
-                        <div class="memory-content">
-                            <span class="var-name">has_sidetable_rc</span>
-                        </div>
-                        <div class="memory-size">引用计数是否在SideTable</div>
-                    </div>
-                    <div class="memory-row">
-                        <div class="memory-offset">位 51-63</div>
-                        <div class="memory-content">
-                            <span class="var-name">extra_rc</span>
-                        </div>
-                        <div class="memory-size">额外引用计数（19位）</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="memory-container"></div>
         
         <h2>内存布局说明</h2>
         <table>
