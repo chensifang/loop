@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优先级翻转问题</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script type="module" src="/mermaid-zoom.js"></script>
+</head>
+<body>
+    <div class="container wide">
+        <h1>优先级翻转问题</h1>
+        
+        <h2>1. 什么是优先级翻转</h2>
+        <p>优先级翻转（Priority Inversion）是指高优先级线程被低优先级线程阻塞，导致高优先级线程无法及时执行的问题。</p>
+        
+        <div class="warning">
+            <p><strong>核心问题</strong>：正常情况下，高优先级线程应该优先执行，但在某些情况下，高优先级线程反而需要等待低优先级线程，这违背了优先级调度的预期。</p>
+        </div>
+        
+        <h2>2. 优先级翻转的发生条件</h2>
+        
+        <div class="warning">
+            <p><strong>重要澄清</strong>：优先级翻转需要的是 <strong>3 个线程</strong>（高、中、低优先级），而不是 3 个锁。实际上只需要 <strong>1 个锁</strong>。</p>
+        </div>
+        
+        <h3>2.1 核心要素</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>要素</th>
+                    <th>数量</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>锁</strong></td>
+                    <td><strong>1 个</strong></td>
+                    <td>只需要一个共享的锁</td>
+                </tr>
+                <tr>
+                    <td><strong>线程</strong></td>
+                    <td><strong>3 个</strong></td>
+                    <td>需要高、中、低三个不同优先级的线程</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>2.2 优先级翻转不是必现的</h3>
+        <p><strong>重要</strong>：优先级翻转问题不是每次都会发生，需要同时满足以下条件才会触发：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>条件</th>
+                    <th>说明</th>
+                    <th>是否必须</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>存在 3 个不同优先级的线程</strong></td>
+                    <td>需要有高、中、低优先级的线程同时存在（<strong>不是 3 个锁</strong>）</td>
+                    <td>✅ 必须</td>
+                </tr>
+                <tr>
+                    <td><strong>低优先级线程持有锁</strong></td>
+                    <td>低优先级线程已经获取了这 1 个锁</td>
+                    <td>✅ 必须</td>
+                </tr>
+                <tr>
+                    <td><strong>高优先级线程需要锁</strong></td>
+                    <td>高优先级线程尝试获取同一个锁</td>
+                    <td>✅ 必须</td>
+                </tr>
+                <tr>
+                    <td><strong>中优先级线程抢占 CPU</strong></td>
+                    <td>中优先级线程在低优先级线程持有锁时运行，抢占 L 的 CPU</td>
+                    <td>✅ 必须（这是关键）</td>
+                </tr>
+                <tr>
+                    <td><strong>低优先级线程执行时间长</strong></td>
+                    <td>低优先级线程持有锁的时间较长</td>
+                    <td>⚠️ 影响严重程度</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>2.3 为什么需要 3 个线程？</h3>
+        <p>关键在于<strong>中优先级线程（M）会抢占低优先级线程（L）的 CPU</strong>，导致高优先级线程（H）间接等待 M。</p>
+        
+        <h4>2.3.1 执行流程</h4>
+        <div class="code-block"><code><span class="comment">// 三个线程的执行流程</span>
+T1: L（低优先级）持有锁，开始执行
+T2: H（高优先级）需要锁，尝试获取 → 被阻塞（等待 L）
+T3: M（中优先级）抢占 L 的 CPU → L 无法继续执行（关键！）
+T4: H 间接等待 M（H 等 L，但 L 被 M 阻塞）
+T5: M 执行完毕，释放 CPU
+T6: L 重新获得 CPU，继续执行 → 释放锁
+T7: H 获得锁 → 执行关键代码</code></div>
+        
+        <h3>2.4 只有两个线程的情况</h3>
+        <p><strong>关键问题</strong>：如果没有中优先级线程，只有高优先级（H）和低优先级（L）两个线程，会发生优先级翻转吗？</p>
+        
+        <p><strong>答案：不会发生优先级翻转</strong></p>
+        
+        <h4>2.4.1 两个线程的执行流程</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>时间点</th>
+                    <th>低优先级线程（L）</th>
+                    <th>高优先级线程（H）</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>T1</td>
+                    <td>持有锁，正在执行</td>
+                    <td>等待 CPU</td>
+                    <td>L 先获得锁</td>
+                </tr>
+                <tr>
+                    <td>T2</td>
+                    <td>持有锁，继续执行</td>
+                    <td>需要获取锁，被阻塞（自旋等待）</td>
+                    <td>H 尝试获取锁，但 L 持有</td>
+                </tr>
+                <tr>
+                    <td>T3</td>
+                    <td>持有锁，继续执行</td>
+                    <td>等待锁释放</td>
+                    <td><strong>关键：没有其他线程抢占 L</strong></td>
+                </tr>
+                <tr>
+                    <td>T4</td>
+                    <td>执行完毕，释放锁</td>
+                    <td>获得锁，开始执行</td>
+                    <td>L 快速执行完毕，H 获得锁</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4>2.4.2 直接等待 vs 间接等待（核心理解）</h4>
+        
+        <p><strong>关键问题</strong>：H 等 L 执行，这是高优晚于低优执行，为什么这不是问题？H 晚于 M 执行，为什么这就是问题？</p>
+        
+        <h5>直接等待（2 个线程）- 这是正常的</h5>
+        <p><strong>场景</strong>：H（高优先级）直接等待 L（低优先级，持有锁）</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>方面</th>
+                    <th>说明</th>
+                    <th>是否合理</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>等待关系</strong></td>
+                    <td>H 直接等待 L 释放锁</td>
+                    <td>✅ 合理</td>
+                </tr>
+                <tr>
+                    <td><strong>等待原因</strong></td>
+                    <td>L 先获得了锁（先来先得）</td>
+                    <td>✅ 合理</td>
+                </tr>
+                <tr>
+                    <td><strong>等待时间</strong></td>
+                    <td>H 等待时间 = L 的执行时间</td>
+                    <td>✅ 合理</td>
+                </tr>
+                <tr>
+                    <td><strong>是否符合优先级调度</strong></td>
+                    <td>符合。H 等待的是锁，不是线程优先级</td>
+                    <td>✅ 合理</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="info">
+            <p><strong>为什么这是正常的？</strong></p>
+            <ul>
+                <li>L 先获得了锁，这是锁机制的正常行为（先来先得）</li>
+                <li>H 等待 L 释放锁，这是正常的锁竞争</li>
+                <li>H 的等待时间 = L 的执行时间，这是合理的</li>
+                <li>这符合优先级调度原则：H 等待的是锁资源，不是线程优先级</li>
+            </ul>
+        </div>
+        
+        <h5>间接等待（3 个线程）- 这是问题</h5>
+        <p><strong>场景</strong>：H（高优先级）等待 L（低优先级），但 L 被 M（中优先级）阻塞，H 间接等待 M</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>方面</th>
+                    <th>说明</th>
+                    <th>是否合理</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>等待关系</strong></td>
+                    <td>H 间接等待 M（通过 L）</td>
+                    <td>❌ 不合理</td>
+                </tr>
+                <tr>
+                    <td><strong>等待原因</strong></td>
+                    <td>M 抢占 L 的 CPU，导致 L 无法执行</td>
+                    <td>❌ 不合理</td>
+                </tr>
+                <tr>
+                    <td><strong>等待时间</strong></td>
+                    <td>H 等待时间 = L 的执行时间 + M 的执行时间</td>
+                    <td>❌ 不合理</td>
+                </tr>
+                <tr>
+                    <td><strong>是否符合优先级调度</strong></td>
+                    <td>不符合。H 应该优先于 M，但被 M 间接阻塞</td>
+                    <td>❌ 不合理</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="warning">
+            <p><strong>为什么这是问题？</strong></p>
+            <ul>
+                <li><strong>违背优先级调度原则</strong>：H 应该优先于 M 执行，但 H 实际上在等待 M</li>
+                <li><strong>等待时间不合理</strong>：H 的等待时间 = L 的执行时间 + M 的执行时间，而不是只有 L 的执行时间</li>
+                <li><strong>间接阻塞</strong>：H 不是直接等待锁，而是通过 M 间接等待，这是不合理的</li>
+            </ul>
+        </div>
+        
+        <h5>对比总结</h5>
+        <table>
+            <thead>
+                <tr>
+                    <th>情况</th>
+                    <th>H 等待谁</th>
+                    <th>是否合理</th>
+                    <th>原因</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>2 个线程</strong></td>
+                    <td>H 直接等待 L</td>
+                    <td>✅ 合理</td>
+                    <td>L 先获得锁，这是正常的锁竞争</td>
+                </tr>
+                <tr>
+                    <td><strong>3 个线程</strong></td>
+                    <td>H 间接等待 M</td>
+                    <td>❌ 不合理</td>
+                    <td>H 应该优先于 M，但被 M 间接阻塞</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="info">
+            <p><strong>核心理解</strong>：</p>
+            <ul>
+                <li><strong>H 等 L</strong>：直接等待，是锁机制的正常行为（先来先得）</li>
+                <li><strong>H 等 M</strong>：间接等待，违背了优先级调度原则（高优先级应该优先执行）</li>
+            </ul>
+            <p>这就是为什么"H 晚于 M 执行"是问题，而"H 晚于 L 执行"不是问题。</p>
+        </div>
+        
+        <h3>2.5 实际触发概率</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>触发概率</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>单线程应用</strong></td>
+                    <td>0%</td>
+                    <td>只有一个线程，不存在优先级翻转</td>
+                </tr>
+                <tr>
+                    <td><strong>相同优先级线程</strong></td>
+                    <td>0%</td>
+                    <td>所有线程优先级相同，不会发生翻转</td>
+                </tr>
+                <tr>
+                    <td><strong>只有两个线程（高+低）</strong></td>
+                    <td><strong>0%</strong></td>
+                    <td><strong>不会发生优先级翻转，H 直接等待 L</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>锁持有时间很短</strong></td>
+                    <td>低</td>
+                    <td>低优先级线程快速释放锁，高优先级线程很快获得</td>
+                </tr>
+                <tr>
+                    <td><strong>三个线程（高+中+低）</strong></td>
+                    <td><strong>高</strong></td>
+                    <td><strong>容易发生优先级翻转，M 会抢占 L 的 CPU</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>多线程 + 不同优先级 + 长时间持有锁</strong></td>
+                    <td>高</td>
+                    <td>满足所有条件，容易触发优先级翻转</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>3. OSSpinLock 的优先级翻转问题</h2>
+        
+        <h3>3.1 为什么 OSSpinLock 容易发生优先级翻转</h3>
+        <p><code class="highlight">OSSpinLock</code> 是一个自旋锁，它使用忙等待（Busy Waiting）机制：</p>
+        <ul>
+            <li>线程在等待锁时，会持续占用 CPU 检查锁状态</li>
+            <li>不会主动让出 CPU，依赖系统调度</li>
+            <li>如果低优先级线程持有锁，高优先级线程会一直自旋等待</li>
+            <li>此时如果有中优先级线程运行，会抢占低优先级线程的 CPU</li>
+            <li>导致高优先级线程被中优先级线程间接阻塞</li>
+        </ul>
+        
+        <h3>3.2 代码示例</h3>
+        <div class="code-block"><code><span class="comment">// 问题代码：使用 OSSpinLock（已废弃）</span>
+<span class="type">OSSpinLock</span> lock = <span class="number">0</span>;
+
+<span class="comment">// 低优先级线程</span>
+<span class="function">dispatch_async</span>(<span class="function">dispatch_get_global_queue</span>(<span class="constant">DISPATCH_QUEUE_PRIORITY_LOW</span>, <span class="number">0</span>), ^{
+    <span class="function">OSSpinLockLock</span>(&lock);
+    <span class="comment">// 执行耗时操作...</span>
+    <span class="function">sleep</span>(<span class="number">5</span>);  <span class="comment">// 模拟耗时操作</span>
+    <span class="function">OSSpinLockUnlock</span>(&lock);
+});
+
+<span class="comment">// 高优先级线程</span>
+<span class="function">dispatch_async</span>(<span class="function">dispatch_get_global_queue</span>(<span class="constant">DISPATCH_QUEUE_PRIORITY_HIGH</span>, <span class="number">0</span>), ^{
+    <span class="function">OSSpinLockLock</span>(&lock);  <span class="comment">// 被阻塞，等待低优先级线程释放锁</span>
+    <span class="comment">// 关键代码...</span>
+    <span class="function">OSSpinLockUnlock</span>(&lock);
+});
+
+<span class="comment">// 中优先级线程（可能抢占低优先级线程的 CPU）</span>
+<span class="function">dispatch_async</span>(<span class="function">dispatch_get_global_queue</span>(<span class="constant">DISPATCH_QUEUE_PRIORITY_DEFAULT</span>, <span class="number">0</span>), ^{
+    <span class="comment">// 执行其他任务，可能抢占低优先级线程的 CPU</span>
+    <span class="comment">// 导致高优先级线程被间接阻塞</span>
+});</code></div>
+        
+        <h3>3.3 OSSpinLock 被废弃的原因</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>问题</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>优先级翻转</strong></td>
+                    <td>高优先级线程可能被低优先级线程间接阻塞</td>
+                </tr>
+                <tr>
+                    <td><strong>CPU 浪费</strong></td>
+                    <td>自旋等待会持续占用 CPU，浪费资源</td>
+                </tr>
+                <tr>
+                    <td><strong>不确定的延迟</strong></td>
+                    <td>高优先级线程的等待时间不确定，可能很长</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="warning">
+            <p><strong>重要</strong>：iOS 10+ 中，<code class="highlight">OSSpinLock</code> 已被标记为废弃，推荐使用 <code class="highlight">os_unfair_lock</code> 替代。</p>
+        </div>
+        
+        <h2>4. 自旋锁 vs 互斥锁：优先级翻转对比</h2>
+        
+        <h3>4.1 是否都会造成优先级翻转？</h3>
+        <p><strong>答案：都会造成优先级翻转，但原因和结果不同。</strong></p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>锁类型</th>
+                    <th>是否会造成优先级翻转</th>
+                    <th>原因</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>自旋锁</strong>（OSSpinLock）</td>
+                    <td>✅ 会</td>
+                    <td>H 自旋等待时占用 CPU，M 可以抢占 L 的 CPU</td>
+                </tr>
+                <tr>
+                    <td><strong>互斥锁</strong>（pthread_mutex）</td>
+                    <td>✅ 会</td>
+                    <td>H 睡眠等待时，M 可以抢占 L 的 CPU</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>4.2 造成的结果是否一致？</h3>
+        <p><strong>答案：不一致。自旋锁的问题更严重。</strong></p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>方面</th>
+                    <th>自旋锁</th>
+                    <th>互斥锁</th>
+                    <th>原因</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CPU 占用</strong></td>
+                    <td>100%（H 自旋占用）</td>
+                    <td>低（H 睡眠）</td>
+                    <td>自旋锁忙等待，互斥锁睡眠等待</td>
+                </tr>
+                <tr>
+                    <td><strong>等待时间</strong></td>
+                    <td>L 执行时间 + M 执行时间</td>
+                    <td>L 执行时间 + M 执行时间</td>
+                    <td>两者相同，都是间接等待 M</td>
+                </tr>
+                <tr>
+                    <td><strong>系统影响</strong></td>
+                    <td>严重（CPU 浪费）</td>
+                    <td>较轻（CPU 可调度其他任务）</td>
+                    <td>自旋锁占用 CPU，互斥锁让出 CPU</td>
+                </tr>
+                <tr>
+                    <td><strong>能耗</strong></td>
+                    <td>高（持续自旋）</td>
+                    <td>低（睡眠状态）</td>
+                    <td>自旋锁持续消耗 CPU，互斥锁睡眠不消耗</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>4.3 核心原因</h3>
+        <p><strong>优先级翻转的根本原因</strong>：需要 3 个线程（H、M、L），M 抢占 L 的 CPU，导致 H 间接等待 M。</p>
+        
+        <p><strong>自旋锁 vs 互斥锁的区别</strong>：</p>
+        <ul>
+            <li><strong>自旋锁</strong>：H 自旋等待时占用 CPU，但 M 仍可以抢占 L 的 CPU，导致优先级翻转 + CPU 浪费</li>
+            <li><strong>互斥锁</strong>：H 睡眠等待时让出 CPU，M 可以抢占 L 的 CPU，导致优先级翻转，但 CPU 可以调度其他任务</li>
+        </ul>
+        
+        <div class="info">
+            <p><strong>关键理解</strong>：</p>
+            <ul>
+                <li>两者都会发生优先级翻转（都需要 3 个线程，M 抢占 L）</li>
+                <li>自旋锁的问题更严重：CPU 100% 占用 + 优先级翻转</li>
+                <li>互斥锁的问题较轻：只有优先级翻转，CPU 可以调度其他任务</li>
+            </ul>
+        </div>
+        
+        <h2>5. 解决方案</h2>
+        
+        <h3>5.1 os_unfair_lock（推荐）</h3>
+        <p><code class="highlight">os_unfair_lock</code> 是 iOS 10+ 引入的新锁，支持优先级继承，解决了 OSSpinLock 的问题：</p>
+        <ul>
+            <li><strong>优先级继承</strong>：系统会自动提升持有锁的低优先级线程的优先级</li>
+            <li><strong>避免自旋</strong>：等待时间过长时会进入睡眠，避免 CPU 浪费</li>
+        </ul>
+        
+        <h4>5.1.1 优先级继承如何解决优先级翻转？</h4>
+        <p><strong>工作原理</strong>：当高优先级线程（H）等待低优先级线程（L）持有的锁时，系统会临时提升 L 的优先级到 H 的优先级。</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>时间点</th>
+                    <th>没有优先级继承（OSSpinLock）</th>
+                    <th>有优先级继承（os_unfair_lock）</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>T1</td>
+                    <td>L 持有锁，优先级：低</td>
+                    <td>L 持有锁，优先级：低</td>
+                </tr>
+                <tr>
+                    <td>T2</td>
+                    <td>H 需要锁，等待 L</td>
+                    <td>H 需要锁，等待 L</td>
+                </tr>
+                <tr>
+                    <td>T3</td>
+                    <td>M 抢占 L 的 CPU（M 优先级 > L 优先级）</td>
+                    <td><strong>系统提升 L 的优先级到 H 的优先级</strong></td>
+                </tr>
+                <tr>
+                    <td>T4</td>
+                    <td>H 间接等待 M（优先级翻转）</td>
+                    <td>M 无法抢占 L（L 优先级 = H 优先级 > M 优先级）</td>
+                </tr>
+                <tr>
+                    <td>T5</td>
+                    <td>M 执行完毕</td>
+                    <td>L 快速执行完毕，释放锁，优先级恢复</td>
+                </tr>
+                <tr>
+                    <td>T6</td>
+                    <td>L 继续执行，释放锁</td>
+                    <td>H 获得锁</td>
+                </tr>
+                <tr>
+                    <td>T7</td>
+                    <td>H 获得锁</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="info">
+            <p><strong>关键点</strong>：</p>
+            <ul>
+                <li>L 的优先级被临时提升后，M 无法抢占 L 的 CPU</li>
+                <li>L 能快速执行并释放锁，H 不会间接等待 M</li>
+                <li>避免了优先级翻转</li>
+            </ul>
+        </div>
+        
+        <p><strong>为什么 os_unfair_lock 能实现优先级继承？</strong></p>
+        <div class="info">
+            <p>os_unfair_lock 是内核级锁，线程等待时会进入内核态睡眠，系统可以在内核态检测到 H 等待 L 的情况，并临时提升 L 的优先级。这是自旋锁难以实现的（自旋锁是用户态忙等待，系统难以介入）。</p>
+        </div>
+        
+        <h3>5.2 使用互斥锁</h3>
+        <p>互斥锁使用睡眠等待机制，虽然也会发生优先级翻转，但问题较轻（CPU 可以调度其他任务）。</p>
+        
+        <h2>6. 为什么自旋锁被废弃而互斥锁没有？</h2>
+        
+        <p><strong>关键问题</strong>：既然自旋锁和互斥锁都会导致优先级翻转，为什么苹果废弃了 OSSpinLock，却没有废弃互斥锁？</p>
+        
+        <h3>6.1 问题的严重程度不同</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>锁类型</th>
+                    <th>优先级翻转</th>
+                    <th>CPU 占用</th>
+                    <th>系统影响</th>
+                    <th>能否解决</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>自旋锁（OSSpinLock）</strong></td>
+                    <td>✅ 会发生</td>
+                    <td>100%（H 自旋占用）</td>
+                    <td>严重：CPU 浪费 + 优先级翻转</td>
+                    <td>❌ 很难解决（忙等待机制）</td>
+                </tr>
+                <tr>
+                    <td><strong>互斥锁（pthread_mutex）</strong></td>
+                    <td>✅ 会发生</td>
+                    <td>低（H 睡眠）</td>
+                    <td>较轻：只有优先级翻转，CPU 可调度其他任务</td>
+                    <td>✅ 可以通过优先级继承解决</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>6.2 核心区别</h3>
+        <p><strong>自旋锁的问题 = 优先级翻转 + CPU 100% 浪费</strong></p>
+        <ul>
+            <li>H 自旋等待时，持续占用 CPU 做无用功</li>
+            <li>即使发生优先级翻转，CPU 也被浪费了</li>
+            <li>系统无法调度其他任务，资源浪费严重</li>
+            <li>在移动设备上，还会导致电池快速消耗</li>
+        </ul>
+        
+        <p><strong>互斥锁的问题 = 优先级翻转（但 CPU 可以调度其他任务）</strong></p>
+        <ul>
+            <li>H 睡眠等待时，让出 CPU</li>
+            <li>虽然发生优先级翻转，但 CPU 可以调度其他任务</li>
+            <li>系统资源没有被浪费</li>
+            <li>可以通过优先级继承来解决优先级翻转问题</li>
+        </ul>
+        
+        <h3>6.3 解决方案的可行性</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>锁类型</th>
+                    <th>实现优先级继承</th>
+                    <th>原因</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>自旋锁</strong></td>
+                    <td>❌ 很难实现</td>
+                    <td>自旋锁是忙等待机制，线程在循环中检查锁状态，系统很难介入进行优先级提升</td>
+                </tr>
+                <tr>
+                    <td><strong>互斥锁</strong></td>
+                    <td>✅ 容易实现</td>
+                    <td>互斥锁是睡眠等待机制，线程进入内核态睡眠，系统可以在内核态进行优先级提升</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="warning">
+            <p><strong>关键理解</strong>：</p>
+            <ul>
+                <li><strong>自旋锁被废弃的原因</strong>：优先级翻转 + CPU 浪费 + 难以解决</li>
+                <li><strong>互斥锁没有被废弃的原因</strong>：虽然也会优先级翻转，但问题较轻（CPU 可调度其他任务），且可以通过优先级继承解决</li>
+            </ul>
+        </div>
+        
+        <h3>6.4 实际影响对比</h3>
+        <p><strong>自旋锁发生优先级翻转时：</strong></p>
+        <ul>
+            <li>H 自旋等待，占用 100% CPU</li>
+            <li>M 抢占 L 的 CPU，L 无法执行</li>
+            <li>结果：H 等待时间 = L 执行时间 + M 执行时间，且 CPU 被浪费</li>
+            <li>影响：延迟 + CPU 浪费 + 电池消耗</li>
+        </ul>
+        
+        <p><strong>互斥锁发生优先级翻转时：</strong></p>
+        <ul>
+            <li>H 睡眠等待，让出 CPU</li>
+            <li>M 抢占 L 的 CPU，L 无法执行</li>
+            <li>结果：H 等待时间 = L 执行时间 + M 执行时间，但 CPU 可以调度其他任务</li>
+            <li>影响：只有延迟，没有 CPU 浪费</li>
+        </ul>
+        
+        <div class="info">
+            <p><strong>总结</strong>：</p>
+            <p>苹果废弃 OSSpinLock 的根本原因不是"优先级翻转"本身，而是<strong>"优先级翻转 + CPU 浪费 + 难以解决"</strong>的组合问题。</p>
+            <p>互斥锁虽然也会优先级翻转，但至少 CPU 没有被浪费，而且可以通过优先级继承来解决优先级翻转问题，所以没有被废弃。</p>
+        </div>
+        
+        <h2>7. 常见问题</h2>
+        
+        <h3>7.1 优先级翻转是死锁吗？</h3>
+        <p><strong>不是</strong>。优先级翻转和死锁是两个不同的概念：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>死锁</th>
+                    <th>优先级翻转</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>等待关系</strong></td>
+                    <td>循环等待（A等B，B等A）</td>
+                    <td>单向等待（H等L）</td>
+                </tr>
+                <tr>
+                    <td><strong>能否恢复</strong></td>
+                    <td>不能，需要外部干预</td>
+                    <td>能，低优先级线程会释放锁</td>
+                </tr>
+                <tr>
+                    <td><strong>阻塞时间</strong></td>
+                    <td>永久阻塞</td>
+                    <td>临时阻塞</td>
+                </tr>
+                <tr>
+                    <td><strong>所需资源</strong></td>
+                    <td>至少2个锁</td>
+                    <td>1个锁</td>
+                </tr>
+                <tr>
+                    <td><strong>问题性质</strong></td>
+                    <td>逻辑错误</td>
+                    <td>调度问题</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h4>7.1.1 为什么优先级翻转不会导致死锁？</h4>
+        <p><strong>核心原因：等待关系是单向的，不是循环的</strong></p>
+        
+        <ul>
+            <li><strong>优先级翻转</strong>：H 等待 L 释放锁，L 不等待 H（L 只是被 M 抢占 CPU）</li>
+            <li><strong>死锁</strong>：A 等待 B，B 等待 A（循环等待）</li>
+        </ul>
+        
+        <div class="info">
+            <p><strong>关键理解</strong>：</p>
+            <ul>
+                <li>L 最终会执行并释放锁（操作系统会通过时间片调度给 L 分配 CPU），所以 H 一定能获得锁</li>
+                <li>只是等待时间可能很长（L 的执行时间 + M 的执行时间）</li>
+                <li>但不会永久阻塞，所以不是死锁</li>
+            </ul>
+            <p><strong>执行流程</strong>：参考 <a href="#2.3.1">2.3.1 执行流程</a> 的详细说明。</p>
+        </div>
+        
+        <h4>7.1.2 自旋锁的优先级翻转也不会死锁吗？</h4>
+        <p><strong>答案：不会死锁</strong></p>
+        
+        <p>即使是自旋锁发生优先级翻转，也不会导致死锁，原因相同：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>方面</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>等待关系</strong></td>
+                    <td>仍然是单向等待（H 等待 L），不是循环等待</td>
+                </tr>
+                <tr>
+                    <td><strong>L 的执行</strong></td>
+                    <td>即使 L 被 M 抢占，操作系统仍会通过时间片调度给 L 分配 CPU</td>
+                </tr>
+                <tr>
+                    <td><strong>锁的释放</strong></td>
+                    <td>L 获得 CPU 后会继续执行，完成后释放锁</td>
+                </tr>
+                <tr>
+                    <td><strong>H 的恢复</strong></td>
+                    <td>L 释放锁后，H 就能获得锁并继续执行</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="warning">
+            <p><strong>自旋锁 vs 互斥锁的区别</strong>：</p>
+            <ul>
+                <li><strong>自旋锁</strong>：H 自旋等待（占用 CPU），但 L 仍会通过时间片调度获得 CPU</li>
+                <li><strong>互斥锁</strong>：H 睡眠等待（让出 CPU），L 也会通过时间片调度获得 CPU</li>
+            </ul>
+            <p>两者都不会死锁，区别在于：自旋锁会浪费 CPU，互斥锁不会。</p>
+        </div>
+        
+        <div class="info">
+            <p><strong>总结</strong>：</p>
+            <p>无论是自旋锁还是互斥锁，优先级翻转都不会导致死锁，因为：</p>
+            <ol>
+                <li>等待关系是单向的（H 等 L），不是循环的</li>
+                <li>L 最终会执行并释放锁（操作系统会调度）</li>
+                <li>H 最终能获得锁并继续执行</li>
+            </ol>
+            <p>唯一的问题是等待时间可能很长，以及自旋锁会浪费 CPU。</p>
+        </div>
+        
+        <h3>7.2 既然有问题，为什么 OSSpinLock 能用这么久？</h3>
+        <p>主要原因：</p>
+        <ul>
+            <li><strong>问题不是必现的</strong>：需要特定条件才会触发，很多场景下不会发生</li>
+            <li><strong>性能优势明显</strong>：自旋锁性能优秀，在等待时间短的场景下表现很好</li>
+            <li><strong>影响有限</strong>：大多数情况下只是延迟，不会导致崩溃或死锁</li>
+            <li><strong>替代方案不成熟</strong>：早期没有更好的替代方案，直到 iOS 10 才推出 os_unfair_lock</li>
+            <li><strong>实际影响较小</strong>：在大多数应用中，优先级翻转的影响可以接受</li>
+        </ul>
+        
+        <h3>7.3 常见误解纠正</h3>
+        <p><strong>误解 1：H 的自旋会阻止 L 执行</strong></p>
+        <p>❌ 错误：认为 H 自旋时会占用所有 CPU，导致 L 无法执行</p>
+        <p>✅ 正确：即使 H 在自旋，操作系统仍会通过时间片调度给 L 分配 CPU，L 可以继续执行</p>
+        
+        <p><strong>误解 2：单核时 L 永远得不到时间片</strong></p>
+        <p>❌ 错误：认为单核时 H 占满 CPU，L 永远无法执行</p>
+        <p>✅ 正确：即使单核，操作系统也会通过时间片调度，L 仍会获得 CPU 时间片</p>
+        
+        <p><strong>误解 3：只有自旋锁才会造成优先级翻转</strong></p>
+        <p>❌ 错误：认为只有自旋锁才会发生优先级翻转</p>
+        <p>✅ 正确：自旋锁和互斥锁都会造成优先级翻转，但自旋锁的问题更严重（CPU 100% 占用）</p>
+        
+        <p><strong>误解 4：只需要 2 个线程就会发生优先级翻转</strong></p>
+        <p>❌ 错误：认为 H 和 L 两个线程就会发生优先级翻转</p>
+        <p>✅ 正确：需要 3 个线程（H、M、L），M 抢占 L 的 CPU 是关键</p>
+        
+        <h2>8. 总结</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>锁类型</th>
+                    <th>优先级翻转风险</th>
+                    <th>推荐度</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>OSSpinLock</strong></td>
+                    <td>高</td>
+                    <td>❌ 已废弃</td>
+                </tr>
+                <tr>
+                    <td><strong>os_unfair_lock</strong></td>
+                    <td>低（支持优先级继承）</td>
+                    <td>✅ 推荐（iOS 10+）</td>
+                </tr>
+                <tr>
+                    <td><strong>pthread_mutex / NSLock</strong></td>
+                    <td>低</td>
+                    <td>✅ 推荐</td>
+                </tr>
+            </tbody>
+        </table>
+        
+    </div>
+</body>
+</html>
