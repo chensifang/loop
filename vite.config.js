@@ -6,6 +6,7 @@ export default defineConfig({
   root: 'src',
   server: {
     port: 8000,
+    host: '0.0.0.0', // 允许外部访问
     open: '/',
   },
   build: {
