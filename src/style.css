@@ -102,8 +102,8 @@ p {
     position: relative;
     z-index: 1;
     flex-shrink: 0; /* 防止被压缩，和 table-structure 一样 */
-    width: 100%; /* 默认填满容器宽度 */
-    min-width: max-content; /* 最小宽度根据内容决定，如果内容很宽则横向滚动 */
+    width: max-content; /* 根据内容决定宽度 */
+    min-width: 100%; /* 最小宽度为容器宽度，确保窄表格也能填满 */
     border-collapse: collapse;
     margin: 0;
     border: 1px solid #d1d5da;
@@ -129,6 +129,7 @@ th {
     font-size: 13px;
     color: #1a1a1a;
     border: 1px solid #d1d5da;
+    max-width: 400px; /* 设置最大宽度 */
     word-wrap: break-word; /* 允许长单词换行 */
     word-break: break-word; /* 允许在单词内换行 */
     white-space: normal; /* 允许换行 */
@@ -140,14 +141,16 @@ td {
     color: #1a1a1a;
     border: 1px solid #d1d5da;
     vertical-align: top;
+    max-width: 400px; /* 设置最大宽度 */
     word-wrap: break-word; /* 允许长单词换行 */
     word-break: break-word; /* 允许在单词内换行 */
     white-space: normal; /* 允许换行 */
 }
 
-tbody tr:hover {
+/* 移除表格行悬停高亮效果 */
+/* tbody tr:hover {
     background: #f9fafb;
-}
+} */
 
 .category {
     font-weight: 600;
@@ -428,6 +431,7 @@ code.highlight {
     
     th, td {
         padding: 6px 8px;
+        max-width: 400px; /* 手机上最大宽度 */
     }
     
     .code-block {
