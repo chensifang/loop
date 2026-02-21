@@ -131,6 +131,33 @@ export default defineConfig({
           fs.copyFileSync(styleCss, distStyleCss);
           console.log('✓ Copied style.css to dist');
         }
+        
+        // 复制 table-wrapper.js 到 dist
+        const tableWrapperJs = resolve(__dirname, 'src/table-wrapper.js');
+        const distTableWrapperJs = resolve(__dirname, 'dist/table-wrapper.js');
+        if (fs.existsSync(tableWrapperJs)) {
+          fs.copyFileSync(tableWrapperJs, distTableWrapperJs);
+          console.log('✓ Copied table-wrapper.js to dist');
+        }
+        
+        // 复制 components 目录到 dist
+        const componentsDir = resolve(__dirname, 'src/components');
+        const distComponentsDir = resolve(__dirname, 'dist/components');
+        if (fs.existsSync(componentsDir)) {
+          copyDir(componentsDir, distComponentsDir);
+          console.log('✓ Copied components directory to dist');
+        }
+        
+        // 复制其他 JS 文件到 dist
+        const jsFiles = ['mermaid-zoom.js', 'table-structure-zoom.js'];
+        jsFiles.forEach(file => {
+          const srcFile = resolve(__dirname, `src/${file}`);
+          const distFile = resolve(__dirname, `dist/${file}`);
+          if (fs.existsSync(srcFile)) {
+            fs.copyFileSync(srcFile, distFile);
+            console.log(`✓ Copied ${file} to dist`);
+          }
+        });
       }
     }
   ]
