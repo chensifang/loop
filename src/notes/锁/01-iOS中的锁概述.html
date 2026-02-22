@@ -46,7 +46,7 @@
                         id: 'spin-locks',
                         title: '自旋锁（Busy Waiting）',
                         rows: [
-                            { offset: 'os_unfair_lock', size: 'iOS 10+ 推荐，高性能，替代 OSSpinLock' },
+                            { offset: 'os_unfair_lock', size: 'iOS 10+ 推荐，高性能，替代 OSSpinLock（注意：不是传统自旋锁，而是自适应锁）' },
                             { offset: 'OSSpinLock', size: '已废弃（iOS 10+），存在优先级反转问题' }
                         ]
                     },
@@ -211,7 +211,7 @@
                     <td><strong>自旋锁</strong></td>
                     <td>忙等待（Busy Waiting）</td>
                     <td>CPU 持续检查锁状态，不进入睡眠</td>
-                    <td><code class="highlight">OSSpinLock</code>（已废弃）、<code class="highlight">os_unfair_lock</code></td>
+                    <td><code class="highlight">OSSpinLock</code>（已废弃）、<code class="highlight">os_unfair_lock</code>（注意：不是传统自旋锁，而是自适应锁，会根据情况在自旋和睡眠之间切换）</td>
                 </tr>
                 <tr>
                     <td><strong>互斥锁</strong></td>

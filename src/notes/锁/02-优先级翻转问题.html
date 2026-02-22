@@ -29,7 +29,130 @@
         <h2>1. 什么是优先级翻转</h2>
         <p>优先级翻转（Priority Inversion）是操作系统调度中的一个异常现象：高优先级线程因为等待低优先级线程持有的资源，导致高优先级线程晚于低优先级线程（甚至中优先级线程）执行，违背了优先级调度的预期。</p>
 
-        <h2>2. 锁的类型与优先级翻转</h2>
+        <h2>2. QoS：iOS 中的线程优先级</h2>
+        <p>在 iOS/macOS 中，线程的优先级通过 <strong>QoS（Quality of Service，服务质量）</strong> 来标识。QoS 决定了线程的优先级，进而影响线程调度和优先级翻转问题。</p>
+
+        <h3>2.1 QoS 的引入</h3>
+        <p><strong>QoS 是在 iOS 8（2014年）中引入的</strong>，用于替代之前的数字优先级系统（如 <code>DISPATCH_QUEUE_PRIORITY_HIGH</code>、<code>DISPATCH_QUEUE_PRIORITY_LOW</code>）。</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>时间点</th>
+                    <th>变化</th>
+                    <th>影响</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>iOS 8 之前</strong></td>
+                    <td>使用数字优先级系统</td>
+                    <td>优先级概念不够清晰</td>
+                </tr>
+                <tr>
+                    <td><strong>iOS 8（2014年）</strong></td>
+                    <td>引入 QoS 系统</td>
+                    <td>使用语义化的 QoS 等级，更清晰地表达任务重要性，系统能更好地平衡性能和能耗</td>
+                </tr>
+                <tr>
+                    <td><strong>iOS 8+</strong></td>
+                    <td>调度器更严格地按 QoS 等级调度</td>
+                    <td><code>OSSpinLock</code> 更容易出现优先级翻转问题</td>
+                </tr>
+                <tr>
+                    <td><strong>iOS 10（2016年）</strong></td>
+                    <td>推出 <code>os_unfair_lock</code>，支持优先级继承</td>
+                    <td>解决 <code>OSSpinLock</code> 的优先级翻转问题</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.2 QoS 等级</h3>
+        <p>iOS/macOS 定义了以下 QoS 等级（从高到低）：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>QoS 等级</th>
+                    <th>说明</th>
+                    <th>典型场景</th>
+                    <th>优先级</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>User Interactive</strong></td>
+                    <td>用户交互相关</td>
+                    <td>UI 更新、动画、用户输入响应</td>
+                    <td>最高</td>
+                </tr>
+                <tr>
+                    <td><strong>User Initiated</strong></td>
+                    <td>用户发起的任务</td>
+                    <td>用户点击按钮后的操作</td>
+                    <td>高</td>
+                </tr>
+                <tr>
+                    <td><strong>Default</strong></td>
+                    <td>默认优先级</td>
+                    <td>一般任务</td>
+                    <td>中等</td>
+                </tr>
+                <tr>
+                    <td><strong>Utility</strong></td>
+                    <td>实用工具类任务</td>
+                    <td>后台处理、数据同步</td>
+                    <td>低</td>
+                </tr>
+                <tr>
+                    <td><strong>Background</strong></td>
+                    <td>后台任务</td>
+                    <td>数据备份、清理工作</td>
+                    <td>最低</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.3 QoS 如何影响优先级翻转问题</h3>
+        <p>QoS 通过以下方式影响优先级翻转问题：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>方面</th>
+                    <th>说明</th>
+                    <th>对优先级翻转的影响</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>严格的优先级调度</strong></td>
+                    <td>iOS 的 Mach 内核采用严格的 QoS 调度算法，高 QoS 线程总是优先于低 QoS 线程获得 CPU</td>
+                    <td>如果高 QoS 线程（H）在自旋等待，低 QoS 线程（L）可能无法获得 CPU，导致 L 被饿死</td>
+                </tr>
+                <tr>
+                    <td><strong>QoS 不会降级</strong></td>
+                    <td>iOS 内核不会允许高 QoS 线程降级到低 QoS。如果足够多的高 QoS 线程在自旋等待锁，持有锁的低 QoS 线程将永远无法执行</td>
+                    <td>这是 OSSpinLock 在 iOS 上不安全的根本原因：高 QoS 线程自旋时，低 QoS 线程可能永远无法获得 CPU</td>
+                </tr>
+                <tr>
+                    <td><strong>多核环境的不确定性</strong></td>
+                    <td>在多核 CPU 上，低 QoS 线程可能在其他核心执行，但在单核或核心被关闭时，低 QoS 线程无法执行</td>
+                    <td>iOS 无法保证多核环境始终可用，因此自旋锁可能导致程序卡死</td>
+                </tr>
+                <tr>
+                    <td><strong>优先级继承的作用</strong></td>
+                    <td><code>os_unfair_lock</code> 通过优先级继承，临时将低 QoS 线程提升到高 QoS 级别</td>
+                    <td>即使高 QoS 线程在自旋，提升后的低 QoS 线程也能获得 CPU，避免被饿死</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="info">
+            <p><strong>关键理解</strong>：QoS 是 iOS/macOS 中线程优先级的体现。优先级翻转问题的核心就是高 QoS 线程被低 QoS 线程阻塞，违背了 QoS 调度的预期。理解 QoS 有助于理解为什么自旋锁在 iOS 上不安全，以及为什么需要优先级继承机制。</p>
+        </div>
+
+        <h2>3. 锁的类型与优先级翻转</h2>
         <p>在 iOS/macOS 中，不同类型的锁对优先级翻转的影响不同，主要取决于锁的等待机制：</p>
         
         <table>
@@ -57,9 +180,9 @@
             </tbody>
         </table>
 
-        <h2>3. 自旋锁的优先级翻转问题</h2>
+        <h2>4. 自旋锁的优先级翻转问题</h2>
         
-        <h3>3.1 问题场景</h3>
+        <h3>4.1 问题场景</h3>
         <p>假设系统中有两个线程：低优先级线程（L）和高优先级线程（H）。</p>
         <div class="code-block"><code><span class="comment">// 执行流程</span>
 T1: L 获得自旋锁，进入临界区开始执行。
@@ -67,7 +190,7 @@ T2: H 被唤醒（例如处理紧急的用户交互），尝试获取同一个�
 T3: 因为锁正被 L 持有，H 获取失败，开始执行 while 循环（自旋忙等）。
 T4: 问题发生。</code></div>
 
-        <h3>3.2 单核 vs 多核：关键区别</h3>
+        <h3>4.2 单核 vs 多核：关键区别</h3>
         <p>自旋锁的行为在单核和多核环境下完全不同：</p>
         
         <table>
@@ -100,7 +223,7 @@ T4: 问题发生。</code></div>
             <p>因为 iOS 无法保证多核环境始终可用。系统可能为了省电关闭其他核心（低功耗模式），其他核心也可能被其他高优先级任务占用。一旦进入单核或核心被关闭的情况，自旋锁就会导致程序卡死。</p>
         </div>
 
-        <h3>3.3 为什么 L 会被饿死？</h3>
+        <h3>4.3 为什么 L 会被饿死？</h3>
         <p>iOS 使用的 Mach 内核采用<strong>严格的优先级调度算法</strong>。当内核决定把 CPU 时间片分给哪个线程时，它总是优先选择优先级最高且处于 <strong>Runnable（可运行）</strong> 状态的线程。</p>
         
         <table>
@@ -130,10 +253,10 @@ T4: 问题发生。</code></div>
             </tbody>
         </table>
 
-        <h2>4. 互斥锁的优先级翻转问题</h2>
+        <h2>5. 互斥锁的优先级翻转问题</h2>
         <p>对于互斥锁（如 <code>pthread_mutex</code>、<code>NSLock</code>、<code>dispatch_semaphore</code>），当获取不到锁时，线程会进入<strong>睡眠（Sleep）</strong>状态并主动让出 CPU。</p>
 
-        <h3>4.1 两个线程的情况</h3>
+        <h3>5.1 两个线程的情况</h3>
         <p>如果只有高优先级线程（H）和低优先级线程（L）两个线程，互斥锁是安全的：</p>
         
         <table>
@@ -167,7 +290,7 @@ T4: 问题发生。</code></div>
             </tbody>
         </table>
 
-        <h3>4.2 三个线程的情况：经典的优先级翻转</h3>
+        <h3>5.2 三个线程的情况：经典的优先级翻转</h3>
         <p>互斥锁只有在引入一个<strong>中优先级线程（M）</strong>时，才会发生优先级翻转：</p>
         <div class="code-block"><code><span class="comment">// 经典的 3 线程优先级翻转流程</span>
 T1: L 获得互斥锁，开始执行。
@@ -182,10 +305,10 @@ T6: 处于睡眠中的 H 只能一直等下去，直到 M 执行完毕，L 才�
             <p>最高优先级的 H，最终等待的时间变成了：<strong>L 的剩余执行时间 + M 的全部执行时间</strong>。这就是经典的优先级翻转问题。<br>但请注意，它<strong>不会导致活锁卡死</strong>，因为只要 M 执行完，L 总能继续执行并释放锁。系统依然是向前推进的。</p>
         </div>
 
-        <h2>5. 解决方案：os_unfair_lock 与优先级继承</h2>
+        <h2>6. 解决方案：os_unfair_lock 与优先级继承</h2>
         <p>为了解决自旋锁的活锁问题和互斥锁的优先级翻转问题，苹果在 iOS 10 推出了 <code>os_unfair_lock</code> 作为 <code>OSSpinLock</code> 的替代。</p>
         
-        <h3>5.1 os_unfair_lock 是什么类型的锁？</h3>
+        <h3>6.1 os_unfair_lock 是什么类型的锁？</h3>
         <p><code>os_unfair_lock</code> <strong>不是纯自旋锁</strong>，而是一种<strong>自适应锁（Adaptive Lock）</strong>：</p>
         
         <table>
@@ -219,7 +342,7 @@ T6: 处于睡眠中的 H 只能一直等下去，直到 M 执行完毕，L 才�
             <p><strong>说明</strong>：Apple 官方文档没有详细说明自旋和睡眠切换的具体阈值，这是系统内部的实现细节。但可以确定的是，<code>os_unfair_lock</code> 会根据实际情况在自旋和睡眠之间自适应切换，而不是像 <code>OSSpinLock</code> 那样一直自旋。</p>
         </div>
         
-        <h3>5.2 优先级继承机制</h3>
+        <h3>6.2 优先级继承机制</h3>
         <p><code>os_unfair_lock</code> 与系统内核调度紧密结合，并利用了<strong>优先级继承（Priority Inheritance）</strong>机制：</p>
         
         <table>
@@ -259,7 +382,7 @@ T6: 处于睡眠中的 H 只能一直等下去，直到 M 执行完毕，L 才�
             </tbody>
         </table>
 
-        <h3>5.3 优先级继承与自适应机制的配合</h3>
+        <h3>6.3 优先级继承与自适应机制的配合</h3>
         <p>优先级继承和自适应机制解决的是不同层面的问题：</p>
         <table>
             <thead>
@@ -288,9 +411,9 @@ T6: 处于睡眠中的 H 只能一直等下去，直到 M 执行完毕，L 才�
             </tbody>
         </table>
 
-        <h2>6. 常见问题</h2>
+        <h2>7. 常见问题</h2>
         
-        <h3>6.1 优先级翻转是死锁吗？</h3>
+        <h3>7.1 优先级翻转是死锁吗？</h3>
         <p><strong>不是</strong>。优先级翻转和死锁是两个不同的概念：</p>
         <table>
             <thead>
@@ -325,7 +448,7 @@ T6: 处于睡眠中的 H 只能一直等下去，直到 M 执行完毕，L 才�
         </table>
         <p>虽然自旋锁导致的优先级翻转在表现上看起来像死锁一样卡死了程序，但它不是死锁，而是活锁（Livelock）或线程饥饿（Starvation）。</p>
 
-        <h3>6.2 为什么 OSSpinLock 能用这么久才被废弃？</h3>
+        <h3>7.2 为什么 OSSpinLock 能用这么久才被废弃？</h3>
         <p>主要原因：</p>
         
         <table>
@@ -355,7 +478,7 @@ T6: 处于睡眠中的 H 只能一直等下去，直到 M 执行完毕，L 才�
             </tbody>
         </table>
 
-        <h2>7. 总结</h2>
+        <h2>8. 总结</h2>
         <table>
             <thead>
                 <tr>
