@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTPS</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script type="module" src="/mermaid-zoom.js"></script>
+    <script src="/table-wrapper.js"></script>
+</head>
+<body>
+    <div class="container wide">
+        <h1>HTTPS</h1>
+        
+        <h2>第一层：HTTP 的问题</h2>
+        <p><strong>问题</strong>：HTTP 是明文传输，数据在网络上以明文形式传输，任何人都可以读取。</p>
+        
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client as 客户端
+    participant Attacker as 攻击者 (MITM)
+    participant Server as 服务器
+
+    Note over Client,Server: HTTP 明文传输，数据完全暴露
+
+    Client->>Attacker: 发送请求 (明文: 用户名/密码)
+    Note over Attacker: 攻击者可以读取所有数据
+    Attacker->>Server: 转发请求 (可篡改内容)
+    Server-->>Attacker: 返回响应 (明文数据)
+    Note over Attacker: 攻击者可以窃听、篡改、伪造数据
+    Attacker-->>Client: 转发响应 (可插入恶意代码)
+        </pre>
+
+        <div class="warning">
+            <p><strong>问题总结</strong>：明文传输导致数据完全暴露，攻击者可以窃听、篡改、伪造数据。</p>
+        </div>
+
+        <h2>第二层：对称加密解决了什么问题</h2>
+        <p><strong>解决方案</strong>：使用对称加密加密数据，客户端和服务器共享密钥 K。</p>
+        <p><strong>解决了</strong>：明文传输问题。即使被截获，攻击者没有密钥 K，无法解密。</p>
+        
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client as 客户端
+    participant Attacker as 攻击者
+    participant Server as 服务器
+
+    Note over Client,Server: 使用对称加密 K 加密数据
+
+    Client->>Server: 如何安全地分发密钥 K？
+    Note over Client,Server: 密钥分发问题
+
+    Client->>Attacker: 如果明文传输密钥 K
+    Note over Attacker: 攻击者截获密钥 K
+    Attacker->>Server: 转发密钥 K
+    Server-->>Attacker: 返回加密数据 E(K, 数据)
+    Note over Attacker: 攻击者用密钥 K 解密，仍然可以窃听
+    Attacker-->>Client: 转发数据
+
+    Note over Client,Server: 新问题：如何安全地分发密钥？
+        </pre>
+
+        <div class="warning">
+            <p><strong>新问题</strong>：密钥 K 如何安全地分发给客户端和服务器？如果通过网络明文传输 K，攻击者可以截获 K，加密失效。</p>
+        </div>
+
+        <h2>第三层：非对称加密解决了什么问题</h2>
+        <p><strong>解决方案</strong>：使用非对称加密解决密钥分发问题。服务器生成公钥 K_pub（公开）和私钥 K_priv（保密）。</p>
+        <p><strong>解决了</strong>：密钥分发问题。即使攻击者截获了加密的对称密钥，没有私钥 K_priv 也无法解密。</p>
+        
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client as 客户端
+    participant Attacker as 攻击者 (MITM)
+    participant Server as 服务器
+
+    Note over Client,Server: 使用非对称加密解决密钥分发
+
+    Server->>Server: 生成公钥 K_pub & 私钥 K_priv
+    Server->>Client: 发送公钥 K_pub (明文)
+    Note over Attacker: 攻击者也可以截获 K_pub
+
+    Client->>Client: 生成对称密钥 K_session
+    Client->>Attacker: 用 K_pub 加密 K_session: E(K_pub, K_session)
+    Note over Attacker: 攻击者截获但无法解密（没有私钥 K_priv）
+    Attacker->>Server: 转发 E(K_pub, K_session)
+    Server->>Server: 用私钥 K_priv 解密获得 K_session
+
+    Note over Client,Server: 双方现在都有 K_session，开始对称加密通信
+    Client->>Server: E(K_session, 数据)
+    Server->>Client: E(K_session, 响应)
+
+    Note over Attacker: 攻击者无法解密（没有 K_session）
+
+    Note over Client,Server: 新问题：如何确保 K_pub 是服务器的，而不是攻击者的？
+        </pre>
+
+        <div class="warning">
+            <p><strong>新问题</strong>：如何确保客户端拿到的公钥 K_pub 确实是服务器的，而不是攻击者伪造的？攻击者可以伪装成服务器，发送自己的公钥 K_attacker_pub，中间人攻击仍然存在。</p>
+        </div>
+
+        <h2>第四层：数字证书解决了什么问题</h2>
+        <p><strong>解决方案</strong>：使用数字证书验证服务器身份。CA（证书颁发机构）用私钥对服务器信息（域名、公钥等）签名，生成证书。</p>
+        <p><strong>解决了</strong>：身份验证问题。攻击者无法伪造证书（没有 CA 的私钥），无法伪装成服务器。</p>
+        
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client as 客户端
+    participant Attacker as 攻击者 (MITM)
+    participant Server as 服务器
+    participant CA as 证书机构 (CA)
+
+    Note over Client,Server: 使用数字证书验证服务器身份
+
+    Server->>Server: 生成公钥 K_server_pub & 私钥 K_server_priv
+    Server->>CA: 申请证书（包含域名、K_server_pub）
+    CA->>CA: 用 CA 私钥签名生成证书 Cert
+    CA->>Server: 返回证书 Cert
+
+    Server->>Client: 发送证书 Cert（包含 K_server_pub）
+    Note over Attacker: 攻击者尝试伪造证书
+    Attacker->>Client: 发送伪造证书（无法通过 CA 签名验证）
+    Client->>Client: 用 CA 公钥验证证书签名
+    Note over Client: 伪造证书验证失败，拒绝连接
+
+    Client->>Client: 验证通过，提取 K_server_pub
+    Client->>Client: 生成对称密钥 K_session
+    Client->>Server: 用 K_server_pub 加密 K_session: E(K_server_pub, K_session)
+    Server->>Server: 用私钥 K_server_priv 解密获得 K_session
+
+    Note over Client,Server: 双方现在都有 K_session，开始对称加密通信
+    Client->>Server: E(K_session, 数据)
+    Server->>Client: E(K_session, 响应)
+
+    Note over Attacker: 攻击者无法伪造证书，无法伪装成服务器，无法窃听数据
+        </pre>
+
+        <div class="info">
+            <p><strong>完整方案</strong>：</p>
+            <ol>
+                <li>数字证书验证服务器身份 → 确认服务器公钥的真实性</li>
+                <li>用服务器公钥加密对称密钥 → 安全地交换对称密钥</li>
+                <li>用对称密钥加密数据 → 高效地加密传输</li>
+            </ol>
+        </div>
+
+        <h2>补充：Charles 抓 HTTPS 包的原理</h2>
+        <p>Charles 等抓包工具能够抓取 HTTPS 数据的关键在于：<strong>客户端信任了 Charles 的 CA 证书</strong>。</p>
+
+        <h3>Charles 抓 HTTPS 包的流程</h3>
+        
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client as 客户端（配置代理）
+    participant Charles as Charles（代理服务器 + 自签名 CA）
+    participant Baidu as 百度
+
+    Note over Client,Baidu: Charles 抓 HTTPS 包的关键：客户端信任 Charles 的 CA
+
+    %% 客户端配置代理
+    Client->>Client: 配置代理指向 Charles（如 127.0.0.1:8888）
+    Client->>Client: 安装 Charles 的 CA 证书到系统信任列表
+
+    %% 客户端访问 HTTPS 网站
+    Client->>Charles: 请求访问 https://www.baidu.com
+    Note over Charles: Charles 生成 baidu.com 的证书<br/>（用 Charles CA 私钥签名）
+
+    Charles->>Client: 返回 Charles 签发的证书（baidu.com）
+    Note over Client: 客户端验证证书<br/>发现是 Charles CA 签发的<br/>因为信任 Charles CA，验证通过
+
+    Client->>Client: 提取 Charles 的公钥 K_charles_pub
+    Client->>Client: 生成对称密钥 K_session
+    Client->>Charles: 用 K_charles_pub 加密 K_session
+
+    Charles->>Charles: 用 Charles 私钥解密获得 K_session
+    Note over Client,Charles: 客户端与 Charles 建立 HTTPS 连接
+
+    %% Charles 与百度建立连接
+    Charles->>Baidu: 请求访问 https://www.baidu.com
+    Baidu->>Charles: 返回百度的真实证书
+    Charles->>Charles: 验证百度证书
+    Charles->>Charles: 提取百度公钥 K_baidu_pub
+    Charles->>Charles: 生成对称密钥 K_session2
+    Charles->>Baidu: 用 K_baidu_pub 加密 K_session2
+    Baidu->>Baidu: 用百度私钥解密获得 K_session2
+    Note over Charles,Baidu: Charles 与百度建立 HTTPS 连接
+
+    %% 数据传输
+    Client->>Charles: E(K_session, 请求数据)
+    Note over Charles: Charles 解密：D(K_session, 密文) = 明文请求
+    Note over Charles: Charles 可以看到明文数据！
+    Charles->>Baidu: E(K_session2, 请求数据)
+
+    Baidu->>Charles: E(K_session2, 响应数据)
+    Note over Charles: Charles 解密：D(K_session2, 密文) = 明文响应
+    Note over Charles: Charles 可以看到明文数据！
+    Charles->>Client: E(K_session, 响应数据)
+        </pre>
+
+        <h3>为什么 Charles 能抓 HTTPS 包？</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>步骤</th>
+                    <th>说明</th>
+                    <th>关键点</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. 安装 CA 证书</strong></td>
+                    <td>客户端安装 Charles 的自签名 CA 证书到系统信任列表</td>
+                    <td>客户端信任 Charles CA，会信任 Charles 签发的所有证书</td>
+                </tr>
+                <tr>
+                    <td><strong>2. 配置代理</strong></td>
+                    <td>客户端配置代理指向 Charles</td>
+                    <td>所有 HTTPS 流量都经过 Charles</td>
+                </tr>
+                <tr>
+                    <td><strong>3. 签发伪造证书</strong></td>
+                    <td>Charles 用自己 CA 私钥为任何域名签发证书</td>
+                    <td>客户端信任 Charles CA，所以验证通过</td>
+                </tr>
+                <tr>
+                    <td><strong>4. 双重 HTTPS 连接</strong></td>
+                    <td>客户端 ↔ Charles（HTTPS）+ Charles ↔ 百度（HTTPS）</td>
+                    <td>Charles 作为中间人，可以看到两端的明文数据</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warning">
+            <p><strong>关键理解</strong>：</p>
+            <ul>
+                <li><strong>Charles 能抓 HTTPS 包的前提</strong>：客户端主动安装并信任了 Charles 的 CA 证书</li>
+                <li><strong>这是合法的中间人</strong>：用户主动配置，用于调试和开发</li>
+                <li><strong>如果攻击者想用同样方式攻击</strong>：需要用户主动安装攻击者的 CA 证书，这在正常情况下不会发生</li>
+            </ul>
+        </div>
+
+        <h3>为什么 Charles 能通过验证？</h3>
+        <p><strong>关键理解</strong>：Charles 返回的不是 Charles 自己的证书，而是<strong>为被访问域名签发的证书</strong>。</p>
+        
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client as 客户端（信任 Charles CA）
+    participant Charles as Charles
+    participant Baidu as 百度
+
+    Note over Client,Baidu: Charles 为被访问域名签发证书
+
+    Client->>Charles: 请求访问 https://www.baidu.com
+    Note over Charles: Charles 拦截请求
+    Note over Charles: 用 Charles CA 私钥为 baidu.com 签发证书
+
+    Charles->>Client: 返回证书（域名：baidu.com，CA：Charles）
+    Note over Client: 浏览器验证证书
+    Note over Client: 证书域名：baidu.com ✓
+    Note over Client: 访问域名：baidu.com ✓
+    Note over Client: 域名匹配！
+    Note over Client: CA 签名：Charles CA ✓
+    Note over Client: 用户信任 Charles CA ✓
+    Client->>Client: 验证通过，建立连接
+
+    Note over Client: Charles 能通过验证的原因：<br/>1. 证书域名匹配（baidu.com）<br/>2. 用户信任 Charles CA
+        </pre>
+
+        <div class="info">
+            <p><strong>Charles 能工作的原因</strong>：</p>
+            <ul>
+                <li><strong>Charles 可以为任何域名签发证书</strong>：因为用户主动信任了 Charles CA</li>
+                <li><strong>证书域名匹配</strong>：访问 `baidu.com` 时，Charles 返回的是 `baidu.com` 的证书</li>
+                <li><strong>CA 签名验证通过</strong>：证书由 Charles CA 签名，用户信任 Charles CA，所以验证通过</li>
+            </ul>
+        </div>
+
+        <h3>为什么攻击者无法像 Charles 一样攻击？</h3>
+        <p><strong>关键理解</strong>：攻击者无法为被攻击域名签发证书，只能返回自己的证书，导致域名不匹配，验证失败。</p>
+        
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client as 客户端
+    participant Attacker as 攻击者（能拦截流量）
+    participant Baidu as 百度
+
+    Note over Client,Baidu: 攻击者尝试中间人攻击
+
+    Client->>Attacker: 请求访问 https://www.baidu.com
+    Note over Attacker: 攻击者拦截流量
+    Note over Attacker: 攻击者无法为 baidu.com 签发证书<br/>（没有受信任 CA 私钥）
+
+    %% 攻击者返回自己的证书
+    Attacker->>Client: 返回攻击者自己的证书（如 attacker.com）
+    Note over Client: 浏览器验证证书
+    Note over Client: 证书域名：attacker.com
+    Note over Client: 访问域名：baidu.com
+    Note over Client: 域名不匹配！
+    Client->>Client: 验证失败，拒绝连接
+
+    Note over Client: 浏览器显示"证书域名不匹配"错误
+    Note over Attacker: 攻击失败
+        </pre>
+
+        <div class="warning">
+            <p><strong>关键点</strong>：</p>
+            <ul>
+                <li><strong>证书域名必须匹配</strong>：访问 `baidu.com` 时，收到的证书必须是 `baidu.com` 的证书</li>
+                <li><strong>即使攻击者能拦截流量</strong>：如果返回的证书域名不匹配（如返回 `google.com` 的证书），浏览器会验证失败，攻击无法成功</li>
+                <li><strong>攻击者需要为被攻击域名签发证书</strong>：这需要受信任 CA 的私钥，几乎不可能获得</li>
+            </ul>
+        </div>
+
+        <h3>Charles vs 真实攻击者的区别</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>方面</th>
+                    <th>Charles</th>
+                    <th>真实攻击者</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CA 证书来源</strong></td>
+                    <td>自签名 CA（用户主动安装）</td>
+                    <td>需要获得受信任的 CA 私钥（几乎不可能）</td>
+                </tr>
+                <tr>
+                    <td><strong>证书签发能力</strong></td>
+                    <td>可以为任何域名签发证书（用户信任 Charles CA）</td>
+                    <td>无法为被攻击域名签发证书（没有 CA 私钥）</td>
+                </tr>
+                <tr>
+                    <td><strong>证书域名匹配</strong></td>
+                    <td>✅ 可以签发匹配的证书（如 baidu.com）</td>
+                    <td>❌ 只能返回自己的证书（域名不匹配，验证失败）</td>
+                </tr>
+                <tr>
+                    <td><strong>用户行为</strong></td>
+                    <td>用户主动安装证书和配置代理</td>
+                    <td>用户不会主动安装攻击者的证书</td>
+                </tr>
+                <tr>
+                    <td><strong>目的</strong></td>
+                    <td>调试、开发、测试</td>
+                    <td>窃取数据、攻击</td>
+                </tr>
+                <tr>
+                    <td><strong>合法性</strong></td>
+                    <td>✅ 合法（用户授权）</td>
+                    <td>❌ 非法</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>总结</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>层次</th>
+                    <th>解决方案</th>
+                    <th>解决的问题</th>
+                    <th>遗留问题</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>第一层</strong></td>
+                    <td>HTTP</td>
+                    <td>-</td>
+                    <td>明文传输，数据暴露</td>
+                </tr>
+                <tr>
+                    <td><strong>第二层</strong></td>
+                    <td>对称加密</td>
+                    <td>✅ 解决明文传输</td>
+                    <td>密钥分发问题</td>
+                </tr>
+                <tr>
+                    <td><strong>第三层</strong></td>
+                    <td>非对称加密</td>
+                    <td>✅ 解决密钥分发</td>
+                    <td>身份验证问题</td>
+                </tr>
+                <tr>
+                    <td><strong>第四层</strong></td>
+                    <td>数字证书</td>
+                    <td>✅ 解决身份验证</td>
+                    <td>✅ 完整方案</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</body>
+</html>
