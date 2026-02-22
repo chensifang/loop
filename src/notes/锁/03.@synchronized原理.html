@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@synchronized 原理</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script type="module" src="/mermaid-zoom.js"></script>
+    <script src="/table-wrapper.js"></script>
+</head>
+<body>
+    <div class="container wide">
+        <h1>@synchronized 原理</h1>
+        
+        <h2>1. @synchronized 是什么</h2>
+        <p><code>@synchronized</code> 是 Objective-C 提供的同步指令，用于在多线程环境中保护代码块，确保同一时刻只有一个线程能够执行被保护的代码。</p>
+        
+        <div class="code-block"><code><span class="comment">// 基本用法</span>
+<span class="keyword">@synchronized</span>(obj) {
+    <span class="comment">// 临界区代码</span>
+    <span class="comment">// 同一时刻只有一个线程能执行这里的代码</span>
+}</code></div>
+
+        <h2>2. @synchronized 的实现原理</h2>
+        <p><code>@synchronized(obj)</code> 在编译时会被转换为对运行时函数的调用：</p>
+        
+        <h3>2.1 编译后的代码</h3>
+        <div class="code-block"><code><span class="comment">// 源代码</span>
+<span class="keyword">@synchronized</span>(obj) {
+    <span class="comment">// 代码块</span>
+}
+
+<span class="comment">// 编译后等价于</span>
+objc_sync_enter(obj);
+<span class="keyword">@try</span> {
+    <span class="comment">// 代码块</span>
+} <span class="keyword">@finally</span> {
+    objc_sync_exit(obj);
+}</code></div>
+
+        <h3>2.2 核心函数</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>函数</th>
+                    <th>作用</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>objc_sync_enter(obj)</code></td>
+                    <td>获取与对象 obj 关联的锁，如果锁被占用则等待</td>
+                </tr>
+                <tr>
+                    <td><code>objc_sync_exit(obj)</code></td>
+                    <td>释放与对象 obj 关联的锁</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.3 内部数据结构</h3>
+        <p>运行时使用以下数据结构来管理锁：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>数据结构</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>SyncData</strong></td>
+                    <td>存储锁信息的结构，包含：
+                        <ul>
+                            <li>指向下一个 SyncData 的指针（链表结构）</li>
+                            <li>同步对象的指针（disguised pointer）</li>
+                            <li>线程计数</li>
+                            <li>递归互斥锁（pthread_mutex_t，支持递归加锁）</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>StripedMap&lt;SyncList&gt;</strong></td>
+                    <td>分片哈希表，将对象指针映射到 SyncData 链表，减少不同对象之间的锁竞争</td>
+                </tr>
+                <tr>
+                    <td><strong>SyncCache</strong></td>
+                    <td>线程本地缓存，快速查找最近同步的对象，避免频繁的内存分配</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2.4 工作流程</h3>
+        <pre class="mermaid">
+sequenceDiagram
+    participant Thread as 线程
+    participant Runtime as 运行时
+    participant Cache as SyncCache（线程缓存）
+    participant Map as StripedMap（全局映射表）
+    participant Lock as 递归互斥锁
+
+    Note over Thread,Lock: @synchronized(obj) 执行流程
+
+    Thread->>Runtime: 调用 objc_sync_enter(obj)
+    Runtime->>Cache: 查找 obj 的锁（快速路径）
+    
+    alt 缓存命中
+        Cache-->>Runtime: 返回缓存的 SyncData
+    else 缓存未命中
+        Runtime->>Map: 根据 obj 的地址计算哈希，查找 SyncData 链表
+        Map->>Map: 遍历链表查找 obj 对应的 SyncData
+        alt 找到 SyncData
+            Map-->>Runtime: 返回 SyncData
+            Runtime->>Cache: 更新缓存
+        else 未找到
+            Map->>Map: 创建新的 SyncData（包含递归互斥锁）
+            Map-->>Runtime: 返回新创建的 SyncData
+            Runtime->>Cache: 更新缓存
+        end
+    end
+
+    Runtime->>Lock: 调用 pthread_mutex_lock（递归锁）
+    Note over Lock: 如果锁被占用，线程等待
+    Lock-->>Runtime: 获取锁成功
+    Runtime-->>Thread: 进入同步块
+
+    Note over Thread: 执行同步块内的代码
+
+    Thread->>Runtime: 调用 objc_sync_exit(obj)
+    Runtime->>Lock: 调用 pthread_mutex_unlock
+    Lock-->>Runtime: 释放锁成功
+    Runtime-->>Thread: 退出同步块
+        </pre>
+
+        <h3>2.5 关键特性</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>基于对象地址</strong></td>
+                    <td>锁与对象的地址（指针值）关联，不同对象有不同的锁</td>
+                </tr>
+                <tr>
+                    <td><strong>递归锁</strong></td>
+                    <td>同一线程可以多次对同一对象加锁，需要相同次数的解锁</td>
+                </tr>
+                <tr>
+                    <td><strong>自动释放</strong></td>
+                    <td>使用 @try/@finally 确保即使发生异常也能释放锁</td>
+                </tr>
+                <tr>
+                    <td><strong>性能优化</strong></td>
+                    <td>使用线程本地缓存和分片哈希表，减少锁竞争和内存分配</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>3. 如果 obj 在同步块内部被置为 nil</h2>
+        <p>这是一个常见的陷阱问题。让我们分析一下会发生什么：</p>
+
+        <h3>3.1 代码示例</h3>
+        <div class="code-block"><code><span class="type">NSObject</span> *obj = [[<span class="type">NSObject</span> alloc] init];
+
+<span class="keyword">@synchronized</span>(obj) {
+    <span class="comment">// 在同步块内部将 obj 置为 nil</span>
+    obj = <span class="keyword">nil</span>;
+    <span class="comment">// 继续执行代码...</span>
+}</code></div>
+
+        <h3>3.2 会发生什么？</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>方面</th>
+                    <th>说明</th>
+                    <th>结果</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>当前线程的锁</strong></td>
+                    <td>锁是在进入同步块时基于 obj 的原始地址获取的</td>
+                    <td>✅ 不会影响当前线程，锁已经获取，会正常释放</td>
+                </tr>
+                <tr>
+                    <td><strong>其他线程的行为</strong></td>
+                    <td>其他线程尝试用 nil 同步时，会使用不同的锁（nil 对象的锁）</td>
+                    <td>⚠️ 可能导致同步失效，多个线程可能同时执行</td>
+                </tr>
+                <tr>
+                    <td><strong>是否会死锁</strong></td>
+                    <td>当前线程已经获取锁，退出时会正常释放</td>
+                    <td>❌ 不会死锁</td>
+                </tr>
+                <tr>
+                    <td><strong>是否会崩溃</strong></td>
+                    <td>运行时处理 nil 对象，不会崩溃</td>
+                    <td>❌ 不会崩溃</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>3.3 详细分析</h3>
+        <pre class="mermaid">
+sequenceDiagram
+    participant T1 as 线程1
+    participant T2 as 线程2
+    participant Runtime as 运行时
+
+    Note over T1,T2: 场景：obj 在同步块内部被置为 nil
+
+    T1->>Runtime: objc_sync_enter(obj) - obj 地址为 0x1000
+    Runtime->>Runtime: 获取地址 0x1000 的锁
+    Runtime-->>T1: 获取锁成功，进入同步块
+
+    Note over T1: 执行同步块代码
+    T1->>T1: obj = nil（obj 现在指向 nil，但锁是基于 0x1000 的）
+
+    T2->>Runtime: objc_sync_enter(nil) - 尝试同步 nil
+    Runtime->>Runtime: nil 对象使用特殊的锁（或忽略）
+    Note over Runtime: nil 对象的处理方式取决于实现
+    Runtime-->>T2: 可能直接通过（不阻塞）
+
+    Note over T1: 继续执行同步块代码
+    T1->>Runtime: objc_sync_exit(nil) - 但实际释放的是 0x1000 的锁
+    Runtime->>Runtime: 释放地址 0x1000 的锁
+    Runtime-->>T1: 退出同步块
+
+    Note over T1,T2: 结果：T1 正常执行，但同步可能失效
+        </pre>
+
+        <div class="warning">
+            <p><strong>关键理解</strong>：</p>
+            <ul>
+                <li><strong>锁是基于对象地址获取的</strong>：进入同步块时，锁已经基于 obj 的原始地址获取</li>
+                <li><strong>修改 obj 不影响已获取的锁</strong>：当前线程的锁不会受影响，会正常释放</li>
+                <li><strong>但会导致同步失效</strong>：其他线程使用 nil 同步时，会使用不同的锁，可能导致多个线程同时执行</li>
+                <li><strong>不会死锁或崩溃</strong>：运行时处理 nil 对象，不会导致死锁或崩溃</li>
+            </ul>
+        </div>
+
+        <h3>3.4 nil 对象的处理</h3>
+        <p>根据 Objective-C 运行时的实现，<code>@synchronized(nil)</code> 的行为：</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>情况</th>
+                    <th>行为</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>objc_sync_enter(nil)</strong></td>
+                    <td>通常会被忽略或使用特殊的全局锁，不会阻塞</td>
+                </tr>
+                <tr>
+                    <td><strong>objc_sync_exit(nil)</strong></td>
+                    <td>通常会被忽略，不会释放任何锁</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="info">
+            <p><strong>实际影响</strong>：</p>
+            <ul>
+                <li>如果多个线程都使用同一个对象同步，但在同步块内部将对象置为 nil，会导致同步失效</li>
+                <li>不同线程可能使用不同的锁（原始对象的锁 vs nil 的锁），无法实现同步</li>
+                <li>虽然不会死锁或崩溃，但会导致数据竞争和不确定的行为</li>
+            </ul>
+        </div>
+
+        <h2>4. 最佳实践</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>实践</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>使用稳定的对象</strong></td>
+                    <td>不要在同步块内部修改或释放同步对象</td>
+                </tr>
+                <tr>
+                    <td><strong>避免使用 self</strong></td>
+                    <td>使用 <code>@synchronized(self)</code> 可能导致死锁，建议使用专门的锁对象</td>
+                </tr>
+                <tr>
+                    <td><strong>避免使用 nil</strong></td>
+                    <td>不要使用 <code>@synchronized(nil)</code>，会导致同步失效</td>
+                </tr>
+                <tr>
+                    <td><strong>性能考虑</strong></td>
+                    <td><code>@synchronized</code> 性能较低，对于高性能场景，考虑使用其他锁（如 os_unfair_lock）</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>5. 总结</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>问题</th>
+                    <th>答案</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>@synchronized 如何实现？</strong></td>
+                    <td>编译为 objc_sync_enter/exit 调用，运行时使用 SyncData 结构管理对象与锁的映射，使用递归互斥锁实现同步</td>
+                </tr>
+                <tr>
+                    <td><strong>obj 在同步块内部被置为 nil 会死锁吗？</strong></td>
+                    <td>❌ 不会。锁已经基于原始对象地址获取，退出时会正常释放</td>
+                </tr>
+                <tr>
+                    <td><strong>obj 在同步块内部被置为 nil 会崩溃吗？</strong></td>
+                    <td>❌ 不会。运行时处理 nil 对象，不会崩溃</td>
+                </tr>
+                <tr>
+                    <td><strong>obj 在同步块内部被置为 nil 有什么影响？</strong></td>
+                    <td>⚠️ 可能导致同步失效，其他线程使用 nil 同步时会使用不同的锁，无法实现同步</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</body>
+</html>
