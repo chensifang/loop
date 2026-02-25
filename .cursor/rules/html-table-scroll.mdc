@@ -1,0 +1,107 @@
+# HTML 表格滚动规范
+
+## 核心原则
+
+**所有包含表格的 HTML 笔记文件都必须引入 `table-wrapper.js` 脚本，以实现表格的横向滚动功能。**
+
+## 原因
+
+- 表格内容可能很宽，在小屏幕设备上会溢出
+- `table-wrapper.js` 会自动为所有表格添加 `.table-wrapper` 包装容器
+- `.table-wrapper` 提供了横向滚动功能，确保表格内容可以完整查看
+
+## 规范
+
+### 1. 必须引入脚本
+
+在所有包含 `<table>` 标签的 HTML 文件中，必须在 `</head>` 标签前添加：
+
+```html
+<script src="/table-wrapper.js"></script>
+```
+
+### 2. 脚本位置
+
+脚本应该放在其他脚本之后，`</head>` 标签之前：
+
+```html
+<head>
+    <!-- 其他样式和脚本 -->
+    <script type="module">
+        import mermaid from '...';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+</head>
+```
+
+### 3. 表格会自动包装
+
+不需要手动添加 `.table-wrapper` 容器，`table-wrapper.js` 会自动为所有表格添加包装：
+
+```html
+<!-- 你只需要写普通的 table -->
+<table>
+    <thead>...</thead>
+    <tbody>...</tbody>
+</table>
+
+<!-- table-wrapper.js 会自动转换为 -->
+<div class="table-wrapper">
+    <table>
+        <thead>...</thead>
+        <tbody>...</tbody>
+    </table>
+</div>
+```
+
+## 样式说明
+
+`.table-wrapper` 的样式已经在 `style.css` 中定义：
+
+- `overflow-x: auto` - 横向滚动
+- `overflow-y: visible` - 纵向不滚动
+- `-webkit-overflow-scrolling: touch` - iOS 平滑滚动
+- 隐藏滚动条（视觉上更美观）
+
+## 示例
+
+### 正确的 HTML 文件结构
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笔记标题</title>
+    <link rel="stylesheet" href="/style.css">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>标题</h1>
+        <table>
+            <!-- 表格内容 -->
+        </table>
+    </div>
+</body>
+</html>
+```
+
+## 检查清单
+
+创建或修改包含表格的 HTML 文件时，确保：
+
+- [ ] 引入了 `<script src="/table-wrapper.js"></script>`
+- [ ] 脚本放在 `</head>` 标签前
+- [ ] 表格使用标准的 `<table>` 标签（不需要手动添加包装）
+
+## 相关文件
+
+- `src/table-wrapper.js` - 自动包装表格的脚本
+- `src/style.css` - `.table-wrapper` 样式定义

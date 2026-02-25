@@ -23,6 +23,7 @@ body {
     background: white;
     padding: 20px;
     border-radius: 6px;
+    overflow-x: visible; /* 允许表格超出容器 */
 }
 
 .container.wide {
@@ -76,38 +77,32 @@ p {
     line-height: 1.6;
 }
 
-/* 表格包装容器 - 支持横向滚动（完全参考 table-structure-container 的样式） */
+/* 表格包装容器 - 支持横向滚动 */
 .table-wrapper {
     position: relative;
     margin: 12px 0;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 0;
     overflow-x: auto;
     overflow-y: visible;
-    max-width: 100%;
-    width: 100%;
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
     -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
+    /* 宽度和对齐方式由 JavaScript 动态设置 */
 }
 
 .table-wrapper::-webkit-scrollbar {
     display: none;
 }
 
+
 /* 表格样式 - 简单网格线 */
 .table-wrapper table {
     position: relative;
     z-index: 1;
-    flex-shrink: 0; /* 防止被压缩，和 table-structure 一样 */
     width: max-content; /* 根据内容决定宽度 */
-    min-width: 100%; /* 最小宽度为容器宽度，确保窄表格也能填满 */
     border-collapse: collapse;
     margin: 0;
     border: 1px solid #d1d5da;
-    table-layout: auto; /* 自动布局，根据内容调整 */
+    table-layout: auto; /* 自动布局，根据内容调整，但单元格仍遵守 max-width */
 }
 
 /* 兼容没有包装的表格 */
@@ -129,10 +124,12 @@ th {
     font-size: 13px;
     color: #1a1a1a;
     border: 1px solid #d1d5da;
-    max-width: 400px; /* 设置最大宽度 */
+    max-width: 400px; /* 设置最大宽度，超过此宽度会换行 */
+    min-width: 0; /* 允许单元格收缩 */
     word-wrap: break-word; /* 允许长单词换行 */
     word-break: break-word; /* 允许在单词内换行 */
     white-space: normal; /* 允许换行 */
+    overflow-wrap: break-word; /* 现代浏览器的换行属性 */
 }
 
 td {
@@ -141,10 +138,12 @@ td {
     color: #1a1a1a;
     border: 1px solid #d1d5da;
     vertical-align: top;
-    max-width: 400px; /* 设置最大宽度 */
+    max-width: 400px; /* 设置最大宽度，超过此宽度会换行 */
+    min-width: 0; /* 允许单元格收缩 */
     word-wrap: break-word; /* 允许长单词换行 */
     word-break: break-word; /* 允许在单词内换行 */
     white-space: normal; /* 允许换行 */
+    overflow-wrap: break-word; /* 现代浏览器的换行属性 */
 }
 
 /* 移除表格行悬停高亮效果 */
@@ -414,10 +413,8 @@ code.highlight {
     }
     
     .table-wrapper {
-        margin-left: -16px; /* 抵消 container padding */
-        margin-right: -16px;
-        padding-left: 16px;
-        padding-right: 16px;
+        margin: 12px calc(50% - 50vw); /* 相对于视口居中 */
+        width: 100vw; /* 宽度为整个视口宽度 */
     }
     
     .table-wrapper table {

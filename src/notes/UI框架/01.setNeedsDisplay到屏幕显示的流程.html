@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        // 代码高亮
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>1. 请详细描述从 setNeedsDisplay 被调用，到像素点真正显示在屏幕上的全过程</h1>
+        
+        <h2>核心概念</h2>
+        <p>从调用 <code class="highlight">setNeedsDisplay</code> 到像素显示在屏幕上，是一个复杂的渲染流程，涉及应用层、系统层、GPU 和硬件显示。整个过程是异步的，不会立即执行。</p>
+        
+        <div class="warning">
+            <strong>重要提示：</strong> 只有当你覆写了 <code class="highlight">drawRect:</code> 方法时，系统才会走 CPU 绘制流程。绝大多数情况下（如设置 <code class="highlight">backgroundColor</code> 或 <code class="highlight">UIImageView</code> 加载图片），是不走 <code class="highlight">drawRect:</code> 的。一旦覆写 <code class="highlight">drawRect:</code>，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节，这是极其耗费内存的。
+        </div>
+        
+        <h2>完整流程时间线</h2>
+        
+        <table id="source-table" style="display: none;">
+            <thead>
+                <tr>
+                    <th>时间点</th>
+                    <th>阶段/操作</th>
+                    <th>执行位置</th>
+                    <th>详细解释</th>
+                    <th>白话理解</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>T0</strong></td>
+                    <td><strong>调用 setNeedsDisplay</strong></td>
+                    <td>App 进程（主线程）</td>
+                    <td>
+                        <p><strong>操作：</strong>开发者调用 <code class="highlight">view.setNeedsDisplay()</code></p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>在视图的 <code class="highlight">layer</code> 上设置 <code class="highlight">needsDisplay</code> 标志位，标记这个视图需要重绘</li>
+                            <li>标记会向上传播到父视图，确保整个视图层级都知道需要更新</li>
+                            <li><strong>关键点：</strong> <code class="highlight">setNeedsDisplay</code> 是异步的，不会立即调用 <code class="highlight">drawRect:</code>，只是标记需要重绘</li>
+                            <li><strong>重要：</strong> 只有当你覆写了 <code class="highlight">drawRect:</code> 方法时，系统才会走 CPU 绘制流程。绝大多数情况下（如设置 <code class="highlight">backgroundColor</code> 或 <code class="highlight">UIImageView</code> 加载图片），是不走 <code class="highlight">drawRect:</code> 的</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>你在墙上贴了一张"需要重新粉刷"的便利贴，但还没开始刷墙。你只是告诉系统"这个视图需要重画"，但系统不会立即画，而是等合适的时机再画。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T1</strong></td>
+                    <td><strong>RunLoop 循环处理</strong></td>
+                    <td>App 进程（主线程）</td>
+                    <td>
+                        <p><strong>操作：</strong>RunLoop 在每次循环中处理各种事件和更新</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>处理触摸事件、定时器、网络回调等</li>
+                            <li>检查是否有视图被标记为 <code class="highlight">needsLayout</code> 或 <code class="highlight">needsDisplay</code></li>
+                            <li>RunLoop 会一直运行，直到进入休眠状态（BeforeWaiting）</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>主线程是一个忙碌的工人，一直在处理各种任务：处理你的点击、执行定时器、处理网络回调等。他一边干活，一边检查有没有需要更新的视图。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T2</strong></td>
+                    <td><strong>RunLoop BeforeWaiting Observer</strong></td>
+                    <td>App 进程（主线程）</td>
+                    <td>
+                        <p><strong>操作：</strong>RunLoop 准备进入休眠前，触发 Core Animation 的 Observer</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>Core Animation 在 RunLoop 的 <code class="highlight">BeforeWaiting</code> 阶段注册了一个 Observer</li>
+                            <li>这个 Observer 会触发 <code class="highlight">CATransaction::commit()</code>，这是真正开始渲染流程的起点</li>
+                            <li><strong>关键点：</strong> 这是 CATransaction 的自动 Commit 机制，不是简单的"RunLoop 检查更新"</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>工人准备休息睡觉前，Core Animation 的"闹钟"响了，说"该开始渲染了！"。这是真正开始画画的信号，不是简单的检查，而是系统专门设置的"渲染时间到"的提醒。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T3</strong></td>
+                    <td><strong>CATransaction Commit - Layout 阶段</strong></td>
+                    <td>App 进程（主线程 CPU）</td>
+                    <td>
+                        <p><strong>操作：</strong>执行布局更新</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>遍历所有被标记为 <code class="highlight">needsLayout</code> 的视图</li>
+                            <li>调用每个视图的 <code class="highlight">layoutSubviews</code> 方法</li>
+                            <li>计算和更新子视图的 frame、bounds 等布局属性</li>
+                            <li>Auto Layout 约束计算也在这个阶段完成</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>先确定每个视图的位置和大小，就像装修前先量尺寸、画图纸。系统会告诉每个子视图"你应该在哪个位置，多大尺寸"。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T4</strong></td>
+                    <td><strong>CATransaction Commit - Display 阶段</strong></td>
+                    <td>App 进程（主线程 CPU）</td>
+                    <td>
+                        <p><strong>操作：</strong>执行绘制更新（<strong>仅当覆写了 drawRect: 时才会执行</strong>）</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li><strong>关键前提：</strong> 只有覆写了 <code class="highlight">drawRect:</code> 方法的视图才会进入这个流程</li>
+                            <li>系统创建 <code class="highlight">CGContext</code>，这是一个离屏位图（bitmap），称为 Backing Store</li>
+                            <li><strong>内存代价：</strong> Backing Store 大小 = width × height × contentsScale² × 4 字节（RGBA），这是极其耗费内存的</li>
+                            <li>执行 <code class="highlight">drawRect:</code> 中的绘制代码，所有绘制操作都记录在这个位图上</li>
+                            <li>绘制完成后，生成一个包含视图内容的位图（bitmap image）</li>
+                            <li>位图被设置为 <code class="highlight">CALayer</code> 的 <code class="highlight">contents</code> 属性</li>
+                            <li><strong>如果没有覆写 drawRect:：</strong> 系统会直接使用 Layer 的 <code class="highlight">contents</code>（如 UIImage、backgroundColor 等），跳过 CPU 绘制流程</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>只有当你自定义了 <code class="highlight">drawRect:</code>（就像自己动手画画），系统才会在这里执行你的绘制代码。系统给你一张空白的画布（Backing Store），你在上面画，画完就是一张图片。这张画布很大很占内存，所以能不自定义就不自定义。</p>
+                        <p><strong>如果没有自定义：</strong> 就像直接用现成的图片或颜色，不需要自己画，直接跳过这一步。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T5</strong></td>
+                    <td><strong>CATransaction Commit - Prepare 阶段</strong></td>
+                    <td>App 进程（主线程 CPU）</td>
+                    <td>
+                        <p><strong>操作：</strong>准备渲染数据，这是性能瓶颈的关键阶段</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li><strong>图片解码（关键性能瓶颈）：</strong> 如果 Layer 的 <code class="highlight">contents</code> 是压缩图片（JPEG、PNG），CPU 必须在这个阶段将图片解压成位图。这一步在主线程执行，如果图片很大或未预解码，会严重卡顿主线程，导致掉帧</li>
+                            <li>图片格式转换：将不同格式的图片转换为 GPU 可用的格式</li>
+                            <li>计算每个 Layer 的变换矩阵（transform）、透明度、裁剪区域、混合模式等</li>
+                            <li><strong>构建渲染树（Render Tree）：</strong> CALayer 实际上有三棵树：
+                                <ul>
+                                    <li><strong>逻辑树（Layer Tree）：</strong> 你在代码里操作的那棵树，包含所有 Layer 的最终状态</li>
+                                    <li><strong>呈现树（Presentation Tree）：</strong> 动画进行中的中间状态，用于显示动画过程中的实时状态</li>
+                                    <li><strong>渲染树（Render Tree）：</strong> 最终打包发给 Render Server 的，是根据前两棵树合成的只读快照，包含所有渲染所需的信息</li>
+                                </ul>
+                            </li>
+                            <li>动画计算：如果有动画，计算当前帧的动画状态</li>
+                            <li><strong>优化建议：</strong> 图片应该提前在后台线程解码，避免在 Commit 阶段阻塞主线程</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>这是最累的一步，就像把所有材料准备好。如果图片是压缩的（JPEG/PNG），CPU 要在这里解压成可以用的格式，这很累很慢。还要把所有视图的信息整理成一份"渲染清单"，告诉 GPU 要画什么、怎么画。</p>
+                        <p><strong>最容易卡的地方：</strong> 图片解码，就像解压一个大文件，如果图片很大，主线程会卡住，导致界面不流畅。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T6</strong></td>
+                    <td><strong>CATransaction Commit - Commit 阶段</strong></td>
+                    <td>App 进程 → Render Server（IPC）</td>
+                    <td>
+                        <p><strong>操作：</strong>将所有渲染数据打包并发送给渲染服务器</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>将 Layer 树、位图数据、变换信息、动画状态等序列化</li>
+                            <li>通过 IPC（进程间通信，iOS 中使用 Mach IPC）将数据发送给渲染服务器进程（backboardd）</li>
+                            <li><strong>为什么需要渲染服务器：</strong> 渲染服务器是一个独立的进程，即使 App 崩溃，渲染服务器仍然可以继续工作，保证界面不会卡死</li>
+                            <li>IPC 通信量可能很大，特别是包含大量图片时</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>把准备好的"渲染清单"和所有图片打包，通过"快递"（IPC 进程间通信）发送给另一个专门负责渲染的"工厂"（Render Server）。即使你的 App 崩溃了，这个工厂还能继续工作，保证界面不会卡死。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T7</strong></td>
+                    <td><strong>Render Server 接收并解析</strong></td>
+                    <td>Render Server 进程（backboardd）</td>
+                    <td>
+                        <p><strong>操作：</strong>渲染服务器接收并解析渲染指令</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>接收 App 进程发送过来的渲染数据</li>
+                            <li>反序列化数据，解析 Layer 树和渲染指令</li>
+                            <li><strong>关键点：</strong> Render Server 本身并不直接做大量的"像素计算"，它主要是拆解（Decode）打包发来的指令，然后调用 OpenGL/Metal API 给 GPU 发送 Draw Calls</li>
+                            <li>准备 GPU 渲染所需的资源（纹理、缓冲区等）</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>渲染工厂收到快递，拆包看看里面有什么。它不直接画画，而是把"渲染清单"翻译成 GPU 能理解的指令，就像把中文翻译成机器语言。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T8</strong></td>
+                    <td><strong>GPU - 纹理上传</strong></td>
+                    <td>GPU（显存）</td>
+                    <td>
+                        <p><strong>操作：</strong>将位图数据上传到 GPU 显存</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>将 CPU 内存中的位图数据通过 PCIe 总线传输到 GPU 的显存中</li>
+                            <li>位图在 GPU 中作为纹理（texture）存储</li>
+                            <li>纹理上传是 GPU 渲染的第一步，如果纹理很大，这一步也会耗时</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>把图片从 CPU 的内存搬到 GPU 的"专用仓库"（显存）里。GPU 有自己的内存，速度更快，但需要先把数据传过去。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T9</strong></td>
+                    <td><strong>GPU - 顶点处理</strong></td>
+                    <td>GPU（顶点着色器）</td>
+                    <td>
+                        <p><strong>操作：</strong>GPU 处理顶点数据</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>GPU 的顶点着色器（Vertex Shader）处理每个 Layer 的顶点数据</li>
+                            <li>应用变换矩阵（位置、旋转、缩放、透视等）</li>
+                            <li>计算每个顶点在屏幕空间中的最终位置</li>
+                            <li>处理顶点颜色、纹理坐标等属性</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>GPU 计算每个视图的四个角（顶点）在屏幕上的最终位置。比如一个视图要旋转 45 度，GPU 会算出旋转后四个角在哪里。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T10</strong></td>
+                    <td><strong>GPU - 光栅化</strong></td>
+                    <td>GPU（光栅化单元）</td>
+                    <td>
+                        <p><strong>操作：</strong>将几何图形转换为像素</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>光栅化（Rasterization）将处理后的顶点数据转换为像素片段（fragments）</li>
+                            <li>确定哪些像素被几何图形覆盖</li>
+                            <li>为每个像素片段生成插值后的属性（颜色、纹理坐标、深度等）</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>把几何图形（比如一个矩形）转换成一个个像素点。就像把一张矢量图转换成位图，确定哪些像素被这个图形覆盖。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T11</strong></td>
+                    <td><strong>GPU - 片段着色</strong></td>
+                    <td>GPU（片段着色器）</td>
+                    <td>
+                        <p><strong>操作：</strong>对每个像素进行着色</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>GPU 的片段着色器（Fragment Shader/Pixel Shader）对每个像素片段进行着色</li>
+                            <li>应用纹理采样、颜色混合、透明度计算等</li>
+                            <li>处理光照、阴影等效果</li>
+                            <li>输出每个像素的最终颜色值</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>给每个像素点"上色"。GPU 会决定每个像素应该是什么颜色，比如从图片上采样颜色，或者应用透明度、混合效果等。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T12</strong></td>
+                    <td><strong>GPU - 合成与离屏渲染</strong></td>
+                    <td>GPU（合成单元）</td>
+                    <td>
+                        <p><strong>操作：</strong>将所有 Layer 按照层级关系合成</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>按照 Layer 的层级关系（z-order）将所有 Layer 合成到一起</li>
+                            <li>处理透明度混合（Alpha Blending）、混合模式（Blend Mode）等</li>
+                            <li><strong>离屏渲染（Offscreen Rendering）：</strong> 如果 Layer 需要特殊处理（如圆角 <code class="highlight">cornerRadius</code>、阴影 <code class="highlight">shadow</code>、遮罩 <code class="highlight">mask</code>），GPU 会先渲染到离屏缓冲区（Offscreen Buffer），然后再合成到主缓冲区。这会增加性能开销，应该尽量避免</li>
+                            <li>深度测试和模板测试（如果启用）</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>把所有视图按照层级关系叠在一起，就像把多张透明纸叠起来。如果某个视图需要特殊效果（圆角、阴影），GPU 会先在一个"临时画布"上画好，再叠到主画布上，这比较慢。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T13</strong></td>
+                    <td><strong>GPU - 写入帧缓冲</strong></td>
+                    <td>GPU（帧缓冲区）</td>
+                    <td>
+                        <p><strong>操作：</strong>将最终渲染结果写入帧缓冲区</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>将合成后的最终图像写入帧缓冲（Frame Buffer）</li>
+                            <li>iOS 使用双缓冲或三缓冲机制：一个 Front Buffer（正在显示）、一个或多个 Back Buffer（正在渲染）</li>
+                            <li>帧缓冲区位于 GPU 显存中，大小 = 屏幕分辨率 × 4 字节（RGBA）</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>把最终画好的完整画面存到一个"准备区"（Back Buffer）。系统有两个缓冲区，一个正在显示，一个正在准备下一帧，这样可以避免画面撕裂。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T14</strong></td>
+                    <td><strong>等待 VSync 信号</strong></td>
+                    <td>硬件（显示器）</td>
+                    <td>
+                        <p><strong>操作：</strong>等待显示器的垂直同步信号</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>VSync（Vertical Synchronization）是显示器硬件发出的同步信号</li>
+                            <li>对于 60Hz 的显示器，VSync 信号每 16.67ms（1/60 秒）发出一次</li>
+                            <li>系统会等待 VSync 信号到来，才进行缓冲区交换</li>
+                            <li><strong>掉帧机制：</strong> 如果 CPU + GPU 执行的总时间超过了 16.67ms，当 VSync 信号到来时，新的一帧还没写进 Back Buffer，交换（Swap）就不会发生。此时屏幕会继续显示上一帧的内容，这在视觉上就是掉帧（Jank）</li>
+                            <li><strong>跳帧补偿：</strong> 系统不会补偿错过的帧。VSync 是硬件发出的脉冲，就像定时发车的公交车。如果没赶上这一班，就只能等下一班。被错过的帧会被直接丢弃，App 表现为直接"跳"到最新的状态</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <p><strong>就像：</strong>等待显示器的"换帧信号"。显示器每 16.67ms（60Hz）会发出一次信号，就像公交车定时发车。如果新画面还没准备好，就继续显示旧画面（掉帧）。如果错过了这一班，就等下一班，不会补偿。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>T15</strong></td>
+                    <td><strong>交换缓冲区（Swap）</strong></td>
+                    <td>硬件（显示控制器）</td>
+                    <td>
+                        <p><strong>操作：</strong>当 VSync 信号到来且新帧已准备好时，交换前后帧缓冲区</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>如果 Back Buffer 中的新帧已经渲染完成，显示控制器会交换 Front Buffer 和 Back Buffer</li>
+                            <li>交换是硬件操作，非常快速（通常只需要修改指针）</li>
+                            <li>交换后，原来的 Back Buffer 变成 Front Buffer（用于显示），原来的 Front Buffer 变成 Back Buffer（用于下一帧渲染）</li>
+                            <li><strong>双缓冲机制：</strong> 避免画面撕裂（Tearing），保证画面完整显示</li>
+                            <li><strong>ProMotion 动态 VSync：</strong> 在现代 ProMotion 屏幕（120Hz）上，VSync 的间隔是动态的（从 10Hz 到 120Hz 变化）。系统通过 <code class="highlight">CADisplayLink</code> 或 <code class="highlight">UIEvent</code> 的频率来动态调整这个周期，以节省电量。当内容静止时，刷新率会降低到 10Hz；当用户交互或动画进行时，会提升到 120Hz</li>
+                        </ul>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>T16</strong></td>
+                    <td><strong>扫描输出</strong></td>
+                    <td>硬件（显示器）</td>
+                    <td>
+                        <p><strong>操作：</strong>显示器从帧缓冲区逐行扫描像素数据</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>显示器的电子束从屏幕左上角开始，逐行扫描像素数据</li>
+                            <li>从 Front Buffer 中读取每个像素的 RGB 值</li>
+                            <li>将数字信号转换为模拟信号，驱动显示器的像素点</li>
+                        </ul>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>T17</strong></td>
+                    <td><strong>像素显示</strong></td>
+                    <td>硬件（显示器）</td>
+                    <td>
+                        <p><strong>操作：</strong>像素点最终显示在屏幕上</p>
+                        <p><strong>内部机制：</strong></p>
+                        <ul>
+                            <li>显示器的每个像素点根据接收到的 RGB 值发光</li>
+                            <li>用户看到最终的画面</li>
+                            <li>整个过程完成，从调用 <code class="highlight">setNeedsDisplay</code> 到像素显示，通常需要 1-2 个 VSync 周期（16.67-33.34ms）</li>
+                        </ul>
+                    </td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div id="render-flow-table"></div>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从现有表格提取数据并渲染
+            renderTableFromHTML('#source-table', '#render-flow-table');
+        });
+        </script>
+        
+        <h2>关键要点总结</h2>
+        
+        <div class="info">
+            <h3>1. CATransaction 的四个阶段</h3>
+            <p>CATransaction Commit 分为四个阶段：</p>
+            <ul>
+                <li><strong>Layout：</strong> 调用 <code class="highlight">layoutSubviews</code> 更新布局</li>
+                <li><strong>Display：</strong> 调用 <code class="highlight">drawRect:</code> 进行绘制（仅当覆写时）</li>
+                <li><strong>Prepare：</strong> 图片解码、格式转换、构建渲染树（性能瓶颈）</li>
+                <li><strong>Commit：</strong> 打包数据并发送给 Render Server</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <h3>2. drawRect: 的触发条件与内存代价</h3>
+            <p><strong>只有覆写了 <code class="highlight">drawRect:</code> 方法时，系统才会走 CPU 绘制流程。</strong> 绝大多数情况下（如设置 <code class="highlight">backgroundColor</code> 或 <code class="highlight">UIImageView</code> 加载图片），是不走 <code class="highlight">drawRect:</code> 的。</p>
+            <p>一旦覆写 <code class="highlight">drawRect:</code>，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节。这是极其耗费内存的，专家级优化通常建议<strong>尽量避免覆写 drawRect:</strong>。</p>
+        </div>
+        
+        <div class="warning">
+            <h3>3. 图片解码是性能瓶颈</h3>
+            <p>在 Prepare 阶段，如果 Layer 的 <code class="highlight">contents</code> 是压缩图片（JPEG、PNG），CPU 必须将图片解压成位图。这一步在主线程执行，如果图片很大或未预解码，会严重卡顿主线程，导致掉帧。这是掉帧的头号杀手。</p>
+            <p><strong>优化建议：</strong> 图片应该提前在后台线程解码，避免在 Commit 阶段阻塞主线程。</p>
+        </div>
+        
+        <div class="info">
+            <h3>4. VSync 与掉帧机制</h3>
+            <p>如果 CPU + GPU 执行的总时间超过了 16.67ms，当 VSync 信号到来时，新的一帧还没写进 Back Buffer，交换（Swap）就不会发生。此时屏幕会继续显示上一帧的内容，这在视觉上就是掉帧（Jank）。</p>
+            <p><strong>跳帧补偿：</strong> 系统不会补偿错过的帧。VSync 是硬件发出的脉冲，如果没赶上这一班，就只能等下一班。被错过的帧会被直接丢弃，App 表现为直接"跳"到最新的状态。</p>
+        </div>
+    </div>
+</body>
+</html>
