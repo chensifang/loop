@@ -147,9 +147,9 @@
                         <p><strong>操作：</strong>准备渲染数据，这是性能瓶颈的关键阶段</p>
                         <p><strong>内部机制：</strong></p>
                         <ul>
-                            <li><strong>图片解码（关键性能瓶颈）：</strong> 如果 Layer 的 <code class="highlight">contents</code> 是压缩图片（JPEG、PNG），CPU 必须在这个阶段将图片解压成位图。这一步在主线程执行，如果图片很大或未预解码，会严重卡顿主线程，导致掉帧</li>
-                            <li>图片格式转换：将不同格式的图片转换为 GPU 可用的格式</li>
-                            <li>计算每个 Layer 的变换矩阵（transform）、透明度、裁剪区域、混合模式等</li>
+                            <li><strong>图片解码（关键性能瓶颈，仅当有图片时）：</strong> 如果 Layer 的 <code class="highlight">contents</code> 是压缩图片（JPEG、PNG），CPU 必须在这个阶段将图片解压成位图。这一步在主线程执行，如果图片很大或未预解码，会严重卡顿主线程，导致掉帧。<strong>注意：</strong> 不是所有 UI 都需要图片。纯色背景（<code class="highlight">backgroundColor</code>）、文字（<code class="highlight">UILabel</code>）、简单几何图形等，GPU 可以直接渲染，不需要图片。只有使用 <code class="highlight">UIImage</code>、覆写 <code class="highlight">drawRect:</code> 或离屏渲染时才需要图片/位图。</li>
+                            <li>图片格式转换（仅当有图片时）：将不同格式的图片转换为 GPU 可用的格式</li>
+                            <li>计算每个 Layer 的变换矩阵（transform）、透明度、裁剪区域、混合模式等（无论是否有图片都需要）</li>
                             <li><strong>构建渲染树（Render Tree）：</strong> CALayer 实际上有三棵树：
                                 <ul>
                                     <li><strong>逻辑树（Layer Tree）：</strong> 你在代码里操作的那棵树，包含所有 Layer 的最终状态</li>
@@ -164,6 +164,7 @@
                     <td>
                         <p><strong>就像：</strong>这是最累的一步，就像把所有材料准备好。如果图片是压缩的（JPEG/PNG），CPU 要在这里解压成可以用的格式，这很累很慢。还要把所有视图的信息整理成一份"渲染清单"，告诉 GPU 要画什么、怎么画。</p>
                         <p><strong>最容易卡的地方：</strong> 图片解码，就像解压一个大文件，如果图片很大，主线程会卡住，导致界面不流畅。</p>
+                        <p><strong>重要理解：</strong> 不是所有 UI 都需要图片。就像画红色方块，GPU 可以直接画，不需要先准备一张红色图片。只有照片、自定义绘制（drawRect）等复杂内容才需要图片。纯色、文字、简单图形，GPU 都能直接画。</p>
                     </td>
                 </tr>
                 <tr>
@@ -393,7 +394,7 @@
             <ul>
                 <li><strong>Layout：</strong> 调用 <code class="highlight">layoutSubviews</code> 更新布局</li>
                 <li><strong>Display：</strong> 调用 <code class="highlight">drawRect:</code> 进行绘制（仅当覆写时）</li>
-                <li><strong>Prepare：</strong> 图片解码、格式转换、构建渲染树（性能瓶颈）</li>
+                <li><strong>Prepare：</strong> 图片解码（仅当有图片时）、格式转换（仅当有图片时）、构建渲染树（性能瓶颈）</li>
                 <li><strong>Commit：</strong> 打包数据并发送给 Render Server</li>
             </ul>
         </div>
@@ -405,8 +406,9 @@
         </div>
         
         <div class="warning">
-            <h3>3. 图片解码是性能瓶颈</h3>
+            <h3>3. 图片解码是性能瓶颈（仅当有图片时）</h3>
             <p>在 Prepare 阶段，如果 Layer 的 <code class="highlight">contents</code> 是压缩图片（JPEG、PNG），CPU 必须将图片解压成位图。这一步在主线程执行，如果图片很大或未预解码，会严重卡顿主线程，导致掉帧。这是掉帧的头号杀手。</p>
+            <p><strong>重要理解：</strong> 不是所有 UI 都需要图片。纯色背景（<code class="highlight">backgroundColor</code>）、文字（<code class="highlight">UILabel</code>）、简单几何图形等，GPU 可以直接渲染，不需要图片。只有使用 <code class="highlight">UIImage</code>、覆写 <code class="highlight">drawRect:</code> 或离屏渲染时才需要图片/位图。</p>
             <p><strong>优化建议：</strong> 图片应该提前在后台线程解码，避免在 Commit 阶段阻塞主线程。</p>
         </div>
         
