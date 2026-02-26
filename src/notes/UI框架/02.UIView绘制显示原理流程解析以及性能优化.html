@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIView绘制显示原理流程解析以及性能优化</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        // 代码高亮
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>iOS底层原理之 UIView绘制显示原理流程解析以及性能优化</h1>
+        
+        <div class="info">
+            <p><strong>来源：</strong><a href="https://juejin.cn/post/7081659568920461348" target="_blank">掘金文章</a></p>
+            <p><strong>作者：</strong>Darren68668</p>
+            <p><strong>发布时间：</strong>2022-04-01</p>
+        </div>
+
+        <h2>背景说明</h2>
+        <p>UIView是iOS开发最基本的UI控件之一, 所有的显示控件几乎都是继承于UIView, 通过不同类型的UIView, 我们可以将文本, 图片等显示到屏幕上, 所以了解UIView的绘制原理, 对于后续的自定义绘制以及性能优化有很大的帮助。</p>
+
+        <h2>图像绘制显示流程简图</h2>
+        <div class="warning">
+            <p><strong>注意：</strong>原文包含流程图图片，此处保留图片引用位置。如需查看完整图片，请访问原文链接。</p>
+            <p>以显示Hello world为例, 整个绘制和显示流程大概如上图所示, 其中CPU层面, 主要负责:</p>
+            <ul>
+                <li><strong>Layout:</strong> UI布局 文本计算</li>
+                <li><strong>Display:</strong> 绘制</li>
+                <li><strong>Prepare:</strong> 图片编解码</li>
+                <li><strong>Commit:</strong> 提交位图</li>
+            </ul>
+            <p>GPU层面, 主要是渲染管线, 包括顶点着色、图元装配、光栅化、片段着色、片段处理、FrameBuffer。</p>
+        </div>
+
+        <h2>UIView和CALayer的关系</h2>
+        <ol>
+            <li>UIView继承UIResponder, 可以响应事件, 其内部持有一个CALayer成员layer, 同时签订了CALayerDelegate协议。</li>
+            <li>CALayer继承NSObject, 负责绘制UIView显示的内容, 而实际的绘图工作都是Layer向其backing store里绘制bitmap完成的。</li>
+            <li>操作View的绝大多数图形属性，其实都是直接操作的其拥有的Layer属性, 比如frame, bounds, backgroundColor等等。</li>
+            <li>实际上UIView的显示内容是由CALayer的contents决定的, 对应的是backing store, 实际上一个bitmap类型的位图。</li>
+            <li>UIView为其提供内容, 以及负责处理触摸等事件, 参与响应链, CALayer负责显示内容contents, 体现了单一职责设计原则。</li>
+        </ol>
+
+        <h2>CALayer是什么?</h2>
+        <p>官方文档的定义是：<strong>管理基于图像的内容并允许您对该内容执行动画的对象。</strong>通常用于为 view 提供后备存储，但也可以在没有 View 的情况下使用以显示内容。</p>
+        <p>Layer的主要工作是管理您提供的可视内容，但Layer本身可以设置可视属性（例如背景颜色、边框和阴影）。</p>
+        <p>除了管理可视内容外，该Layer还维护有关内容几何的信息（例如位置、大小和变换），用于在屏幕上显示该内容。</p>
+
+        <h2>为什么不直接用一个UIView或CALayer处理所有事件?</h2>
+        <p>主要有两点考虑:</p>
+        
+        <h3>1. 职责不同</h3>
+        <p>UIVIew 的主要职责是负责接收并响应事件；而 CALayer 的主要职责是负责显示 UI, 体现了单一职责设计原则。</p>
+
+        <h3>2. 需要复用</h3>
+        <p>在macOS和App系统上，NSView 和 UIView 虽然行为相似，在实现上却有着显著的区别，却又都依赖于 CALayer 。在这种情况下，只能封装一个 CALayer 出来。</p>
+
+        <h2>CALayer的显示基础</h2>
+        <p>CALayer中有一个很重要的属性, 叫contents, 里面就提供显示的内容, 定义如下:</p>
+        
+        <pre><code class="language-swift">/* An object providing the contents of the layer, typically a CGImageRef
+ * or an IOSurfaceRef, but may be something else. (For example, NSImage
+ * objects are supported on Mac OS X 10.6 and later.) Default value is nil.
+ * Animatable. */
+
+/** Layer content properties and methods. **/
+open var contents: Any?</code></pre>
+
+        <p>翻译成中文, 大概意思就是: contents是图层内容属性和方法, 是提供层内容的对象, 通常是 CGImageRef 或 IOSurfaceRef，但也可能是其他东西。 （例如，Mac OS X 10.6 及更高版本支持 NSImage 对象。）默认值为 nil。</p>
+        <p>实际上, contents 属性保存了由设备渲染流水线渲染好的位图 bitmap（通常也被称为 backing store）, 而当设备屏幕进行刷新时，会从CALayer中读取生成好的 bitmap, 进而呈现到屏幕上。</p>
+        <div class="warning">
+            <p><strong>重要说明：</strong>只有当你覆写了 <code class="highlight">drawRect:</code> 方法时，系统才会走 CPU 绘制流程并调用 drawRect: 方法。绝大多数情况下（如设置 <code class="highlight">backgroundColor</code>、使用 <code class="highlight">UIImageView</code> 加载图片、设置 <code class="highlight">UILabel</code> 的文本等），是不走 <code class="highlight">drawRect:</code> 的。一旦覆写 <code class="highlight">drawRect:</code>，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节，这是极其耗费内存的。</p>
+        </div>
+        
+        <div class="warning">
+            <p><strong>注意：</strong>如果是View 的图层，应避免直接设置此属性的内容。视图和图层之间的相互作用通常会导致视图在后续更新期间替换此属性的内容。</p>
+        </div>
+
+        <h2>CALayer的图层树 Layer-tree</h2>
+        <p>UIView和CALayer都有自己的树状结构，它们都可以有自己的SubView和SubLayer</p>
+        <p>iOS中有三种Layer tree:</p>
+
+        <h3>1. layer tree(model tree) (模型树)</h3>
+        <p>就是各个树的节点的model信息, 比如常见的frame, affineTransform, backgroundColor等等, 这些model数据都是我们在APP开发中可以配置设置的, 我们任何对于view/layer的修改都能反应在model-tree中。</p>
+
+        <h3>2. presentation tree (演示树)</h3>
+        <p>这是一个中间层, 我们App无法主动操作, 这个层内容是iOS系统在Render Server中生成的! CAAnimation 的中间态就都在这一层上更改属性来完成动画的分动作。</p>
+
+        <h3>3. render tree (渲染树)</h3>
+        <p>这是直接对应于提交到render server上进行显示的树。</p>
+        <p>三种Layer tree显示如下, 最后需要提交给render server的内容都是在model-tree中, 包括Animation的相关参数。</p>
+
+        <h2>UIView绘制原理</h2>
+        <p>通过上面的介绍, 我们知道了图像的显示都是通过Layer来管理的, 但是我们在显示内容时, 却不是通过直接操作Layer层来实现, 虽然可以通过直接设置Layer的contents属性来实现, 但是比较麻烦, 比如我们要在屏幕上显示Hello world这两个单词, 我们会选择用UILabel来显示, 通过设置对应的text属性就能很快实现, 而UILabel也是继承UIView, 内部也是调用Layer的一些相关方法来实现绘制。</p>
+
+        <div class="warning">
+            <p><strong>注意：</strong>原文包含绘制流程图，此处保留图片引用位置。</p>
+        </div>
+
+        <p>绘制过程图归纳如下:</p>
+        <ol>
+            <li>当调用[UIView setNeedsDisplay]时，实际上会直接调用底层layer的同名方法 [layer setNeedsDisplay]</li>
+            <li>然后会被Core Animation捕获到layer-tree的变化, 提交一个CATransaction , 然后触发Runloop的Observer回调，在回调中调用[CALayer display]进行当前视图的真正绘制流程</li>
+            <li>[CALayer display]内部会先判断这个layer的delegate是否会响应displayLayer：方法，如果不响应就会进入系统绘制流程中。如果能够响应，实际上是提供了异步绘制的入口，也就是给我们进行异步绘制留有余地, 我们可以在这里实现异步绘制, 具体如何实现, 后面会讲。</li>
+        </ol>
+
+        <h3>系统绘制流程</h3>
+        <p>本质是创建一个 backing storage 的流程</p>
+        <ol>
+            <li>当[CALayer display]方法调用时, 判断是否有delegate去实现绘制方法, 如果没有就触发系统绘制。</li>
+            <li>系统绘制时, 会先创建 backing storage(CGContextRef). 注意每个layer都会有一个context, 这个context指向一块缓存区被称为backing storeage。</li>
+            <li>如果layer有delegate, 则调用delegate的- (void)drawLayer:(CALayer *)layer inContext:(CGContextRef)ctx方法(默认会将创建的CGContextRef传入)，否则调用-[CALayer drawInContext:]方法,进而调用[UIView drawRect:]方法, 此时已经在CGContextRef环境中, 如果在drawRect中通过UIGraphicsGetCurrentContext() 获取到的就是CALayer创建的CGContextRef。</li>
+            <li>注意drawRect方法是在CPU执行的, 在它执行完之后, 通过context将数据(通常情况下这里的最终结果会是一个bitmap, 类型是 CGImageRef)写入backing store, 通过rend server交给GPU去渲染，将backing store中的bitmap数据显示在屏幕上。</li>
+        </ol>
+
+        <div class="info">
+            <p><strong>注：</strong>每一个UIView的Layer都有一个对应的Backing Store作为其存储Content的实际内容, 而这些内容其实就是一个CGImage数据, 确切的说，是bitmap数据,以供GPU读取展示。</p>
+        </div>
+
+        <h3>drawRect流程梳理</h3>
+        <p>系统绘制流程中, 会调用到drawRect方法, 而在开发阶段, 与我们打交道最多的也是drawRect方法, 因此这里额外再梳理下其调用流程。</p>
+        <div class="warning">
+            <p><strong>注意：</strong>以下流程仅适用于覆写了 <code class="highlight">drawRect:</code> 方法的视图。如果没有覆写 <code class="highlight">drawRect:</code>，系统会直接使用 Layer 的 <code class="highlight">contents</code>（如 UIImage、backgroundColor 等），跳过 CPU 绘制流程。</p>
+        </div>
+        <ol>
+            <li>当我们调用[UIView setNeedsDisplay], 底层会调用[CALayer setNeedsDisplay], 然后会给图层增加一个dirty标记, 但还显示原来的内容。它实际上没做任何工作，所以多次调用 -setNeedsDisplay并不会造成性能损失。</li>
+            <li>然后会触发[CALayer display]方法。</li>
+            <li>CALayer创建一个CGContextRef, 创建一个 backing store, 然后将CGContextRef推入Graphics context stack(因此 CGContextRef是可以嵌套的), 当我们调用UIKit的UIRectFill()等API, 会自动将绘制结果放在stack栈顶的CGContextRef中, 我们也可以直接调用UIGraphicsGetCurrent拿到当前的Grahics context栈顶的CGContextRef。</li>
+            <li>然后就是drawRect方法执行了, 绘制的内容在CGContextRef的backing storage中。</li>
+            <li>这个back storage会保存在与layer-model-tree关联的属性中, 一起在 commit 时, 提交给 render server。</li>
+        </ol>
+
+        <h3>特殊场景 -- UIImageView</h3>
+        <p>当我们使用UIImageView时, 这个View仍然有一个CALayer, 但是它会直接使用CGImageRef(UIImage), 我们传给UIImageView的UIImage中的图片可能是没有解码的, 在 CA Commit之前会有一个prepare过程, 因此, 这样会在CA-Transaction的第三步prepare中能看到如下调用栈:</p>
+        <ol>
+            <li>CA::Layer::prepare_commit</li>
+            <li>Render::prepare_image</li>
+            <li>Render::copy_image</li>
+            <li>Render::create_image</li>
+            <li>... decodeImage</li>
+        </ol>
+
+        <div class="info">
+            <p><strong>注：</strong>UIImage其实是CGImage的一个轻量级封装, 因此在UIImageView中的UIImage对象直接将自己的CGImage图片数据作为CALayer的Content即可, 不再需要重新创建CGContetRef。</p>
+        </div>
+
+        <h3>异步绘制流程</h3>
+        <div class="info">
+            <p><strong>说明：</strong>以下是一个自定义异步绘制的示例代码，展示了如何通过实现CALayerDelegate的display方法来在后台线程进行绘制。注意：代码中使用了一些自定义的类（如ADLayerDelegate、ADManager等），这些不是系统API，仅作为示例参考。</p>
+        </div>
+        <p>参考代码如下:</p>
+        
+        <pre><code class="language-objectivec">/**
+ 维护线程安全的绘制状态
+ */
+@property (atomic, assign) ADLayerStatus status;
+
+- (void)setNeedsDisplay {
+    
+    // 收到新的绘制请求时，同步正在绘制的线程本次取消
+    self.status = ADLayerStatusCancel;
+    
+    [super setNeedsDisplay];
+}
+
+- (void)display {
+    
+    // 标记正在绘制
+    self.status = ADLayerStatusDrawing;
+    
+    if ([self.delegate respondsToSelector:@selector(asyncDrawLayer:inContext:canceled:)]) {
+        [self asyncDraw];
+    } else {
+        [super display];
+    }
+}
+
+- (void)asyncDraw {
+    
+    __block ADQueue *q = [[ADManager shareInstance] ad_getExecuteTaskQueue];
+    __block id&lt;ADLayerDelegate&gt; delegate = (id&lt;ADLayerDelegate&gt;)self.delegate;
+    
+    dispatch_async(q.queue, ^{
+        
+        // 重绘取消
+        if ([self canceled]) {
+            [[ADManager shareInstance] ad_finishTask:q];
+            return;
+        }
+        
+        // 生成上下文context
+        CGSize size = self.bounds.size;
+        BOOL opaque = self.opaque;
+        CGFloat scale = [UIScreen mainScreen].scale;
+        CGColorRef backgroundColor = (opaque && self.backgroundColor) ? CGColorRetain(self.backgroundColor) : NULL;
+        UIGraphicsBeginImageContextWithOptions(size, opaque, scale);
+        CGContextRef context = UIGraphicsGetCurrentContext();
+        if (opaque && context) {
+            CGContextSaveGState(context); {
+                if (!backgroundColor || CGColorGetAlpha(backgroundColor) &lt; 1) {
+                    CGContextSetFillColorWithColor(context, [UIColor whiteColor].CGColor);
+                    CGContextAddRect(context, CGRectMake(0, 0, size.width * scale, size.height * scale));
+                    CGContextFillPath(context);
+                }
+                if (backgroundColor) {
+                    CGContextSetFillColorWithColor(context, backgroundColor);
+                    CGContextAddRect(context, CGRectMake(0, 0, size.width * scale, size.height * scale));
+                    CGContextFillPath(context);
+                }
+            } CGContextRestoreGState(context);
+            CGColorRelease(backgroundColor);
+         } else {            
+            CGColorRelease(backgroundColor);
+        }        
+        
+        // 使用context绘制
+        [delegate asyncDrawLayer:self inContext:context canceled:[self canceled]];
+        
+        // 重绘取消
+        if ([self canceled]) {
+            [[ADManager shareInstance] ad_finishTask:q];
+            UIGraphicsEndImageContext();
+            return;
+        }
+        
+        // 获取image
+        UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        
+        // 结束任务
+        [[ADManager shareInstance] ad_finishTask:q];
+        
+        // 重绘取消
+        if ([self canceled]) {
+            return;
+        }
+        
+        // 主线程刷新
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.contents = (__bridge id)(image.CGImage);
+        });
+    });
+}</code></pre>
+
+        <h2>CALayerDelegate方法解析</h2>
+        <p>通过上面的介绍, 我们知道, 不管是系统绘制还是异步绘制, 都跟CALayerDelegate中的相关方法有关, 接下来就具体介绍下CALayerDelegate的相关方法:</p>
+
+        <pre><code class="language-swift">/** Delegate methods. **/
+public protocol CALayerDelegate : NSObjectProtocol {
+
+    
+    /* If defined, called by the default implementation of the -display
+     * method, in which case it should implement the entire display
+     * process (typically by setting the `contents' property). */
+    
+    @available(iOS 2.0, *)
+    optional func display(_ layer: CALayer)
+
+    
+    /* If defined, called by the default implementation of -drawInContext: */
+    
+    @available(iOS 2.0, *)
+    optional func draw(_ layer: CALayer, in ctx: CGContext)
+
+    
+    /* If defined, called by the default implementation of the -display method.
+     * Allows the delegate to configure any layer state affecting contents prior
+     * to -drawLayer:InContext: such as `contentsFormat' and `opaque'. It will not
+     * be called if the delegate implements -displayLayer. */
+    
+    @available(iOS 10.0, *)
+    optional func layerWillDraw(_ layer: CALayer)
+
+    
+    /* Called by the default -layoutSublayers implementation before the layout
+     * manager is checked. Note that if the delegate method is invoked, the
+     * layout manager will be ignored. */
+    
+    @available(iOS 2.0, *)
+    optional func layoutSublayers(of layer: CALayer)
+
+    
+    /* If defined, called by the default implementation of the
+     * -actionForKey: method. Should return an object implementing the
+     * CAAction protocol. May return 'nil' if the delegate doesn't specify
+     * a behavior for the current event. Returning the null object (i.e.
+     * '[NSNull null]') explicitly forces no further search. (I.e. the
+     * +defaultActionForKey: method will not be called.) */
+    
+    @available(iOS 2.0, *)
+    optional func action(for layer: CALayer, forKey event: String) -> CAAction?
+}</code></pre>
+
+        <h3>func display(_ layer: CALayer)</h3>
+        <p>当图层标记其内容为需要更新 (setNeedsDisplay()) 时，调用此方法。例如，为图层设置 contents 属性</p>
+
+        <pre><code class="language-swift">private lazy var delegate = LayerDelegate()
+     
+private lazy var sublayer: CALayer = {
+    let layer = CALayer()
+    layer.delegate = self.delegate
+    return layer
+}()
+     
+// 调用 `sublayer.setNeedsDisplay()` 时，会调用 `sublayer.display(_:)`。
+class LayerDelegate: NSObject, CALayerDelegate {
+    func display(_ layer: CALayer) {
+        layer.contents = UIImage(named: "rabbit.png")?.cgImage
+    }
+}</code></pre>
+
+        <h3>func draw(_ layer: CALayer, in ctx: CGContext)</h3>
+        <p>和 display(_:) 一样，但是可以使用图层的 CGContext 来实现显示的过程</p>
+
+        <pre><code class="language-swift">// sublayer.setNeedsDisplay()
+class LayerDelegate: NSObject, CALayerDelegate {
+    func draw(_ layer: CALayer, in ctx: CGContext) {
+        ctx.addEllipse(in: ctx.boundingBoxOfClipPath)
+        ctx.strokePath()
+    }
+}</code></pre>
+
+        <h4>和 View中draw(_ rect: CGRect)的关系</h4>
+        <ol>
+            <li>首先调用Layer的draw(_:in:) 方法；</li>
+            <li>随后在super.draw(_:in:) 方法里面创建并配置好绘图环境；</li>
+            <li>通过Layer的super.draw(_:in:) 调用 view 的 draw(_:) 方法。</li>
+        </ol>
+
+        <pre><code class="language-swift">/// 注：此方法默认不执行任何操作，调用super.draw(_:) 与否并无影响。
+override func draw(_ rect: CGRect) {
+    print(#function)
+}
+
+override func draw(_ layer: CALayer, in ctx: CGContext) {
+    print(#function)
+}
+
+// Prints "draw(_:in:)"</code></pre>
+
+        <pre><code class="language-swift">/// 注：此方法默认不执行任何操作，调用super.draw(_:) 与否并无影响。
+override func draw(_ rect: CGRect) {
+    print(#function)
+}
+
+override func draw(_ layer: CALayer, in ctx: CGContext) {
+    print(#function)
+    super.draw(layer, in: ctx)
+}
+
+// Prints "draw(_:in:)"
+// Prints "draw"</code></pre>
+
+        <div class="info">
+            <p><strong>注：</strong>只有当系统在检测到View 的 draw(_:) 方法被实现时，才会自动调用Layer的display(_:) 或 draw(_ :in:) 方法。否则就必须通过手动调用图层的 setNeedsDisplay() 方法来调用。</p>
+        </div>
+
+        <h3>func layerWillDraw(_ layer: CALayer)</h3>
+        <p>在 draw(_ layer: CALayer, in ctx: CGContext) 调用之前调用，可以使用此方法配置影响内容的任何图层状态（例如 contentsFormat 和 isOpaque ）。</p>
+
+        <h3>func layoutSublayers(of layer: CALayer)</h3>
+        <p>和 UIView 的 layoutSubviews() 类似。当发现边界发生变化并且其sublayers可能需要重新排列时（例如通过 frame 改变大小），将调用此方法。</p>
+
+        <h3>func action(for layer: CALayer, forKey event: String) -> CAAction?</h3>
+        <p>CALayer之所以能够执行动画，是因为它被定义在Core Animation框架中，是Core Animation执行操作的核心。</p>
+        <p>也就是说，CALayer 除了负责显示内容外，还能执行动画（其实是Core Animation与硬件之间的操作在执行，CALayer负责存储操作需要的数据，相当于Model）。</p>
+        <p>因此，使用CALayer的大部分属性都附带动画效果。但是在UIView中，默认将这个效果给关掉了，可以通过它图层的委托方法重新开启 ( 在View animation block中也会自动开启 )，返回决定它动画特效的对象，如果返回的是 nil ，将使用默认隐含的动画特效。</p>
+
+        <p>示例 - 使用图层的委托方法返回一个从左到右移动对象的基本动画:</p>
+
+        <pre><code class="language-swift">final class CustomView: UIView {
+    override func action(for layer: CALayer, forKey event: String) -> CAAction? {
+        guard event == "moveRight" else {
+            return super.action(for: layer, forKey: event)
+        }
+        let animation = CABasicAnimation()
+        animation.valueFunction = CAValueFunction(name: .translateX)
+        animation.fromValue = 1
+        animation.toValue = 300
+        animation.duration = 2
+        return animation
+    }
+}
+
+let view = CustomView(frame: CGRect(x: 44, y: 44, width: UIScreen.width - 88, height: 300))
+view.backgroundColor = .orange
+self.view.addSubview(view)
+
+let action = view.layer.action(forKey: "moveRight")
+action?.run(forKey: "transform", object: view.layer, arguments: nil)</code></pre>
+
+        <h2>渲染原理</h2>
+        <p>图形渲染主要是利用GPU并行运算能力，实现图形渲染并显示在屏幕的每一个像素上。</p>
+        <p>渲染过程最常用的就是光栅化，即将数据转化为可见像素的过程。GPU及相关驱动实现了图形处理的OpenGL和DirectX模型，其实OpenGL不是函数API而是一种标准，制定了相关函数API及其实现的功能，具体的函数库由第三方来实现，通常是由显卡制造商来提供。</p>
+
+        <h3>GPU架构模型</h3>
+        <p>GPU内部包含了若干处理核来实现并发执行，其内部使用了二级缓存(L1、L2 cache)，其与CPU的架构模型包含如下两种形式：分离式及耦合式</p>
+
+        <h4>1. 分离式结构</h4>
+        <p>CPU 和 GPU 拥有各自的存储系统，两者通过 PCI-e 总线进行连接。</p>
+        <p>这种结构的缺点在于 PCI-e 相对于两者具有低带宽和高延迟，数据的传输成了其中的性能瓶颈。目前使用非常广泛，如PC、智能手机等。</p>
+
+        <h4>2. 耦合式结构</h4>
+        <p>CPU 和 GPU 共享内存和缓存。AMD 的 APU 采用的就是这种结构，目前主要使用在游戏主机中，如 PS4。</p>
+
+        <h3>GPU渲染过程</h3>
+        <p>主要包括:</p>
+        <ol>
+            <li><strong>顶点着色器</strong>：包含了3D坐标系的转换，每个顶点属性值设定</li>
+            <li><strong>形状(图元)装配</strong>：形成基本的图形</li>
+            <li><strong>几何着色器</strong>：构造新的顶点来形成其他形状，如上图的另一个三角形</li>
+            <li><strong>光栅化</strong>：将形状映射到屏幕的相应的像素生成片段，片段包含了像素结构所有的数据</li>
+            <li><strong>片段着色器</strong>：丢弃超过视图以外的像素并着色</li>
+            <li><strong>测试与混合</strong>：判断像素位置如是否在其他像素的后面及透明度等决定是否丢弃及混合</li>
+        </ol>
+
+        <h3>纹理</h3>
+        <p>要想图形更加真实逼真需要更多的顶点及颜色属性，这样就增加了性能开销，为提升成产和执行效率，经常会使用纹理来表现细节。</p>
+        <p>纹理是一个 2D 图片（甚至也有 1D 和 3D 的纹理），纹理一般可以直接作为图形渲染流水线的第五阶段(即片段着色器)的输入。</p>
+
+        <h3>图形渲染技术栈</h3>
+        <p>App 使用 Core Graphics、Core Animation、Core Image 等框架来绘制可视化内容，这些软件框架相互之间也有着依赖关系。</p>
+        <p>这些框架都需要通过 OpenGL 来调用 GPU 进行绘制，最终将内容显示到屏幕之上。</p>
+
+        <div class="warning">
+            <p><strong>注意：</strong>原文包含图形渲染技术栈结构图，此处保留图片引用位置。</p>
+        </div>
+
+        <h4>1. UIKit</h4>
+        <p>自身并不具备在屏幕成像的能力，其主要负责对用户操作事件的响应（UIView 继承自 UIResponder），事件响应的传递大体是经过逐层的视图树遍历实现的。</p>
+
+        <h4>2. Core Animation</h4>
+        <p>是一个复合引擎，其职责是尽可能快地组合屏幕上不同的可视内容，这些可视内容可被分解成独立的图层（即 CALayer），这些图层会被存储在一个叫做图层树的体系之中。从本质上而言，CALayer是用户所能在屏幕上看见的一切的基础。</p>
+
+        <h4>3. Core Graphics</h4>
+        <p>基于Quartz高级绘图引擎，主要用于运行时绘制图像。开发者可以使用此框架来处理基于路径的绘图，转换，颜色管理，离屏渲染，图案，渐变和阴影，图像数据管理，图像创建和图像遮罩以及PDF文档创建，显示和分析。</p>
+
+        <h4>4. Core Image</h4>
+        <p>与Core Graphics恰恰相反，Core Graphics用于在运行时创建图像，而Core Image是用来处理运行前创建的图像的。Core Image框架拥有一系列现成的图像过滤器，能对已存在的图像进行高效的处理。</p>
+
+        <h4>5. OpenGL(ES)</h4>
+        <p>OpenGL for Embedded Systems，简称GLES，是OpenGL的子集。</p>
+
+        <h4>6. Metal</h4>
+        <p>Metal是苹果开发的低开销图形API，用于替代OpenGL ES。从iOS 12开始，OpenGL ES已被废弃，Metal成为iOS上唯一的底层图形API。大多数开发者都没有直接使用过Metal，但其实所有开发者都在间接地使用Metal。Core Animation、Core Image、SceneKit、SpriteKit等等渲染框架都是构建于Metal 之上的。Metal提供了比OpenGL ES更好的性能和更低的CPU开销，是iOS图形渲染的底层基础。</p>
+
+        <h3>Render Server</h3>
+        <p>iOS中应用并不负责渲染而是由专门的渲染进程负责，即Render Server</p>
+        <p>主要处理流程如下：</p>
+        <ol>
+            <li>由App处理事件（Handle Events），如：用户的点击操作，在此过程中app可能需要更新视图树，相应地，图层树也会被更新。</li>
+            <li>App通过CPU完成对显示内容的计算，如：视图的创建、布局计算、图片解码、文本绘制等。在完成对显示内容的计算之后，App对图层进行打包，并在下一次RunLoop时将其发送至Render Server，即完成了一次Commit Transaction 操作。</li>
+        </ol>
+
+        <p>具体commit transaction可以细分为如下步骤：</p>
+        <ul>
+            <li><strong>A) Layout，</strong>主要进行视图构建，包括LayoutSubviews方法的重写（override），addSubview方法填充子视图等。</li>
+            <li><strong>B) Display，</strong>主要进行视图绘制，这里仅仅是设置需要成像的图元数据。重写（override）视图的drawRect:方法可以自定义UIView的显示，其原理是在drawRect:方法内部绘制寄宿图，该过程使用CPU和内存。<strong>注意：</strong>只有覆写了drawRect:方法的视图才会进入这个流程。</li>
+            <li><strong>C) Prepare，</strong>属于附加步骤，一般处理图像的解码和转换等操作。如果Layer的contents是压缩图片（JPEG、PNG），CPU必须在这个阶段将图片解压成位图，这是性能瓶颈的关键阶段。</li>
+            <li><strong>D) Commit，</strong>主要将图层打包，并将它们通过IPC发送至Render Server。该过程会递归执行，因为图层和视图都是以树形结构存在。</li>
+        </ul>
+
+        <ol start="3">
+            <li>Render Server（backboardd进程）接收App发送的渲染数据，主要负责协调和传递渲染指令。Render Server会根据layer的各种属性（如果是动画属性，则会计算动画layer的属性的中间值）准备渲染指令。在现代iOS系统中，实际渲染主要通过Metal API执行（iOS 12后OpenGL ES已被废弃），Render Server会将渲染指令传递给GPU执行。</li>
+            <li>GPU通过Frame Buffer、视频控制器等相关组件对图层进行渲染到屏幕。</li>
+        </ol>
+
+        <p>为了满足屏幕60FPS刷新率，RunLoop每次操作的时间间隔不应超过16.67ms，且上述步骤需要并行执行。</p>
+
+        <h3>渲染与RunLoop</h3>
+        <ol>
+            <li>iOS 的显示系统是由VSync信号驱动的，VSync信号由硬件时钟生成，每秒钟发出60次（这个值取决设备硬件，比如iPhone真机上通常是59.97，ProMotion屏幕支持120Hz）。</li>
+            <li>VSync信号主要由Render Server（backboardd进程）监听，而不是直接由App的RunLoop监听。Render Server接收到VSync信号后，会协调整个渲染流程。</li>
+            <li>App的RunLoop主要负责处理应用层的事件和更新。Core Animation在RunLoop中注册了一个Observer，监听了BeforeWaiting和Exit事件，这个Observer的优先级是2000000，低于常见的其他Observer。</li>
+        </ol>
+
+        <div class="info">
+            <p><strong>注：</strong>VSync信号主要由Render Server监听，App的RunLoop并不直接监听VSync信号。App通过Core Animation的Observer在RunLoop的BeforeWaiting阶段提交渲染数据给Render Server，Render Server再根据VSync信号协调GPU进行渲染。</p>
+        </div>
+
+        <ol start="4">
+            <li>Core Animation在RunLoop中注册了一个Observer，监听了BeforeWaiting和Exit事件。这个Observer的优先级是2000000，低于常见的其他Observer。</li>
+            <li>当一个触摸事件到来时，RunLoop被唤醒，App中的代码会执行一些操作，比如创建和调整视图层级、设置 UIView的frame、修改CALayer的透明度、为视图添加一个动画。这些操作最终都会被CALayer捕获，并通过CATransaction提交到一个中间状态去。</li>
+            <li>当上面所有操作结束后，RunLoop即将进入休眠（或者退出）时，关注该事件的Observer都会得到通知。这时Core Animation注册的那个Observer就会在回调中，把所有的中间状态合并提交到GPU去显示。</li>
+            <li>如果此处有动画，Core Animation会通过CADisplayLink等机制多次触发相关流程。</li>
+        </ol>
+
+        <h2>显示原理</h2>
+        <p>以屏幕显示播放视频为例, 其屏幕图形显示结构如图所示</p>
+
+        <div class="warning">
+            <p><strong>注意：</strong>原文包含屏幕图形显示结构图，此处保留图片引用位置。</p>
+        </div>
+
+        <ol>
+            <li>CPU将图形数据通过总线BUS提交至GPU</li>
+            <li>GPU经过渲染处理转化为一帧帧的数据并提交至帧缓冲区</li>
+            <li>视频控制器会通过垂直同步信号VSync逐帧读取帧缓冲区的数据并提交至屏幕控制器最终显示在屏幕上。</li>
+        </ol>
+
+        <h3>双缓冲机制</h3>
+        <p>为解决一个帧缓冲区效率问题(读取和写入都是一个无法有效的并发处理)，采用双缓冲机制，在这种情况下，GPU会预先渲染一帧放入一个缓冲区中，用于视频控制器的读取。当下一帧渲染完毕后，GPU 会直接把视频控制器的指针指向第二个缓冲器。</p>
+
+        <div class="warning">
+            <p><strong>注意：</strong>原文包含双缓冲机制示意图，此处保留图片引用位置。</p>
+        </div>
+
+        <p>双缓冲机制虽然提升了效率但也引入了画面撕裂问题，即当视频控制器还未读取完成时，即屏幕内容刚显示一半时，GPU将新的一帧内容提交到帧缓冲区并把两个缓冲区进行交换后，视频控制器就会把新的一帧数据的下半段显示到屏幕上，造成画面撕裂现象</p>
+
+        <h3>垂直同步 (V-Sync)</h3>
+        <p>为了解决画面撕裂的问题，GPU通常有一个机制叫做垂直同步（ V-Sync），当开启垂直同步后，GPU会等待显示器的VSync信号发出后，才进行新的一帧渲染和缓冲区更新。这样能解决画面撕裂现象，也增加了画面流畅度，但需要消费更多的计算资源，也会带来部分延迟。</p>
+
+        <h3>页面卡顿掉帧</h3>
+        <p>在VSync信号到来后，系统图形服务会通过CADisplayLink等机制通知App，App主线程开始在CPU中计算显示内容，比如视图的创建、布局计算、图片解码、文本绘制等。随后CPU会将计算好的内容提交到GPU去，由GPU进行变换、合成、渲染。随后GPU会把渲染结果提交到帧缓冲区去，等待下一次VSync信号到来时显示到屏幕上。由于垂直同步的机制，如果在一个VSync时间内，CPU或者GPU没有完成内容提交，则那一帧就会被丢弃，等待下一次机会再显示，而这时显示屏会保留之前的内容不变。这就是界面卡顿的原因。</p>
+
+        <h2>性能优化</h2>
+        <p>通过上面的讲解, 我们了解了UIView绘制到显示的整个流程, 但是在实际开发中, 可能因为一些不当的操作, 导致整个流程耗时增加, 甚至出现掉帧卡顿的问题, 这时候, 我们可以通过以下几个方面来做性能优化, 保证页面显示滚动的流畅性。</p>
+
+        <h2>CPU层面</h2>
+        <p>cpu层面主要考虑降低资源消耗, 可以从以下几个方面入手</p>
+
+        <h3>1. 对象创建</h3>
+        <p>对象创建会分配内存、调整属性、甚至还有读取文件(如创建UIViewController读取xib文件)等操作，比较消耗CPU资源。因此，尽量使用轻量的对象替代重量的对象，如</p>
+        <ol>
+            <li>CALayer比UIView不需要响应触摸事件。</li>
+            <li>如果对象不涉及UI操作，则尽量放到后台线程执行。</li>
+            <li>性能敏感的视图对象，尽量使用代码创建而不是Storyboard来创建。</li>
+            <li>如果对象可以复用，可以使用缓存池来复用。</li>
+        </ol>
+
+        <h3>2. 对象调整</h3>
+        <p>如CALayer属性修改、视图层次调整、添加和移除视图等。</p>
+
+        <div class="info">
+            <p><strong>注：</strong>CALayer内部并没有属性方法，其内部是通过runtime动态接收方法resoleInstanceMethod方法为对象临时添加一个方法，并把对应属性值保存到内部的一个Dictionary字典里，同时还会通知delegate、创建动画等。UIView的关于显示相关的属性(比如frame/bounds/transform)等实际上是CALayer属性映射来的。</p>
+        </div>
+
+        <h3>3. 对象销毁</h3>
+        <p>虽然对象销毁销毁资源不多，但累积起来也不容忽视。通常当容器类持有大量对象时，其销毁时的资源消耗就非常明显，因此，可见用于后台线程去释放的对象挪动后台线程去。</p>
+
+        <h3>4. 布局计算</h3>
+        <p>视图布局计算是应用最为常见的消耗CPU资源的地方，其最终实现都会通过UIView.frame/bounds/center等属性的调整上，因此，避免CPU资源消耗尽量提前计算好布局，在需要时一次性调整好对应属性，而不要多次、频繁的计算和调整这些属性。</p>
+
+        <h3>5. Autolayout</h3>
+        <p>Auotlayout是苹果提倡的技术，可在大部分情况下能很好地提升开发效率，但是其对于复杂视图来说会带来严重的性能问题，因此对于性能要求高的视图尽量使用代码实现视图。</p>
+
+        <h3>6. 文本计算</h3>
+        <p>如果页面包含大量文本，文本宽高计算会占用很大一部分资源，并且不可避免。可以通过富文本NSAttributedString的[NSAttributedString boundingRectWithSize:options:context]方法来计算文本宽高，用[NSAttributeString drawWithRect:options:context:]来绘制文本，并放在后台线程执行避免阻塞主线程；或者使用CoreText基于c的跨平台API来绘制文本。</p>
+
+        <h3>7. 文本渲染</h3>
+        <p>屏幕上能看到的所有文本内容控件，包括UIWebView，在底层都是通过CoreText排版、绘制为Bitmap显示。常见的文本控件，如UILabel、UITextView等，其排版和绘制都是在主线程进行，当显示大量文本时，CPU的压力会非常大。解决方案只有一个，就是自定义文本控件，并用TextKit或最底层的CoreText对文本异步绘制。</p>
+
+        <h3>8. 图片解码</h3>
+        <p>当使用UIImage或CGImageSource的那几个方法创建图片时，图片数据并不会立即解码。只有图片设置到UIImageView或者CALayer.contents中去，并且CALayer被提交到GPU前，CGImage中的数据才会得到解码。</p>
+        <div class="warning">
+            <p><strong>重要说明：</strong>如果图片未在后台线程预解码，系统会在Commit Transaction的Prepare阶段在主线程进行解码，这是性能瓶颈的关键阶段。如果图片很大或未预解码，会严重卡顿主线程，导致掉帧。</p>
+        </div>
+        <p>解决方法：后台线程先把图片绘制到CGBitmapContext中，然后从Bitmap直接创建图片。目前常见的网络图片库（如SDWebImage、Kingfisher）都自带这个功能，会在后台线程完成图片解码后再设置到UIImageView。</p>
+
+        <h3>9. 图像绘制</h3>
+        <p>图像的绘制通常是指用CGxx开头的方法将图像绘制到画布中，然后从画布创建图片并显示这样的一个过程。这个最常见的就是[UIView drawRect:]方法，由于CoreCraphic方法通常都是线程安全的，所以图像的绘制可以很容易放到后台线程进行。</p>
+
+        <h2>GPU层面</h2>
+        <p>相对于CPU来说，GPU主要就是：接收提交的纹理和顶点描述(三角形)，应用变换、混合并渲染，然后输出到屏幕上。通常你所能看到的内容，主要也就是纹理(图片)和形状(三角模拟的矢量图形)两类。因此可以从下面三方面入手。</p>
+
+        <h3>1. 纹理的渲染</h3>
+        <p>所有的Bitmap，包括图片、文本、栅格化的内容，最终都要从内存提交到显存，绑定为GPU纹理。不论是提交到显存的过程，还是GPU调制和渲染纹理的过程，都要消耗不少GPU资源。</p>
+        <p>当在较短时间内显示大量图片时(如UITableView存在非常多的图片并且快速滑动时)，CPU占用率很低，GPU占用非常高，因此会导致界面掉帧卡顿。有效避免此情况的方法就是尽量减少在短时间内大量图片的显示，尽可能将多张图片合并为一张进行显示。</p>
+
+        <h3>2. 视图的混合</h3>
+        <p>存在多视图且多层次重叠显示时，GPU会首先将其混合在一起。如果视图结构很复杂，混合的过程也会消耗很多的GPU资源。为了减轻GPU的消耗，应尽量减少视图数量级层次，并在不透明的视图里标明opaque属性以避免无用的Alpha通道合成。</p>
+
+        <h3>3. 图形的生成</h3>
+        <p>某些CALayer属性会触发离屏渲染(offscreen rendering)，而离屏渲染通常发生在GPU中，会增加性能开销。常见的触发离屏渲染的情况包括：</p>
+        <ul>
+            <li><strong>圆角（cornerRadius）：</strong>在iOS 9+上，单独的 <code class="highlight">cornerRadius</code> 不一定会触发离屏渲染，但如果同时设置了 <code class="highlight">masksToBounds = true</code>，则会触发离屏渲染。</li>
+            <li><strong>阴影（shadow）：</strong>设置 <code class="highlight">shadowOffset</code>、<code class="highlight">shadowRadius</code>、<code class="highlight">shadowColor</code> 等属性会触发离屏渲染。</li>
+            <li><strong>遮罩（mask）：</strong>设置 <code class="highlight">mask</code> 属性会触发离屏渲染。</li>
+            <li><strong>边框（border）：</strong>在某些情况下会触发离屏渲染。</li>
+            <li><strong>CAShapeLayer的矢量图形：</strong>使用CAShapeLayer绘制复杂路径会触发离屏渲染。</li>
+        </ul>
+        <p>当一个列表视图中存在大量圆角的CALayer且快速滑动时，会消耗大量的GPU资源，进而引发界面卡顿。为避免此种情况，可以尝试开启CALayer.shouldRasterize属性，这会把离屏渲染的操作转嫁到CPU上（但会增加内存开销）；最好是尽量避免使用会触发离屏渲染的属性，或者使用预渲染的图片替代。</p>
+
+        <div class="info">
+            <p><strong>注：</strong>GPU屏幕渲染存在两种方式：</p>
+            <ul>
+                <li><strong>当前屏幕渲染(On-Screen Rendering)：</strong>正常的GPU渲染流程，GPU将渲染完成的帧放到帧缓冲区，然后显示到屏幕。</li>
+                <li><strong>离屏渲染(Off-Screen Rendering)：</strong>会额外创建一个离屏渲染缓冲区(如保存后续复用的数据)，后续仍会提交至帧缓冲区进而显示到屏幕。离屏渲染需要创建新的缓冲区，渲染过程中会涉及从当前屏幕切换到离屏环境多次上下文环境切换，等到离屏渲染完成后还需要将渲染结果切换到当前屏幕环境，因此付出的代价较高。</li>
+            </ul>
+        </div>
+
+        <h2>总结</h2>
+        <p>以上就是UIView从绘制到渲染再到显示的全过程, 作为一个有追求的iOS开发工程师, 保持iOS流畅的性能是永远不变的追求。</p>
+
+        <div class="info">
+            <p><strong>参考链接：</strong><a href="https://juejin.cn/post/7081659568920461348" target="_blank">iOS底层原理之 UIView绘制显示原理流程解析以及性能优化</a></p>
+        </div>
+    </div>
+</body>
+</html>
