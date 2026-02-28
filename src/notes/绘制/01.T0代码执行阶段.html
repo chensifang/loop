@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>T0：代码执行阶段（主线程）</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>时间点</strong></td>
+                    <td>代码执行时，在主线程同步执行</td>
+                </tr>
+                <tr>
+                    <td><strong>这个阶段发生了什么</strong></td>
+                    <td>（见下方表格）</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>步骤</th>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. 创建 UIButton 对象</strong></td>
+                    <td><code class="highlight">UIButton(type: .system)</code></td>
+                    <td>在堆上分配内存；创建 UIButton 的 <code class="highlight">CALayer</code>（此时 <code class="highlight">contents</code> 为 nil）；创建内部的 <code class="highlight">UIImageView</code> 和 <code class="highlight">UILabel</code>（各自也有 <code class="highlight">CALayer</code>）</td>
+                </tr>
+                <tr>
+                    <td><strong>2. 设置 frame</strong></td>
+                    <td><code class="highlight">button.frame = ...</code></td>
+                    <td>实际设置的是 <code class="highlight">layer.frame</code>；Layer 的 frame 属性被修改；此时还没有布局计算，只是属性值被设置</td>
+                </tr>
+                <tr>
+                    <td><strong>3. 设置文字</strong></td>
+                    <td><code class="highlight">button.setTitle(...)</code></td>
+                    <td>内部 <code class="highlight">UILabel</code> 的 text 属性被设置；<code class="highlight">UILabel</code> 的 Layer 标记需要更新（内部调用类似 <code class="highlight">setNeedsDisplay</code>）；但此时还没有生成 bitmap</td>
+                </tr>
+                <tr>
+                    <td><strong>4. 设置图片</strong></td>
+                    <td><code class="highlight">button.setImage(...)</code></td>
+                    <td>内部 <code class="highlight">UIImageView</code> 的 image 属性被设置；<code class="highlight">UIImageView</code> 的 Layer 标记需要更新；图片文件还在内存中，还没有解码成 bitmap</td>
+                </tr>
+                <tr>
+                    <td><strong>5. 设置背景色和圆角</strong></td>
+                    <td><code class="highlight">backgroundColor</code>、<code class="highlight">cornerRadius</code></td>
+                    <td>Layer 的属性被设置；UIButton 自身的 Layer 标记需要更新</td>
+                </tr>
+                <tr>
+                    <td><strong>6. 添加到视图层级</strong></td>
+                    <td><code class="highlight">view.addSubview(button)</code></td>
+                    <td>button 被添加到视图树；button 的 Layer 被添加到 Layer 树（Model Tree）；此时 Layer 树已经建立，但还没有渲染</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>关键点</strong>：</p>
+        <ul>
+            <li>这个阶段只修改属性值，不进行实际绘制</li>
+            <li>所有 Layer 的 <code class="highlight">contents</code> 都还是 nil（或之前的值）</li>
+            <li>系统只是标记哪些 Layer 需要更新，但不立即执行</li>
+        </ul>
+
+        <h2>标记机制</h2>
+
+        <p>每个 Layer 内部有多种标记位（dirty flags），用于标记不同类型的更新需求：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>标记类型</th>
+                    <th>对应方法</th>
+                    <th>作用</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Layout 标记</strong></td>
+                    <td><code class="highlight">setNeedsLayout</code></td>
+                    <td>需要重新计算布局</td>
+                </tr>
+                <tr>
+                    <td><strong>Display 标记</strong></td>
+                    <td><code class="highlight">setNeedsDisplay</code></td>
+                    <td>需要重新生成 bitmap</td>
+                </tr>
+                <tr>
+                    <td><strong>Commit 标记</strong></td>
+                    <td>系统自动设置</td>
+                    <td>需要提交到 Render Server</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>修改 Layer 属性时，系统会根据属性类型自动设置相应的标记位，但更新操作会延迟到后续阶段执行。</p>
+
+        <h2>系统自动标记的情况</h2>
+
+        <p>系统会自动标记，不需要手动调用 <code class="highlight">setNeedsLayout</code>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>情况</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>视图被添加到父视图时</td>
+                    <td><code class="highlight">addSubview</code> → 系统自动标记</td>
+                </tr>
+                <tr>
+                    <td>父视图的 frame 改变时</td>
+                    <td>系统自动标记子视图需要布局</td>
+                </tr>
+                <tr>
+                    <td>Auto Layout 约束更新时</td>
+                    <td>系统自动标记</td>
+                </tr>
+                <tr>
+                    <td>设备旋转时</td>
+                    <td>系统自动标记</td>
+                </tr>
+                <tr>
+                    <td>视图的 <code class="highlight">bounds</code> 改变时</td>
+                    <td>如果 <code class="highlight">autoresizesSubviews</code> 为 true → 系统自动标记</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,206 @@
+# 笔记模板组件规范
+
+## 核心原则
+
+**所有笔记文件必须使用统一的 HTML 头部模板，确保样式和组件的一致性。**
+
+## 统一的 HTML 头部模板
+
+所有笔记文件必须在 `<head>` 中使用以下标准模板：
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 笔记内容 -->
+    </div>
+</body>
+</html>
+```
+
+## Block 组件规范
+
+所有笔记中的 block（如表格、代码块、列表等）都应该使用统一的样式类，这些样式已经在 `style.css` 中定义。
+
+### 1. 代码块 Block
+
+```html
+<div class="code-block"><code>
+// 代码内容
+</code></div>
+```
+
+### 2. 表格 Block
+
+```html
+<table>
+    <thead>
+        <tr>
+            <th>列1</th>
+            <th>列2</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>内容1</td>
+            <td>内容2</td>
+        </tr>
+    </tbody>
+</table>
+```
+
+**注意**：`table-wrapper.js` 会自动为表格添加滚动包装，无需手动添加。
+
+### 3. Mermaid 图表 Block
+
+```html
+<div class="mermaid">
+graph TD
+    A --> B
+</div>
+```
+
+### 4. 信息表格 Block（时间点、触发时机等）
+
+统一使用两列表格格式：
+
+```html
+<table>
+    <thead>
+        <tr>
+            <th>项目</th>
+            <th>内容</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>时间点</strong></td>
+            <td>描述内容</td>
+        </tr>
+    </tbody>
+</table>
+```
+
+### 5. 步骤表格 Block
+
+统一使用三列表格格式：
+
+```html
+<table>
+    <thead>
+        <tr>
+            <th>步骤</th>
+            <th>操作</th>
+            <th>说明</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>1. 步骤名称</strong></td>
+            <td>操作描述</td>
+            <td>详细说明</td>
+        </tr>
+    </tbody>
+</table>
+```
+
+### 6. 对比表格 Block
+
+```html
+<table>
+    <thead>
+        <tr>
+            <th>对比项</th>
+            <th>选项1</th>
+            <th>选项2</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>特性</strong></td>
+            <td>值1</td>
+            <td>值2</td>
+        </tr>
+    </tbody>
+</table>
+```
+
+### 7. 关键点 Block
+
+可以使用列表或表格：
+
+**列表形式**：
+```html
+<p><strong>关键点</strong>：</p>
+<ul>
+    <li>要点1</li>
+    <li>要点2</li>
+</ul>
+```
+
+**表格形式**：
+```html
+<table>
+    <thead>
+        <tr>
+            <th>要点</th>
+            <th>说明</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>要点名称</strong></td>
+            <td>详细说明</td>
+        </tr>
+    </tbody>
+</table>
+```
+
+## 样式说明
+
+所有 block 的样式都在 `/style.css` 中统一定义：
+
+- `.code-block` - 代码块样式
+- `table` - 表格样式（自动应用）
+- `.mermaid` - Mermaid 图表样式
+- `.container` - 容器样式
+
+**不需要在每个笔记文件中重复定义样式。**
+
+## 标题规范
+
+- **h1**：笔记主标题（每个文件只有一个）
+- **h2**：主要章节标题
+- **h3**：子章节标题
+
+标题不需要编号前缀，直接使用文本内容即可。
+
+## 注意事项
+
+1. **不要在每个文件中重复 HTML 头部**：所有文件使用相同的头部模板
+2. **不要自定义样式**：使用 `style.css` 中已定义的样式类
+3. **表格会自动包装**：`table-wrapper.js` 会自动处理表格滚动
+4. **保持 block 格式一致**：相同类型的 block 使用相同的 HTML 结构

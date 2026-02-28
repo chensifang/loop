@@ -10,7 +10,7 @@ body {
     line-height: 1.6;
     color: #1a1a1a;
     background: #fff;
-    padding: 12px;
+    padding: 8px;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -18,16 +18,16 @@ body {
 }
 
 .container {
-    max-width: 900px;
+    max-width: 800px;
     margin: 0 auto;
     background: white;
-    padding: 20px;
+    padding: 16px;
     border-radius: 6px;
     overflow-x: visible; /* 允许表格超出容器 */
 }
 
 .container.wide {
-    max-width: 1000px;
+    max-width: 900px;
 }
 
 /* 标题样式 */
@@ -62,11 +62,24 @@ h3 {
     letter-spacing: -0.005em;
 }
 
+/* 正文文本 Block - 统一样式 */
 p {
     margin-bottom: 10px;
     color: #1a1a1a;
     font-size: 14px;
     line-height: 1.6;
+}
+
+li {
+    margin-bottom: 6px;
+    color: #1a1a1a;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+strong {
+    color: #1a1a1a;
+    font-weight: 600;
 }
 
 .subtitle {
@@ -77,40 +90,11 @@ p {
     line-height: 1.6;
 }
 
-/* 表格包装容器 - 支持横向滚动 */
-.table-wrapper {
-    position: relative;
-    margin: 12px 0;
-    overflow-x: auto;
-    overflow-y: visible;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-    -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
-    /* 宽度和对齐方式由 JavaScript 动态设置 */
-}
-
-.table-wrapper::-webkit-scrollbar {
-    display: none;
-}
-
-
-/* 表格样式 - 简单网格线 */
-.table-wrapper table {
-    position: relative;
-    z-index: 1;
-    width: max-content; /* 根据内容决定宽度 */
-    border-collapse: collapse;
-    margin: 0;
-    border: 1px solid #d1d5da;
-    table-layout: auto; /* 自动布局，根据内容调整，但单元格仍遵守 max-width */
-}
-
-/* 兼容没有包装的表格 */
+/* 表格基本样式 */
 table {
     width: 100%;
     border-collapse: collapse;
     margin: 14px 0;
-    border: 1px solid #d1d5da;
 }
 
 thead {
@@ -121,29 +105,19 @@ th {
     padding: 8px 12px;
     text-align: left;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     color: #1a1a1a;
     border: 1px solid #d1d5da;
-    max-width: 400px; /* 设置最大宽度，超过此宽度会换行 */
-    min-width: 0; /* 允许单元格收缩 */
-    word-wrap: break-word; /* 允许长单词换行 */
-    word-break: break-word; /* 允许在单词内换行 */
-    white-space: normal; /* 允许换行 */
-    overflow-wrap: break-word; /* 现代浏览器的换行属性 */
+    vertical-align: top;
 }
 
 td {
     padding: 8px 12px;
-    font-size: 13px;
+    font-size: 14px;
     color: #1a1a1a;
     border: 1px solid #d1d5da;
     vertical-align: top;
-    max-width: 400px; /* 设置最大宽度，超过此宽度会换行 */
-    min-width: 0; /* 允许单元格收缩 */
-    word-wrap: break-word; /* 允许长单词换行 */
-    word-break: break-word; /* 允许在单词内换行 */
-    white-space: normal; /* 允许换行 */
-    overflow-wrap: break-word; /* 现代浏览器的换行属性 */
+    line-height: 1.6;
 }
 
 /* 移除表格行悬停高亮效果 */
@@ -272,18 +246,7 @@ ul, ol {
     padding-left: 0;
 }
 
-li {
-    margin-bottom: 6px;
-    color: #1a1a1a;
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-strong {
-    color: #1a1a1a;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-}
+/* 重复样式已移除，使用上方统一定义 */
 
 /* 行内代码样式 */
 code {
@@ -412,24 +375,7 @@ code.highlight {
         font-size: 16px;
     }
     
-    .table-wrapper {
-        margin: 12px calc(50% - 50vw); /* 相对于视口居中 */
-        width: 100vw; /* 宽度为整个视口宽度 */
-    }
-    
-    .table-wrapper table {
-        font-size: 13px;
-        min-width: 600px; /* 手机上最小宽度，确保内容不被压缩 */
-    }
-    
-    table {
-        font-size: 13px;
-    }
-    
-    th, td {
-        padding: 6px 8px;
-        max-width: 400px; /* 手机上最大宽度 */
-    }
+    /* 表格使用浏览器默认样式 */
     
     .code-block {
         font-size: 12px;

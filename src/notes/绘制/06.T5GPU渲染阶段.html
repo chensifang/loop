@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>T5：GPU 渲染阶段（渲染到屏幕）</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>时间点</strong></td>
+                    <td>VSync 信号触发后，GPU 开始渲染</td>
+                </tr>
+                <tr>
+                    <td><strong>这个阶段发生了什么</strong></td>
+                    <td>（见下方内容）</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>GPU 渲染管线（Rendering Pipeline）</h2>
+
+        <p>GPU 按照固定的渲染管线处理每一帧：</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>阶段</th>
+                    <th>名称</th>
+                    <th>作用</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1</strong></td>
+                    <td>顶点着色（Vertex Shading）</td>
+                    <td>处理 Layer 的几何信息（position、bounds、transform）；将 Layer 的顶点坐标转换到屏幕坐标系；应用变换矩阵（transform）</td>
+                </tr>
+                <tr>
+                    <td><strong>2</strong></td>
+                    <td>图元装配（Primitive Assembly）</td>
+                    <td>将顶点组装成图元（三角形、四边形等）；确定哪些图元在屏幕可见区域内</td>
+                </tr>
+                <tr>
+                    <td><strong>3</strong></td>
+                    <td>光栅化（Rasterization）</td>
+                    <td>将图元转换成像素片段（fragments）；确定每个像素的颜色值</td>
+                </tr>
+                <tr>
+                    <td><strong>4</strong></td>
+                    <td>片段着色（Fragment Shading）</td>
+                    <td>对每个像素片段进行着色；如果有纹理（texture），从纹理中采样颜色；应用视觉属性（backgroundColor、opacity 等）；处理混合模式（blend mode）</td>
+                </tr>
+                <tr>
+                    <td><strong>5</strong></td>
+                    <td>片段处理（Fragment Processing）</td>
+                    <td>深度测试（z-order）；模板测试；混合（blending）</td>
+                </tr>
+                <tr>
+                    <td><strong>6</strong></td>
+                    <td>写入 FrameBuffer</td>
+                    <td>将渲染结果写入 FrameBuffer（帧缓冲区）；FrameBuffer 是 GPU 内存中的一块区域，存储最终要显示的图像</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>双缓冲机制（Double Buffering）</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Buffer</th>
+                    <th>作用</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Front Buffer</strong></td>
+                    <td>当前显示</td>
+                    <td>当前显示在屏幕上的帧</td>
+                </tr>
+                <tr>
+                    <td><strong>Back Buffer</strong></td>
+                    <td>正在渲染</td>
+                    <td>正在渲染的帧</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>工作流程</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>步骤</th>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1</strong></td>
+                    <td>GPU 在 Back Buffer 中渲染新帧</td>
+                    <td>渲染新的一帧内容</td>
+                </tr>
+                <tr>
+                    <td><strong>2</strong></td>
+                    <td>VSync 信号到来时，交换 Buffer</td>
+                    <td>Front Buffer 和 Back Buffer 交换</td>
+                </tr>
+                <tr>
+                    <td><strong>3</strong></td>
+                    <td>显示 Front Buffer 的内容</td>
+                    <td>保证屏幕显示的是完整的帧，不会出现撕裂（tearing）</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>VSync 信号的作用</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>作用</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>同步渲染和显示</strong></td>
+                    <td>确保 GPU 渲染完成后再显示</td>
+                </tr>
+                <tr>
+                    <td><strong>防止撕裂</strong></td>
+                    <td>在屏幕刷新间隙交换 Buffer</td>
+                </tr>
+                <tr>
+                    <td><strong>控制帧率</strong></td>
+                    <td>限制渲染频率，避免过度渲染</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>显示到屏幕</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>步骤</th>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1</strong></td>
+                    <td>FrameBuffer 数据输出</td>
+                    <td>FrameBuffer 中的数据通过显示控制器（Display Controller）输出到屏幕</td>
+                </tr>
+                <tr>
+                    <td><strong>2</strong></td>
+                    <td>屏幕扫描显示</td>
+                    <td>屏幕硬件按照刷新率（60Hz 或 120Hz）逐行扫描显示</td>
+                </tr>
+                <tr>
+                    <td><strong>3</strong></td>
+                    <td>用户看到结果</td>
+                    <td>最终用户看到渲染结果</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>关键点</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>要点</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>并行处理</strong></td>
+                    <td>GPU 渲染是并行处理的，非常高效</td>
+                </tr>
+                <tr>
+                    <td><strong>同步机制</strong></td>
+                    <td>VSync 信号保证渲染和显示同步</td>
+                </tr>
+                <tr>
+                    <td><strong>防止撕裂</strong></td>
+                    <td>双缓冲机制防止画面撕裂</td>
+                </tr>
+                <tr>
+                    <td><strong>掉帧条件</strong></td>
+                    <td>如果 GPU 渲染时间超过 16.67ms（60 FPS），会出现掉帧</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>性能考虑</h2>
+
+        <p><strong>GPU 渲染瓶颈</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>瓶颈类型</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>纹理大小</strong></td>
+                    <td>大纹理占用显存</td>
+                </tr>
+                <tr>
+                    <td><strong>视图混合</strong></td>
+                    <td>多个 Layer 混合需要更多计算</td>
+                </tr>
+                <tr>
+                    <td><strong>离屏渲染</strong></td>
+                    <td>off-screen rendering，需要额外的渲染 pass</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>掉帧的原因</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>原因</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CPU 处理时间过长</strong></td>
+                    <td>Layout、Display 阶段耗时过长</td>
+                </tr>
+                <tr>
+                    <td><strong>GPU 渲染时间过长</strong></td>
+                    <td>复杂图形、大量混合</td>
+                </tr>
+                <tr>
+                    <td><strong>位图上传时间过长</strong></td>
+                    <td>大图片上传到 GPU 耗时</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

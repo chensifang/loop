@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>T2：Display 阶段（生成 bitmap）</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>时间点</strong></td>
+                    <td>Layout 阶段之后，RunLoop 进入休眠前</td>
+                </tr>
+                <tr>
+                    <td><strong>触发时机</strong></td>
+                    <td>
+                        <ul style="margin: 0; padding-left: 20px;">
+                            <li>RunLoop 的 <code class="highlight">kCFRunLoopBeforeWaiting</code> 阶段</li>
+                            <li>或者手动调用 <code class="highlight">displayIfNeeded()</code> 时</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>这个阶段发生了什么</strong></td>
+                    <td>
+                        <ol style="margin: 0; padding-left: 20px;">
+                            <li><strong>检查哪些 Layer 需要 Display</strong>
+                                <ul>
+                                    <li>系统检查所有被标记为"需要显示"的 Layer</li>
+                                    <li><code class="highlight">setNeedsDisplay</code> 标记的 Layer 会被处理</li>
+                                    <li>只有被标记的 Layer 才会执行 Display</li>
+                                </ul>
+                            </li>
+                            <li><strong>CALayer 的 display 方法被调用</strong>
+                                <ul>
+                                    <li>对于被标记的 Layer，系统会调用 <code class="highlight">display(_:)</code> 方法</li>
+                                    <li>这个方法负责生成 bitmap 并存入 <code class="highlight">contents</code></li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>CALayer 的 display 方法流程</h2>
+
+        <p><code class="highlight">[CALayer display]</code> 方法被调用时，会根据 delegate 的实现情况，走不同的绘制路径：</p>
+
+        <div class="mermaid">
+graph TD
+    A[开始: CALayer display 被触发] --> B{delegate 是否响应<br/>displayLayer: ?}
+    
+    B -- 是 --> C[执行 delegate.displayLayer: layer]
+    C --> D{开发者是否手动<br/>赋值 contents?}
+    D -- 是 --> E[显示开发者提供的位图]
+    D -- 否 --> F[Layer 显示为空白]
+    E --> END[结束: 提交至 Render Server]
+    F --> END
+
+    B -- 否 --> G{是否满足 CPU 绘图条件?<br/>重写了 drawRect: 或<br/>drawLayer:inContext:}
+    
+    G -- 是 --> H[1. 创建 Backing Store 位图内存]
+    H --> I[2. 执行绘图链条: 调用 drawRect:]
+    I --> J[3. 渲染生成位图 CGImage]
+    J --> K[4. 赋值: layer.contents = bitmap]
+    K --> END
+    
+    G -- 否 --> L{是否存在已有内容?<br/>如 UIImageView.image<br/>或手动设过 contents}
+    
+    L -- 是 --> M[直接使用已有 contents 位图]
+    M --> END
+    
+    L -- 否 --> N{是否有样式属性?<br/>backgroundColor / border / corner}
+    N -- 是 --> O[GPU 属性渲染路径:<br/>不产生位图内存, 直接指令着色]
+    N -- 否 --> P[Layer 完全透明/无内容]
+    O --> END
+    P --> END
+
+    style B fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#f96,stroke:#333,stroke-width:2px
+    style O fill:#9f9,stroke:#333,stroke-width:2px
+    style H fill:#f66,stroke:#333,stroke-width:2px
+        </div>
+
+        <p><strong>关键点说明</strong>：</p>
+
+        <ol>
+            <li><strong>第一个判断</strong>：<code class="highlight">displayLayer:</code> 方法
+                <ul>
+                    <li>如果实现了 → 走完全自定义/异步绘制入口（路径 A）</li>
+                    <li>系统完全放手，不创建上下文，不调用 drawRect</li>
+                    <li>开发者必须手动给 <code class="highlight">layer.contents</code> 赋值</li>
+                    <li>如果没实现 → 走系统接管流程（路径 B）</li>
+                </ul>
+            </li>
+            <li><strong>系统接管流程中的关键判定</strong>：是否需要 CPU 绘图？
+                <ul>
+                    <li>系统会先检查：是否覆写了 <code class="highlight">drawRect:</code> 或实现了 <code class="highlight">drawLayer:inContext:</code></li>
+                    <li>如果不需要 CPU 绘图（极速路径）：
+                        <ul>
+                            <li>不创建 Backing Store，不产生位图内存</li>
+                            <li>直接结束，GPU 根据 <code class="highlight">backgroundColor</code> 等属性直接着色</li>
+                            <li>这是 90% 普通 UIView 的状态，内存开销极低</li>
+                        </ul>
+                    </li>
+                    <li>如果需要 CPU 绘图（降级路径）：
+                        <ul>
+                            <li>创建 Backing Store（开辟内存：宽 × 高 × 4 字节）</li>
+                            <li>调用绘图链条（<code class="highlight">drawLayer:inContext:</code> 或 <code class="highlight">drawRect:</code>）</li>
+                            <li>生成位图，存入 <code class="highlight">layer.contents</code></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><strong>drawRect: 的调用条件（唯一路径）</strong>：
+                <ul>
+                    <li>delegate 没有实现 <code class="highlight">displayLayer:</code>（否则走异步绘制）</li>
+                    <li>系统判定需要 CPU 绘图（覆写了 <code class="highlight">drawRect:</code> 或实现了 <code class="highlight">drawLayer:inContext:</code>）</li>
+                    <li>delegate 没有实现 <code class="highlight">drawLayer:inContext:</code>（否则走 drawLayer:inContext:）</li>
+                    <li>delegate 是 UIView（否则不会调用 drawRect:）</li>
+                    <li>UIView 覆写了 <code class="highlight">drawRect:</code> 方法</li>
+                    <li>结论：只有同时满足以上所有条件，才会调用 <code class="highlight">drawRect:</code></li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>三种不同的 Display 路径</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>路径</th>
+                    <th>Layer</th>
+                    <th>显示方式</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>路径 A</strong></td>
+                    <td>UIButton 自身的 Layer</td>
+                    <td>GPU 直接渲染</td>
+                    <td>只设置了 <code class="highlight">backgroundColor</code>、<code class="highlight">cornerRadius</code> 等属性，不生成 bitmap，<code class="highlight">contents</code> 保持为 nil</td>
+                </tr>
+                <tr>
+                    <td><strong>路径 B</strong></td>
+                    <td>UIImageView 的 Layer</td>
+                    <td>图片解码成 bitmap</td>
+                    <td>图片文件（PNG/JPEG）需要解码成未压缩的 bitmap，解码后的 bitmap 赋值给 <code class="highlight">layer.contents</code></td>
+                </tr>
+                <tr>
+                    <td><strong>路径 C</strong></td>
+                    <td>UILabel 的 Layer</td>
+                    <td>文字光栅化成 bitmap</td>
+                    <td>Core Text 根据字体、字号、行距等属性进行排版，排版结果光栅化成 bitmap，bitmap 存入 <code class="highlight">layer.contents</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>光栅化是什么？</h2>
+
+        <p><strong>光栅化（Rasterization）</strong>：将矢量图形转换成位图（bitmap）的过程。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>类型</th>
+                    <th>定义</th>
+                    <th>优点</th>
+                    <th>缺点</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>矢量图形</strong></td>
+                    <td>用数学公式描述的图形（如文字轮廓、Bezier 曲线）</td>
+                    <td>可以无限放大不失真</td>
+                    <td>GPU 无法直接渲染，需要先转换成像素</td>
+                </tr>
+                <tr>
+                    <td><strong>位图（bitmap）</strong></td>
+                    <td>由像素点组成的图像</td>
+                    <td>GPU 可以直接渲染</td>
+                    <td>放大后会模糊</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>在 UILabel 中的光栅化过程</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>阶段</th>
+                    <th>过程</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. Core Text 排版</strong></td>
+                    <td>矢量阶段</td>
+                    <td>根据字体文件（TTF/OTF）中的轮廓数据，计算出文字的矢量轮廓；轮廓是数学曲线，不是像素</td>
+                </tr>
+                <tr>
+                    <td><strong>2. 光栅化</strong></td>
+                    <td>矢量 → 位图</td>
+                    <td>将矢量轮廓"填充"成像素点；根据 Label 的 bounds 大小，创建一个像素网格；判断每个像素点是否在文字轮廓内；如果在轮廓内，就填充颜色（通常是黑色）；如果在轮廓边缘，可能做抗锯齿处理（半透明像素）；最终得到一个 bitmap（像素矩阵）</td>
+                </tr>
+                <tr>
+                    <td><strong>3. 存入 contents</strong></td>
+                    <td>存储位图</td>
+                    <td>光栅化后的 bitmap 存入 <code class="highlight">layer.contents</code>；GPU 可以直接读取这个 bitmap 进行渲染</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>位图和纹理的关系</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>对比项</th>
+                    <th>位图（Bitmap）</th>
+                    <th>纹理（Texture）</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>定义</strong></td>
+                    <td>由像素点组成的图像数据</td>
+                    <td>GPU 内存中的图像数据</td>
+                </tr>
+                <tr>
+                    <td><strong>存储位置</strong></td>
+                    <td>CPU 内存（<code class="highlight">layer.contents</code> 存储的就是位图）</td>
+                    <td>GPU 显存</td>
+                </tr>
+                <tr>
+                    <td><strong>存储格式</strong></td>
+                    <td>二维数组，每个元素是一个像素的颜色值（RGBA）</td>
+                    <td>GPU 可以直接读取和渲染的格式</td>
+                </tr>
+                <tr>
+                    <td><strong>大小计算</strong></td>
+                    <td>宽 × 高 × 4 字节（每个像素占用 4 字节 RGBA）</td>
+                    <td>与位图相同</td>
+                </tr>
+                <tr>
+                    <td><strong>本质</strong></td>
+                    <td>图像数据本身</td>
+                    <td>位图上传到 GPU 内存后，就变成了纹理</td>
+                </tr>
+                <tr>
+                    <td><strong>转换过程</strong></td>
+                    <td colspan="2">CPU 内存（位图） → 上传到 GPU → GPU 内存（纹理） → GPU 渲染</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>在 iOS 绘制流程中的位置</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>阶段</th>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>t2 阶段（Display）</strong></td>
+                    <td>生成位图</td>
+                    <td>存入 <code class="highlight">layer.contents</code>（CPU 内存）；UILabel：文字光栅化成位图；UIImageView：图片解码成位图</td>
+                </tr>
+                <tr>
+                    <td><strong>t3 阶段（Commit）</strong></td>
+                    <td>提交数据</td>
+                    <td>位图数据随 Layer 信息一起提交到 Render Server</td>
+                </tr>
+                <tr>
+                    <td><strong>t4 阶段（Render Server）</strong></td>
+                    <td>位图上传</td>
+                    <td>位图上传到 GPU 内存，变成纹理</td>
+                </tr>
+                <tr>
+                    <td><strong>t5 阶段（GPU 渲染）</strong></td>
+                    <td>纹理采样</td>
+                    <td>GPU 从纹理中采样像素，进行渲染</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>异步绘制实现示例</h2>
+
+        <p>如果 delegate 实现了 <code class="highlight">displayLayer:</code> 方法，可以自定义异步绘制逻辑：</p>
+
+        <div class="code-block"><code><span class="comment">// 自定义 CALayer，实现异步绘制</span>
+<span class="keyword">@interface</span> <span class="type">AsyncLayer</span> : <span class="type">CALayer</span>
+<span class="keyword">@property</span> (atomic, assign) <span class="type">BOOL</span> isDrawing;  <span class="comment">// 绘制状态标记</span>
+<span class="keyword">@end</span>
+
+<span class="keyword">@implementation</span> <span class="type">AsyncLayer</span>
+
+- (<span class="keyword">void</span>)setNeedsDisplay {
+    <span class="comment">// 收到新的绘制请求时，取消正在绘制的线程</span>
+    <span class="keyword">self</span>.isDrawing = <span class="keyword">NO</span>;
+    [<span class="keyword">super</span> setNeedsDisplay];
+}
+
+- (<span class="keyword">void</span>)display {
+    <span class="comment">// 判断 delegate 是否实现了 displayLayer: 方法</span>
+    <span class="keyword">if</span> ([<span class="keyword">self</span>.delegate respondsToSelector:<span class="keyword">@selector</span>(displayLayer:)]) {
+        <span class="comment">// ✅ 走异步绘制入口</span>
+        [<span class="keyword">self</span> asyncDraw];
+    } <span class="keyword">else</span> {
+        <span class="comment">// ❌ 走系统绘制流程</span>
+        [<span class="keyword">super</span> display];
+    }
+}
+
+- (<span class="keyword">void</span>)asyncDraw {
+    <span class="keyword">self</span>.isDrawing = <span class="keyword">YES</span>;
+    
+    <span class="comment">// 在后台线程进行绘制</span>
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, <span class="number">0</span>), ^{
+        
+        <span class="comment">// 检查是否被取消</span>
+        <span class="keyword">if</span> (!<span class="keyword">self</span>.isDrawing) <span class="keyword">return</span>;
+        
+        <span class="comment">// 1. 创建绘制上下文（后台线程）</span>
+        <span class="type">CGSize</span> size = <span class="keyword">self</span>.bounds.size;
+        <span class="type">CGFloat</span> scale = [<span class="type">UIScreen</span> mainScreen].scale;
+        <span class="type">UIGraphicsBeginImageContextWithOptions</span>(size, <span class="keyword">self</span>.opaque, scale);
+        <span class="type">CGContextRef</span> context = <span class="type">UIGraphicsGetCurrentContext</span>();
+        
+        <span class="comment">// 2. 设置背景色（如果需要）</span>
+        <span class="keyword">if</span> (<span class="keyword">self</span>.opaque && <span class="keyword">self</span>.backgroundColor) {
+            <span class="type">CGContextSetFillColorWithColor</span>(context, <span class="keyword">self</span>.backgroundColor);
+            <span class="type">CGContextFillRect</span>(context, <span class="type">CGRectMake</span>(<span class="number">0</span>, <span class="number">0</span>, size.width * scale, size.height * scale));
+        }
+        
+        <span class="comment">// 3. 调用 delegate 的绘制方法（后台线程）</span>
+        <span class="keyword">if</span> ([<span class="keyword">self</span>.delegate respondsToSelector:<span class="keyword">@selector</span>(drawLayer:inContext:)]) {
+            [<span class="keyword">self</span>.delegate drawLayer:<span class="keyword">self</span> inContext:context];
+        }
+        
+        <span class="comment">// 4. 检查是否被取消</span>
+        <span class="keyword">if</span> (!<span class="keyword">self</span>.isDrawing) {
+            <span class="type">UIGraphicsEndImageContext</span>();
+            <span class="keyword">return</span>;
+        }
+        
+        <span class="comment">// 5. 从上下文生成图片</span>
+        <span class="type">UIImage</span> *image = <span class="type">UIGraphicsGetImageFromCurrentImageContext</span>();
+        <span class="type">UIGraphicsEndImageContext</span>();
+        
+        <span class="comment">// 6. 在主线程设置 contents</span>
+        dispatch_async(dispatch_get_main_queue(), ^{
+            <span class="keyword">if</span> (<span class="keyword">self</span>.isDrawing) {
+                <span class="keyword">self</span>.contents = (__bridge id)(image.CGImage);
+            }
+        });
+    });
+}
+
+<span class="keyword">@end</span></code></div>
+
+        <h2>系统绘制 vs 异步绘制</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>系统绘制（drawRect）</th>
+                    <th>异步绘制（displayLayer）</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>触发条件</strong></td>
+                    <td>delegate 没有实现 <code class="highlight">displayLayer:</code></td>
+                    <td>delegate 实现了 <code class="highlight">displayLayer:</code></td>
+                </tr>
+                <tr>
+                    <td><strong>执行线程</strong></td>
+                    <td>主线程</td>
+                    <td>可以后台线程</td>
+                </tr>
+                <tr>
+                    <td><strong>内存消耗</strong></td>
+                    <td>大（backing store）</td>
+                    <td>大（backing store）</td>
+                </tr>
+                <tr>
+                    <td><strong>使用场景</strong></td>
+                    <td>默认路径，简单绘制</td>
+                    <td>复杂绘制，需要性能优化</td>
+                </tr>
+                <tr>
+                    <td><strong>是否阻塞主线程</strong></td>
+                    <td>是</td>
+                    <td>否（如果实现得当）</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>关键点</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>要点</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>路径判断</strong></td>
+                    <td><code class="highlight">display</code> 方法中判断 delegate 是否实现了 <code class="highlight">displayLayer:</code>，决定走哪个路径</td>
+                </tr>
+                <tr>
+                    <td><strong>异步绘制</strong></td>
+                    <td>异步绘制在后台线程创建 context 并绘制</td>
+                </tr>
+                <tr>
+                    <td><strong>主线程设置</strong></td>
+                    <td>绘制完成后，必须在主线程设置 <code class="highlight">layer.contents</code></td>
+                </tr>
+                <tr>
+                    <td><strong>取消逻辑</strong></td>
+                    <td>需要处理取消逻辑，避免重复绘制</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

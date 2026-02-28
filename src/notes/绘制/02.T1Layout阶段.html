@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>T1：Layout 阶段（布局计算）</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>时间点</strong></td>
+                    <td>RunLoop 进入休眠前，或者手动调用 <code class="highlight">layoutIfNeeded()</code> 时</td>
+                </tr>
+                <tr>
+                    <td><strong>触发时机</strong></td>
+                    <td>
+                        <ul style="margin: 0; padding-left: 20px;">
+                            <li>RunLoop 的 <code class="highlight">kCFRunLoopBeforeWaiting</code> 阶段</li>
+                            <li>或者代码中显式调用 <code class="highlight">view.layoutIfNeeded()</code></li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>这个阶段发生了什么</strong></td>
+                    <td>（见下方表格）</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>步骤</th>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. 检查哪些视图需要布局</strong></td>
+                    <td>检查标记</td>
+                    <td>系统只检查被标记为"需要布局"的视图；如果没有调用 <code class="highlight">setNeedsLayout</code>，且系统也没有自动标记，这些视图不会执行 layout</td>
+                </tr>
+                <tr>
+                    <td><strong>2. UIButton 的布局计算</strong></td>
+                    <td>布局子视图</td>
+                    <td>只有被标记的视图才会执行；<code class="highlight">layoutSubviews()</code> 被调用（如果 UIButton 覆写了这个方法）；UIButton 内部会布局它的子视图：<code class="highlight">UIImageView</code> 的 frame、<code class="highlight">UILabel</code> 的 frame；这些 frame 值会同步到对应的 Layer 的 frame</td>
+                </tr>
+                <tr>
+                    <td><strong>3. Layer 的 frame 同步</strong></td>
+                    <td>同步几何属性</td>
+                    <td>UIView 的 frame → CALayer 的 frame；CALayer 的 frame → position、bounds、anchorPoint 等属性；此时 Layer 的几何属性才真正确定</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>关键点</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>特性</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>作用</strong></td>
+                    <td>只计算位置和大小，不进行绘制</td>
+                </tr>
+                <tr>
+                    <td><strong>contents 状态</strong></td>
+                    <td>所有 Layer 的 <code class="highlight">contents</code> 仍然没有生成</td>
+                </tr>
+                <tr>
+                    <td><strong>确定内容</strong></td>
+                    <td>这个阶段确定的是"在哪里显示"和"显示多大"</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Layout 和 Display 的区别</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>对比项</th>
+                    <th>Layout</th>
+                    <th>Display</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>作用</strong></td>
+                    <td>计算位置和大小</td>
+                    <td>生成显示内容</td>
+                </tr>
+                <tr>
+                    <td><strong>计算内容</strong></td>
+                    <td>frame、bounds、center 等几何属性</td>
+                    <td>生成 bitmap（contents）</td>
+                </tr>
+                <tr>
+                    <td><strong>确定内容</strong></td>
+                    <td>"在哪里显示"、"显示多大"</td>
+                    <td>"显示什么"</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>动画中为什么必须用 layoutIfNeeded()？</h2>
+
+        <p>如果想做一个 <code class="highlight">NSLayoutConstraint</code> 的动画，必须先修改 constant，然后在一个 <code class="highlight">UIView.animate</code> 闭包里调用 <code class="highlight">layoutIfNeeded()</code>。如果调用 <code class="highlight">setNeedsLayout()</code>，动画会瞬间完成。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>方法</th>
+                    <th>执行方式</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code class="highlight">setNeedsLayout()</code></td>
+                    <td>异步</td>
+                    <td>只标记"需要布局"，实际布局会在 RunLoop 下一圈执行</td>
+                </tr>
+                <tr>
+                    <td><code class="highlight">layoutIfNeeded()</code></td>
+                    <td>同步</td>
+                    <td>立即执行布局计算</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>为什么动画中必须用 layoutIfNeeded()</strong>：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>原因</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>动画工作原理</strong></td>
+                    <td><code class="highlight">UIView.animate</code> 闭包会捕获闭包执行时的视图状态；动画系统会在每一帧更新视图属性，产生动画效果</td>
+                </tr>
+                <tr>
+                    <td><strong>setNeedsLayout() 的问题</strong></td>
+                    <td>只是标记，不会立即执行；动画闭包立即结束，动画系统只看到开始和结束状态；等到 RunLoop 下一圈执行布局时，动画闭包已经结束了；结果：看不到动画效果，瞬间完成</td>
+                </tr>
+                <tr>
+                    <td><strong>layoutIfNeeded() 的优势</strong></td>
+                    <td>立即执行布局计算；动画系统可以捕获到布局变化的过程；每一帧都会更新布局，产生平滑的动画效果</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
