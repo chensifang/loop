@@ -24,6 +24,50 @@ body {
     padding: 16px;
     border-radius: 6px;
     overflow-x: visible; /* 允许表格超出容器 */
+    position: relative; /* 为右上角按钮提供定位上下文 */
+}
+
+/* 目录按钮样式 */
+.directory-button {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
+    background: #f6f8fa;
+    color: #24292f;
+    border: 1px solid #d0d7de;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+}
+
+.directory-button:hover {
+    background: #f3f4f6;
+    border-color: #c4c9d0;
+    color: #1a1a1a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.directory-button:active {
+    background: #eaeef2;
+    border-color: #b8bec5;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+/* 响应式：小屏幕时调整按钮位置 */
+@media (max-width: 768px) {
+    .directory-button {
+        top: 8px;
+        right: 8px;
+        padding: 5px 12px;
+        font-size: 12px;
+    }
 }
 
 .container.wide {

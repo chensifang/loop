@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <button class="directory-button" onclick="window.location.href='/'">目录</button>
+    <div class="container">
+        <h1>iOS 绘制框架分层架构</h1>
+
+        <p>iOS 的图形渲染体系采用分层架构，框架像洋葱一样分层包裹。越上层越易用，越底层性能越高、控制力越强。</p>
+
+        <h2>四层架构概览</h2>
+
+        <div class="mermaid">
+graph TD
+    A[第一层：应用层<br/>UIKit / SwiftUI] --> B[第二层：核心服务层<br/>Core Animation / Core Graphics / Core Text]
+    B --> C[第三层：硬件抽象层<br/>Metal]
+    C --> D[第四层：领域特定层<br/>SceneKit / SpriteKit / ARKit]
+    D --> E[GPU 硬件]
+        </div>
+
+        <h2>第一层：应用层（Application Layer）</h2>
+
+        <p><strong>特点</strong>：最顶层，也是平时写的最多的。这些框架是对底层渲染能力的高级封装，目的是让开发者能快速构建 UI，不需要关心像素和显卡。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>框架</th>
+                    <th>核心组件</th>
+                    <th>主要职责</th>
+                    <th>特点</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>UIKit</strong></td>
+                    <td>UIView、UIViewController</td>
+                    <td>处理用户交互、布局、动画的高级接口</td>
+                    <td>本身不直接渲染像素，而是管理 CALayer 图层树</td>
+                </tr>
+                <tr>
+                    <td><strong>AppKit</strong></td>
+                    <td>NSView、NSViewController</td>
+                    <td>macOS 的 UI 框架（UIKit 的 macOS 版本）</td>
+                    <td>与 UIKit 类似，但针对 macOS</td>
+                </tr>
+                <tr>
+                    <td><strong>SwiftUI</strong></td>
+                    <td>View、ViewModifier</td>
+                    <td>声明式 UI 框架</td>
+                    <td>底层混合使用 Core Animation 和 Metal</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>第二层：核心服务层（Core Services Layer）</h2>
+
+        <p><strong>特点</strong>：iOS 图形渲染的引擎，也是区分初级和高级工程师的分水岭。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>框架</th>
+                    <th>核心组件</th>
+                    <th>主要职责</th>
+                    <th>执行位置</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Core Animation</strong><br/>(Quartz Core)</td>
+                    <td>CALayer、CAAnimation</td>
+                    <td>图层合成引擎，负责把多个图层高效合成</td>
+                    <td>GPU（合成）</td>
+                </tr>
+                <tr>
+                    <td><strong>Core Graphics</strong><br/>(Quartz 2D)</td>
+                    <td>CGContext、CGPath、CGImage</td>
+                    <td>CPU 绘图引擎，2D 矢量绘图，输出位图</td>
+                    <td>主要在 CPU</td>
+                </tr>
+                <tr>
+                    <td><strong>Core Image</strong></td>
+                    <td>CIImage、CIFilter</td>
+                    <td>图像处理滤镜库（模糊、色彩调整等）</td>
+                    <td>GPU（并行计算）</td>
+                </tr>
+                <tr>
+                    <td><strong>Core Text</strong></td>
+                    <td>CTFrame、CTLine</td>
+                    <td>文字排版引擎，处理复杂文字渲染</td>
+                    <td>CPU</td>
+                </tr>
+                <tr>
+                    <td><strong>TextKit</strong></td>
+                    <td>NSLayoutManager、NSTextContainer</td>
+                    <td>高级文字排版框架（基于 Core Text）</td>
+                    <td>CPU</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Core Animation 的关键作用</h3>
+
+        <p><strong>理解 Core Animation 是精通 iOS 渲染的关键</strong>：</p>
+
+        <ul>
+            <li>Core Animation 是 UIKit 和 GPU 之间的桥梁</li>
+            <li>几乎所有 iOS 动画都由它驱动</li>
+            <li>性能优化的核心在于减少不必要的 Layer 创建和离屏渲染</li>
+        </ul>
+
+        <h2>第三层：硬件抽象层（Hardware Abstraction Layer）</h2>
+
+        <p><strong>特点</strong>：直接与 GPU（图形处理器）对话。如果你做游戏引擎、视频播放器或高性能绘图 App，才会用到这里。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>框架</th>
+                    <th>地位</th>
+                    <th>主要职责</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Metal</strong></td>
+                    <td>现代 iOS 渲染的基石</td>
+                    <td>低开销图形 API，直接与 GPU 对话</td>
+                    <td>✅ 推荐使用</td>
+                </tr>
+                <tr>
+                    <td><strong>OpenGL ES</strong></td>
+                    <td>老一代跨平台图形标准</td>
+                    <td>跨平台图形 API</td>
+                    <td>❌ iOS 12+ 已废弃</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Metal 的重要性</h3>
+
+        <p>Metal 是现代 iOS 渲染的基石：</p>
+
+        <ul>
+            <li>苹果自研的图形 API，直接对标 OpenGL/Vulkan</li>
+            <li>开销极低，能榨干 A 系列芯片的 GPU 性能</li>
+            <li>UIKit、Core Animation、Core Image 底层都通过 Metal 实现</li>
+            <li>从 iOS 12 开始，OpenGL ES 已被废弃，Metal 成为唯一的底层图形 API</li>
+        </ul>
+
+        <h2>第四层：领域特定层（Domain Specific）</h2>
+
+        <p><strong>特点</strong>：基于 Metal 或 OpenGL 封装的专用引擎。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>框架</th>
+                    <th>主要用途</th>
+                    <th>底层技术</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>SceneKit</strong></td>
+                    <td>3D 游戏引擎（模型、光照、物理）</td>
+                    <td>Metal</td>
+                </tr>
+                <tr>
+                    <td><strong>SpriteKit</strong></td>
+                    <td>2D 游戏引擎（精灵图、物理碰撞）</td>
+                    <td>Metal</td>
+                </tr>
+                <tr>
+                    <td><strong>ARKit</strong></td>
+                    <td>增强现实渲染（结合摄像头和 3D 渲染）</td>
+                    <td>Metal + 摄像头数据</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>其他相关框架</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>框架</th>
+                    <th>用途</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Image I/O</strong></td>
+                    <td>图片编解码（PNG、JPEG、HEIF 等）</td>
+                </tr>
+                <tr>
+                    <td><strong>PDFKit</strong></td>
+                    <td>PDF 文档渲染和操作</td>
+                </tr>
+                <tr>
+                    <td><strong>MapKit</strong></td>
+                    <td>地图渲染（基于 Core Animation）</td>
+                </tr>
+                <tr>
+                    <td><strong>AVFoundation</strong></td>
+                    <td>视频渲染和播放</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>框架依赖关系</h2>
+
+        <div class="mermaid">
+graph LR
+    A[UIKit] --> B[Core Animation]
+    C[SwiftUI] --> B
+    C --> D[Metal]
+    B --> D
+    E[Core Graphics] --> B
+    F[Core Image] --> D
+    G[Core Text] --> B
+    H[SceneKit] --> D
+    I[SpriteKit] --> D
+    J[ARKit] --> D
+        </div>
+
+        <h2>使用场景建议</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>推荐框架</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>99% 的场景</strong></td>
+                    <td>UIKit / SwiftUI</td>
+                    <td>日常 UI 开发</td>
+                </tr>
+                <tr>
+                    <td><strong>复杂静态图形/文字</strong></td>
+                    <td>Core Graphics</td>
+                    <td>报表、PDF 生成</td>
+                </tr>
+                <tr>
+                    <td><strong>复杂动画/图层特效</strong></td>
+                    <td>Core Animation</td>
+                    <td>卡片翻转、粒子效果</td>
+                </tr>
+                <tr>
+                    <td><strong>图片滤镜/修图</strong></td>
+                    <td>Core Image</td>
+                    <td>高斯模糊、色彩调整</td>
+                </tr>
+                <tr>
+                    <td><strong>游戏/高性能计算</strong></td>
+                    <td>Metal 或 SpriteKit/SceneKit</td>
+                    <td>游戏引擎、高性能图形</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>各框架的必要性</h2>
+
+        <h3>Core Animation：必须（对于 UIKit）</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>原因</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>UIView 底层就是 CALayer</strong></td>
+                    <td>每个 UIView 都有一个 CALayer；UIView 的 frame、backgroundColor 等属性实际操作的是 CALayer</td>
+                </tr>
+                <tr>
+                    <td><strong>UIKit 依赖 Core Animation</strong></td>
+                    <td>UIKit 的渲染流程：UIView → CALayer → Render Server → GPU；没有 Core Animation，UIKit 无法工作</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>理论上可以不用</strong>：如果不用 UIKit，直接用 Metal 渲染，但会失去 UIKit 的便利性。</p>
+
+        <h3>Core Graphics：大多数情况不需要</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>原因</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>90% 的 UIView 不走 drawRect</strong></td>
+                    <td>系统会先检查是否覆写了 <code class="highlight">drawRect:</code>；如果没有覆写，不会创建 Backing Store，不走 CPU 绘制流程</td>
+                </tr>
+                <tr>
+                    <td><strong>系统控件都不走 drawRect</strong></td>
+                    <td>UIImageView、UILabel、UIButton 等系统控件都不走 drawRect，直接使用 <code class="highlight">layer.contents</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>只有一种情况需要</strong>：当你覆写了 <code class="highlight">drawRect:</code> 方法时。</p>
+
+        <h2>实际开发示例</h2>
+
+        <h3>示例 1：普通 UIView（不需要 Core Graphics）</h3>
+
+        <div class="code-block"><code><span class="keyword">let</span> view = <span class="type">UIView</span>()
+view.backgroundColor = <span class="type">UIColor</span>.blue
+<span class="comment">// ✅ 不走 drawRect，不需要 Core Graphics</span>
+<span class="comment">// ✅ 需要 Core Animation（CALayer）</span></code></div>
+
+        <h3>示例 2：UIImageView（不需要 Core Graphics）</h3>
+
+        <div class="code-block"><code><span class="keyword">let</span> imageView = <span class="type">UIImageView</span>(image: <span class="type">UIImage</span>(named: <span class="string">"icon"</span>))
+<span class="comment">// ✅ 不走 drawRect，不需要 Core Graphics</span>
+<span class="comment">// ✅ 需要 Core Animation（CALayer）</span>
+<span class="comment">// 图片解码后直接存入 layer.contents</span></code></div>
+
+        <h3>示例 3：自定义绘制（需要 Core Graphics）</h3>
+
+        <div class="code-block"><code><span class="keyword">class</span> <span class="type">CustomView</span>: <span class="type">UIView</span> {
+    <span class="keyword">override func</span> draw(<span class="keyword">_</span> rect: <span class="type">CGRect</span>) {
+        <span class="comment">// ❌ 只有这种情况才需要 Core Graphics</span>
+        <span class="keyword">let</span> context = <span class="type">UIGraphicsGetCurrentContext</span>()
+        <span class="comment">// 绘制...</span>
+    }
+}</code></div>
+
+        <h2>总结</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>框架</th>
+                    <th>是否必须</th>
+                    <th>使用场景</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Core Animation</strong></td>
+                    <td>✅ 使用 UIKit 时必须</td>
+                    <td>所有 UIKit 视图都需要</td>
+                </tr>
+                <tr>
+                    <td><strong>Core Graphics</strong></td>
+                    <td>❌ 大多数情况不需要</td>
+                    <td>只有覆写 <code class="highlight">drawRect:</code> 时才需要</td>
+                </tr>
+                <tr>
+                    <td><strong>Metal</strong></td>
+                    <td>✅ 底层必须（间接使用）</td>
+                    <td>所有框架最终都通过 Metal 渲染</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>关键理解</strong>：</p>
+
+        <ul>
+            <li>Core Animation（CALayer）：UIKit 渲染的基础，使用 UIKit 就必须有</li>
+            <li>Core Graphics（drawRect）：仅在自定义绘制时使用，大多数情况下不需要</li>
+            <li>Metal：现代 iOS 渲染的底层基础，所有框架最终都通过它渲染</li>
+        </ul>
+    </div>
+</body>
+</html>

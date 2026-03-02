@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>loop</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/objectivec.min.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("pre code").forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <script src="/table-wrapper.js"></script>
+    <script src="/components/table-component.js"></script>
+</head>
+<body>
+    <button class="directory-button" onclick="window.location.href='/'">目录</button>
+    <div class="container">
+        <h1>CPU 绘制 vs GPU 绘制：本质区别</h1>
+
+        <h2>核心理解</h2>
+
+        <p><strong>关键点</strong>：CPU 不能直接"画"到屏幕上，它只是在内存中生成位图数据。</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>概念</th>
+                    <th>准确含义</th>
+                    <th>位置</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CPU "绘制"</strong></td>
+                    <td>在内存中生成位图数据</td>
+                    <td>CPU 内存（RAM）</td>
+                </tr>
+                <tr>
+                    <td><strong>GPU 绘制</strong></td>
+                    <td>把位图数据渲染到屏幕</td>
+                    <td>GPU 显存 → FrameBuffer → 屏幕</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>CPU "绘制"的真正含义</h2>
+
+        <p>当我们说"CPU 绘制"时，实际上是指：</p>
+
+        <ol>
+            <li><strong>在内存中创建位图</strong>：系统在 CPU 内存中分配一块区域（Backing Store）</li>
+            <li><strong>计算像素数据</strong>：CPU 执行代码，计算每个像素的颜色值</li>
+            <li><strong>写入内存</strong>：将像素数据写入内存数组</li>
+            <li><strong>存储位图</strong>：位图数据存入 <code class="highlight">layer.contents</code></li>
+        </ol>
+
+        <p><strong>重要</strong>：此时屏幕还没有任何变化，只是内存中有了图像数据。</p>
+
+        <h2>GPU 绘制的真正含义</h2>
+
+        <p>GPU 绘制才是真正显示到屏幕的过程：</p>
+
+        <ol>
+            <li><strong>位图上传</strong>：位图数据从 CPU 内存复制到 GPU 显存（变成纹理）</li>
+            <li><strong>GPU 渲染管线</strong>：GPU 执行顶点着色、片段着色、光栅化等操作</li>
+            <li><strong>写入 FrameBuffer</strong>：渲染结果写入帧缓冲区</li>
+            <li><strong>屏幕显示</strong>：屏幕硬件读取 FrameBuffer，显示到屏幕</li>
+        </ol>
+
+        <h2>完整流程对比</h2>
+
+        <h3>示例：drawRect 的完整流程</h3>
+
+        <div class="code-block"><code><span class="keyword">class</span> <span class="type">RedView</span>: <span class="type">UIView</span> {
+    <span class="keyword">override func</span> draw(<span class="keyword">_</span> rect: <span class="type">CGRect</span>) {
+        <span class="comment">// 步骤 1：CPU 在内存中生成位图</span>
+        <span class="keyword">let</span> context = <span class="type">UIGraphicsGetCurrentContext</span>()
+        context?.setFillColor(<span class="type">UIColor</span>.red.cgColor)
+        context?.fill(rect)
+        <span class="comment">// 此时：内存中有红色位图，屏幕还是空白</span>
+    }
+}</code></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>操作</th>
+                    <th>位置</th>
+                    <th>屏幕状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>T0</strong></td>
+                    <td>代码执行，调用 <code class="highlight">drawRect</code></td>
+                    <td>CPU</td>
+                    <td>空白</td>
+                </tr>
+                <tr>
+                    <td><strong>T1</strong></td>
+                    <td>CPU 在内存中生成位图</td>
+                    <td>CPU 内存</td>
+                    <td>空白</td>
+                </tr>
+                <tr>
+                    <td><strong>T2</strong></td>
+                    <td>位图存入 <code class="highlight">layer.contents</code></td>
+                    <td>CPU 内存</td>
+                    <td>空白</td>
+                </tr>
+                <tr>
+                    <td><strong>T3</strong></td>
+                    <td>提交到 Render Server</td>
+                    <td>进程间通信</td>
+                    <td>空白</td>
+                </tr>
+                <tr>
+                    <td><strong>T4</strong></td>
+                    <td>位图上传到 GPU 显存</td>
+                    <td>GPU 显存</td>
+                    <td>空白</td>
+                </tr>
+                <tr>
+                    <td><strong>T5</strong></td>
+                    <td>GPU 渲染到 FrameBuffer</td>
+                    <td>GPU</td>
+                    <td>空白</td>
+                </tr>
+                <tr>
+                    <td><strong>T6</strong></td>
+                    <td>屏幕显示</td>
+                    <td>屏幕硬件</td>
+                    <td>✅ 红色方块</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>技术层面的区别</h2>
+
+        <h3>CPU "绘制"的本质</h3>
+
+        <p><strong>CPU 绘制 = 在内存中生成位图数据</strong></p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>创建位图内存</strong></td>
+                    <td>在 CPU 内存中分配 Backing Store（宽 × 高 × 4 字节）</td>
+                </tr>
+                <tr>
+                    <td><strong>计算像素颜色</strong></td>
+                    <td>CPU 执行代码，计算每个像素的 RGBA 值</td>
+                </tr>
+                <tr>
+                    <td><strong>写入内存数组</strong></td>
+                    <td>将像素数据写入内存的二维数组</td>
+                </tr>
+                <tr>
+                    <td><strong>存储位图</strong></td>
+                    <td>位图数据存入 <code class="highlight">layer.contents</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>关键</strong>：所有操作都在 CPU 内存中进行，屏幕没有任何变化。</p>
+
+        <h3>GPU 绘制的本质</h3>
+
+        <p><strong>GPU 绘制 = 把位图数据渲染到屏幕</strong></p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>操作</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>读取位图数据</strong></td>
+                    <td>从 CPU 内存读取位图数据</td>
+                </tr>
+                <tr>
+                    <td><strong>上传到 GPU</strong></td>
+                    <td>位图数据复制到 GPU 显存（变成纹理）</td>
+                </tr>
+                <tr>
+                    <td><strong>执行渲染管线</strong></td>
+                    <td>GPU 执行顶点着色、片段着色、光栅化等</td>
+                </tr>
+                <tr>
+                    <td><strong>写入 FrameBuffer</strong></td>
+                    <td>渲染结果写入帧缓冲区</td>
+                </tr>
+                <tr>
+                    <td><strong>屏幕显示</strong></td>
+                    <td>屏幕硬件读取 FrameBuffer，显示到屏幕</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>关键</strong>：只有经过 GPU，数据才能显示到屏幕上。</p>
+
+        <h2>为什么说"CPU 绘制"？</h2>
+
+        <p>这是习惯说法，更准确的表述是：</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>习惯说法</th>
+                    <th>准确说法</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>CPU 绘制</td>
+                    <td>CPU 生成位图数据</td>
+                </tr>
+                <tr>
+                    <td>GPU 绘制</td>
+                    <td>GPU 渲染位图到屏幕</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>常见场景</h2>
+
+        <h3>场景 1：drawRect（CPU 绘制）</h3>
+
+        <div class="code-block"><code><span class="keyword">class</span> <span class="type">CustomView</span>: <span class="type">UIView</span> {
+    <span class="keyword">override func</span> draw(<span class="keyword">_</span> rect: <span class="type">CGRect</span>) {
+        <span class="comment">// CPU 在内存中生成位图</span>
+        <span class="keyword">let</span> context = <span class="type">UIGraphicsGetCurrentContext</span>()
+        context?.setFillColor(<span class="type">UIColor</span>.blue.cgColor)
+        context?.fillEllipse(in: rect)
+        <span class="comment">// 位图存入 layer.contents</span>
+        <span class="comment">// 后续由 GPU 渲染到屏幕</span>
+    }
+}</code></div>
+
+        <h3>场景 2：UIImageView（不需要 CPU 绘制）</h3>
+
+        <div class="code-block"><code><span class="keyword">let</span> imageView = <span class="type">UIImageView</span>(image: <span class="type">UIImage</span>(named: <span class="string">"icon"</span>))
+<span class="comment">// 图片解码成位图（CPU 操作）</span>
+<span class="comment">// 位图存入 layer.contents</span>
+<span class="comment">// GPU 直接渲染位图，不需要 drawRect</span></code></div>
+
+        <h3>场景 3：UILabel（文字光栅化）</h3>
+
+        <div class="code-block"><code><span class="keyword">let</span> label = <span class="type">UILabel</span>()
+label.text = <span class="string">"Hello"</span>
+<span class="comment">// Core Text 排版（CPU 操作）</span>
+<span class="comment">// 文字光栅化成位图（CPU 操作）</span>
+<span class="comment">// 位图存入 layer.contents</span>
+<span class="comment">// GPU 直接渲染位图，不需要 drawRect</span></code></div>
+
+        <h2>总结</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>要点</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>CPU "绘制"</strong></td>
+                    <td>在内存中生成位图数据，不直接显示到屏幕</td>
+                </tr>
+                <tr>
+                    <td><strong>GPU 绘制</strong></td>
+                    <td>把位图数据渲染到屏幕，用户才能看到</td>
+                </tr>
+                <tr>
+                    <td><strong>CPU 的作用</strong></td>
+                    <td>准备数据（生成位图）</td>
+                </tr>
+                <tr>
+                    <td><strong>GPU 的作用</strong></td>
+                    <td>显示数据（渲染到屏幕）</td>
+                </tr>
+                <tr>
+                    <td><strong>关键理解</strong></td>
+                    <td>CPU 确实没有直接绘制到屏幕的能力，它只是准备数据；GPU 才是真正把数据显示到屏幕的硬件</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
