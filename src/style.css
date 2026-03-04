@@ -31,7 +31,8 @@ body {
 .directory-button {
     position: fixed;
     top: 16px;
-    right: 16px;
+    /* 按钮左边对齐内容区右边：内容区居中，max-width 1000px，所以 left = 50% + 500px + 间距 */
+    left: calc(50% + 500px + 16px);
     z-index: 1000;
     background: #f6f8fa;
     color: #24292f;
@@ -60,7 +61,29 @@ body {
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
+/* 宽容器页面的按钮位置调整 */
+.container.wide .directory-button {
+    /* 宽容器 max-width 1200px，所以 left = 50% + 600px + 间距 */
+    left: calc(50% + 600px + 16px);
+}
+
 /* 响应式：小屏幕时调整按钮位置 */
+@media (max-width: 1200px) {
+    .container.wide .directory-button {
+        /* 屏幕宽度小于 1200px 时，按钮贴在右边 */
+        left: auto;
+        right: 16px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .directory-button {
+        /* 屏幕宽度小于 1000px 时，按钮贴在右边 */
+        left: auto;
+        right: 16px;
+    }
+}
+
 @media (max-width: 768px) {
     .directory-button {
         top: 8px;
