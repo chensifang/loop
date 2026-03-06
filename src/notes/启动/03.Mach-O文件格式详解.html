@@ -228,42 +228,65 @@
         <h3><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 常见的 Segment（用房子比喻）</h3>
         <p>想象一下，一个 App 就像一栋房子：</p>
 
-        <h4><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> __TEXT（代码段）- 房子的"图纸和说明书"</h4>
-        <p><strong>特点</strong>：只读、可执行（就像图纸，只能看，不能改，但可以照着做）</p>
-        <p><strong>包含的 Section</strong>：</p>
-        <ul>
-            <li><code class="highlight">__text</code>：编译后的机器码（实际的代码，CPU 能直接执行）</li>
-            <li><code class="highlight">__const</code>：常量数据（比如 <code class="highlight">let PI = 3.14</code>）</li>
-            <li><code class="highlight">__cstring</code>：C 字符串（比如 <code class="highlight">"Hello World"</code>）</li>
-            <li><code class="highlight">__objc_methname</code>：Objective-C 方法名（比如 <code class="highlight">viewDidLoad</code>）</li>
-            <li><code class="highlight">__objc_classname</code>：Objective-C 类名（比如 <code class="highlight">ViewController</code>）</li>
-        </ul>
-        <p><strong>简单记忆</strong>：__TEXT 就是"代码和常量"，只读，不能改。</p>
-
-        <h4><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> __DATA（数据段）- 房子的"储物间"</h4>
-        <p><strong>特点</strong>：可读写、不可执行（就像储物间，可以放东西、取东西，但不能在里面住）</p>
-        <p><strong>包含的 Section</strong>：</p>
-        <ul>
-            <li><code class="highlight">__data</code>：已初始化的全局变量和静态变量（比如 <code class="highlight">var count = 10</code>）</li>
-            <li><code class="highlight">__bss</code>：未初始化的全局变量（比如 <code class="highlight">var name: String?</code>，在文件中不占空间，运行时才分配）</li>
-            <li><code class="highlight">__objc_classlist</code>：Objective-C 类列表（所有类的信息）</li>
-            <li><code class="highlight">__objc_catlist</code>：Objective-C 分类列表（所有分类的信息）</li>
-            <li><code class="highlight">__objc_protolist</code>：Objective-C 协议列表（所有协议的信息）</li>
-            <li><code class="highlight">__la_symbol_ptr</code>：懒加载符号指针（需要时才加载的函数地址）</li>
-            <li><code class="highlight">__nl_symbol_ptr</code>：非懒加载符号指针（启动时就加载的函数地址）</li>
-        </ul>
-        <p><strong>简单记忆</strong>：__DATA 就是"变量和运行时数据"，可读写。</p>
-
-        <h4><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> __LINKEDIT（链接编辑段）- 房子的"索引和目录"</h4>
-        <p><strong>特点</strong>：只读、不可执行（就像索引，只能查，不能改）</p>
-        <p><strong>包含</strong>：</p>
-        <ul>
-            <li>符号表（函数名、变量名对应的地址）</li>
-            <li>字符串表（所有字符串的集合）</li>
-            <li>动态链接信息（Rebase、Bind 的信息）</li>
-            <li>代码签名信息（验证文件是否被篡改）</li>
-        </ul>
-        <p><strong>简单记忆</strong>：__LINKEDIT 就是"辅助信息"，帮助系统找到需要的东西。</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Segment</th>
+                    <th>比喻</th>
+                    <th>特点</th>
+                    <th>包含的 Section</th>
+                    <th>简单记忆</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>__TEXT</strong></td>
+                    <td>房子的"图纸和说明书"</td>
+                    <td>只读、可执行（就像图纸，只能看，不能改，但可以照着做）</td>
+                    <td>
+                        <ul>
+                            <li><code class="highlight">__text</code>：编译后的机器码（实际的代码，CPU 能直接执行）</li>
+                            <li><code class="highlight">__const</code>：常量数据（比如 <code class="highlight">let PI = 3.14</code>）</li>
+                            <li><code class="highlight">__cstring</code>：C 字符串（比如 <code class="highlight">"Hello World"</code>）</li>
+                            <li><code class="highlight">__objc_methname</code>：Objective-C 方法名（比如 <code class="highlight">viewDidLoad</code>）</li>
+                            <li><code class="highlight">__objc_classname</code>：Objective-C 类名（比如 <code class="highlight">ViewController</code>）</li>
+                        </ul>
+                    </td>
+                    <td>__TEXT 就是"代码和常量"，只读，不能改。</td>
+                </tr>
+                <tr>
+                    <td><strong>__DATA</strong></td>
+                    <td>房子的"储物间"</td>
+                    <td>可读写、不可执行（就像储物间，可以放东西、取东西，但不能在里面住）</td>
+                    <td>
+                        <ul>
+                            <li><code class="highlight">__data</code>：已初始化的全局变量和静态变量（比如 <code class="highlight">var count = 10</code>）</li>
+                            <li><code class="highlight">__bss</code>：未初始化的全局变量（比如 <code class="highlight">var name: String?</code>，在文件中不占空间，运行时才分配）</li>
+                            <li><code class="highlight">__objc_classlist</code>：Objective-C 类列表（所有类的信息）</li>
+                            <li><code class="highlight">__objc_catlist</code>：Objective-C 分类列表（所有分类的信息）</li>
+                            <li><code class="highlight">__objc_protolist</code>：Objective-C 协议列表（所有协议的信息）</li>
+                            <li><code class="highlight">__la_symbol_ptr</code>：懒加载符号指针（需要时才加载的函数地址）</li>
+                            <li><code class="highlight">__nl_symbol_ptr</code>：非懒加载符号指针（启动时就加载的函数地址）</li>
+                        </ul>
+                    </td>
+                    <td>__DATA 就是"变量和运行时数据"，可读写。</td>
+                </tr>
+                <tr>
+                    <td><strong>__LINKEDIT</strong></td>
+                    <td>房子的"索引和目录"</td>
+                    <td>只读、不可执行（就像索引，只能查，不能改）</td>
+                    <td>
+                        <ul>
+                            <li>符号表（函数名、变量名对应的地址）</li>
+                            <li>字符串表（所有字符串的集合）</li>
+                            <li>动态链接信息（Rebase、Bind 的信息）</li>
+                            <li>代码签名信息（验证文件是否被篡改）</li>
+                        </ul>
+                    </td>
+                    <td>__LINKEDIT 就是"辅助信息"，帮助系统找到需要的东西。</td>
+                </tr>
+            </tbody>
+        </table>
 
         <h3><span class="num">5</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> Segment 和 Section 的关系</h3>
         <div class="code-block"><code><pre>__TEXT Segment

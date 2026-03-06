@@ -112,15 +112,15 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>SideTable</h1>
         
-        <h2>概述</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 概述</h2>
         <p>Side Table 是 iOS Runtime 中的一个辅助数据结构，用于存储对象的额外信息。当对象的 ISA 指针无法存储所有信息时（比如引用计数过大、需要 weak 引用等），系统会创建 Side Table 来存储这些信息。</p>
         
-        <h2>实际存储结构</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 实际存储结构</h2>
         <p><strong>假设场景</strong>：对象 p1（地址 0x1，引用计数=3，2个weak指针），对象 p2（地址 0x2，引用计数=5，2个weak指针）</p>
         
         <div id="sidetable-container"></div>
         
-        <h2>各层结构说明</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 各层结构说明</h2>
         <table>
             <thead>
                 <tr>
@@ -170,7 +170,7 @@
             </tbody>
         </table>
         
-        <h3>结构层级说明</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 结构层级说明</h3>
         <ul>
             <li><strong>refcnts</strong>：
                 <ul>
@@ -196,12 +196,12 @@
             </li>
         </ul>
         
-        <h2>StripedMap：SideTable 的存储容器</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> StripedMap：SideTable 的存储容器</h2>
         
-        <h3>为什么需要 StripedMap？</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 为什么需要 StripedMap？</h3>
         <p>如果所有对象共享一个全局的 SideTable，那么每次访问 SideTable 都需要加锁，这会成为性能瓶颈。StripedMap 通过将多个 SideTable 分散存储，减少锁竞争，提高并发性能。</p>
         
-        <h3>StripedMap 的结构</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> StripedMap 的结构</h3>
         <table>
             <thead>
                 <tr>
@@ -224,10 +224,10 @@
             </tbody>
         </table>
         
-        <h3>如何找到对象的 SideTable？</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 如何找到对象的 SideTable？</h3>
         <p>通过对象地址计算哈希值，从 StripedMap 中选择对应的 SideTable。具体流程如下：</p>
         
-        <h4>查找步骤</h4>
+        <h4><span class="num">4</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 查找步骤</h4>
         <table>
             <thead>
                 <tr>
@@ -260,7 +260,7 @@
             </tbody>
         </table>
         
-        <h4>代码实现</h4>
+        <h4><span class="num">4</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 代码实现</h4>
         <div class="code-block"><code><span class="comment">// 实际实现（简化版）</span>
 <span class="type">SideTable</span>& <span class="function">tableForPointer</span>(<span class="type">const</span> <span class="type">void</span> *p) {
     <span class="comment">// 1. 将对象地址转换为整数</span>
@@ -275,7 +275,7 @@
     <span class="keyword">return</span> SideTablesMap.array[index];
 }</code></div>
         
-        <h4>示例</h4>
+        <h4><span class="num">4</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 示例</h4>
         <p>假设对象地址为 <code class="highlight">0x100012340</code>：</p>
         <ul>
             <li>地址转整数：<code class="highlight">addr = 0x100012340</code></li>
@@ -284,14 +284,14 @@
             <li>结果：使用 <code class="highlight">SideTable[52]</code></li>
         </ul>
         
-        <h4>为什么右移4位？</h4>
+        <h4><span class="num">4</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span><span class="num">4</span><span class="dot">.</span> 为什么右移4位？</h4>
         <ul>
             <li>对象地址通常是8字节对齐的（最低3位为0）</li>
             <li>右移4位可以去除对齐位，同时保留足够的地址信息用于哈希</li>
             <li>这样可以让不同对象更均匀地分布到64个 SideTable 中</li>
         </ul>
         
-        <h3>工作原理</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">4</span><span class="dot">.</span> 工作原理</h3>
         <table>
             <thead>
                 <tr>
@@ -319,14 +319,14 @@
             </tbody>
         </table>
         
-        <h3>优势</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">5</span><span class="dot">.</span> 优势</h3>
         <ul>
             <li><strong>减少锁竞争</strong>：不同对象可能使用不同的 SideTable，可以并发访问</li>
             <li><strong>提高性能</strong>：多个线程可以同时操作不同的 SideTable，减少等待时间</li>
             <li><strong>简单高效</strong>：通过地址哈希快速定位，O(1) 时间复杂度</li>
         </ul>
         
-        <h3>示例</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">6</span><span class="dot">.</span> 示例</h3>
         <p>假设有 3 个对象：</p>
         <ul>
             <li>对象 A（地址 0x1000）：索引 = (0x1000 >> 4) & 63 = 0，使用 SideTable[0]</li>
@@ -335,7 +335,7 @@
         </ul>
         <p>虽然多个对象可能共享同一个 SideTable，但 SideTable 内部使用哈希表存储，仍然可以快速区分不同对象的数据。</p>
         
-        <h2>完整存储结构</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 完整存储结构</h2>
         <p>Side Table 存储在全局的 <strong>StripedMap</strong> 中（包含多个 SideTable 的数组），通过对象地址的哈希值选择使用哪个 SideTable。多个对象可以共享同一个 SideTable（通过 SideTable 内的哈希表区分）。</p>
         
         <div class="code-block"><code><span class="comment">// 全局 StripedMap 实例</span>

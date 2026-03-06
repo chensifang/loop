@@ -28,7 +28,7 @@
 
         <p>iOS 的图形渲染体系采用分层架构，框架像洋葱一样分层包裹。越上层越易用，越底层性能越高、控制力越强。</p>
 
-        <h2>四层架构概览</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 四层架构概览</h2>
 
         <div class="mermaid">
 graph TD
@@ -38,7 +38,7 @@ graph TD
     D --> E[GPU 硬件]
         </div>
 
-        <h2>第一层：应用层（Application Layer）</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 第一层：应用层（Application Layer）</h2>
 
         <p><strong>特点</strong>：最顶层，也是平时写的最多的。这些框架是对底层渲染能力的高级封装，目的是让开发者能快速构建 UI，不需要关心像素和显卡。</p>
 
@@ -73,7 +73,7 @@ graph TD
             </tbody>
         </table>
 
-        <h2>第二层：核心服务层（Core Services Layer）</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 第二层：核心服务层（Core Services Layer）</h2>
 
         <p><strong>特点</strong>：iOS 图形渲染的引擎，也是区分初级和高级工程师的分水岭。</p>
 
@@ -120,7 +120,7 @@ graph TD
             </tbody>
         </table>
 
-        <h3>Core Animation 的关键作用</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> Core Animation 的关键作用</h3>
 
         <p><strong>理解 Core Animation 是精通 iOS 渲染的关键</strong>：</p>
 
@@ -130,7 +130,7 @@ graph TD
             <li>性能优化的核心在于减少不必要的 Layer 创建和离屏渲染</li>
         </ul>
 
-        <h2>第三层：硬件抽象层（Hardware Abstraction Layer）</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 第三层：硬件抽象层（Hardware Abstraction Layer）</h2>
 
         <p><strong>特点</strong>：直接与 GPU（图形处理器）对话。如果你做游戏引擎、视频播放器或高性能绘图 App，才会用到这里。</p>
 
@@ -159,7 +159,7 @@ graph TD
             </tbody>
         </table>
 
-        <h3>Metal 的重要性</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> Metal 的重要性</h3>
 
         <p>Metal 是现代 iOS 渲染的基石：</p>
 
@@ -170,7 +170,7 @@ graph TD
             <li>从 iOS 12 开始，OpenGL ES 已被废弃，Metal 成为唯一的底层图形 API</li>
         </ul>
 
-        <h2>第四层：领域特定层（Domain Specific）</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 第四层：领域特定层（Domain Specific）</h2>
 
         <p><strong>特点</strong>：基于 Metal 或 OpenGL 封装的专用引擎。</p>
 
@@ -201,7 +201,7 @@ graph TD
             </tbody>
         </table>
 
-        <h2>其他相关框架</h2>
+        <h2><span class="num">6</span><span class="dot">.</span> 其他相关框架</h2>
 
         <table>
             <thead>
@@ -230,7 +230,7 @@ graph TD
             </tbody>
         </table>
 
-        <h2>框架依赖关系</h2>
+        <h2><span class="num">7</span><span class="dot">.</span> 框架依赖关系</h2>
 
         <div class="mermaid">
 graph LR
@@ -246,7 +246,7 @@ graph LR
     J[ARKit] --> D
         </div>
 
-        <h2>使用场景建议</h2>
+        <h2><span class="num">8</span><span class="dot">.</span> 使用场景建议</h2>
 
         <table>
             <thead>
@@ -285,9 +285,9 @@ graph LR
             </tbody>
         </table>
 
-        <h2>各框架的必要性</h2>
+        <h2><span class="num">9</span><span class="dot">.</span> 各框架的必要性</h2>
 
-        <h3>Core Animation：必须（对于 UIKit）</h3>
+        <h3><span class="num">9</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> Core Animation：必须（对于 UIKit）</h3>
 
         <table>
             <thead>
@@ -310,7 +310,7 @@ graph LR
 
         <p><strong>理论上可以不用</strong>：如果不用 UIKit，直接用 Metal 渲染，但会失去 UIKit 的便利性。</p>
 
-        <h3>Core Graphics：大多数情况不需要</h3>
+        <h3><span class="num">9</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> Core Graphics：大多数情况不需要</h3>
 
         <table>
             <thead>
@@ -333,23 +333,23 @@ graph LR
 
         <p><strong>只有一种情况需要</strong>：当你覆写了 <code class="highlight">drawRect:</code> 方法时。</p>
 
-        <h2>实际开发示例</h2>
+        <h2><span class="num">10</span><span class="dot">.</span> 实际开发示例</h2>
 
-        <h3>示例 1：普通 UIView（不需要 Core Graphics）</h3>
+        <h3><span class="num">10</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 示例 1：普通 UIView（不需要 Core Graphics）</h3>
 
         <div class="code-block"><code><span class="keyword">let</span> view = <span class="type">UIView</span>()
 view.backgroundColor = <span class="type">UIColor</span>.blue
 <span class="comment">// ✅ 不走 drawRect，不需要 Core Graphics</span>
 <span class="comment">// ✅ 需要 Core Animation（CALayer）</span></code></div>
 
-        <h3>示例 2：UIImageView（不需要 Core Graphics）</h3>
+        <h3><span class="num">10</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 示例 2：UIImageView（不需要 Core Graphics）</h3>
 
         <div class="code-block"><code><span class="keyword">let</span> imageView = <span class="type">UIImageView</span>(image: <span class="type">UIImage</span>(named: <span class="string">"icon"</span>))
 <span class="comment">// ✅ 不走 drawRect，不需要 Core Graphics</span>
 <span class="comment">// ✅ 需要 Core Animation（CALayer）</span>
 <span class="comment">// 图片解码后直接存入 layer.contents</span></code></div>
 
-        <h3>示例 3：自定义绘制（需要 Core Graphics）</h3>
+        <h3><span class="num">10</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 示例 3：自定义绘制（需要 Core Graphics）</h3>
 
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">CustomView</span>: <span class="type">UIView</span> {
     <span class="keyword">override func</span> draw(<span class="keyword">_</span> rect: <span class="type">CGRect</span>) {
@@ -359,7 +359,7 @@ view.backgroundColor = <span class="type">UIColor</span>.blue
     }
 }</code></div>
 
-        <h2>总结</h2>
+        <h2><span class="num">11</span><span class="dot">.</span> 总结</h2>
 
         <table>
             <thead>

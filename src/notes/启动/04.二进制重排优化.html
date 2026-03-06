@@ -26,10 +26,10 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>二进制重排优化（Binary Reordering）</h1>
 
-        <h2>1. 概述</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 概述</h2>
         <p>二进制重排是一种启动优化技术，通过调整二进制文件中函数/方法的排列顺序，把启动时实际用到的「热代码」放到文件前面，减少缺页中断（page fault），从而加快启动速度。</p>
 
-        <h3>1.1 核心原理</h3>
+        <h3><span class="num">1</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 核心原理</h3>
         <div class="code-block"><code><pre>问题：代码分散在文件各处
     ↓
 启动时需要多次读磁盘，产生很多缺页中断
@@ -42,7 +42,7 @@
     ↓
 快很多</pre></code></div>
 
-        <h3>1.2 优化哪个阶段</h3>
+        <h3><span class="num">1</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 优化哪个阶段</h3>
         <p>二进制重排主要优化的是<strong>加载阶段</strong>的速度：</p>
         <ol>
             <li><strong>系统启动阶段</strong>：内核加载 App 可执行文件时（mmap 映射到虚拟地址空间）</li>
@@ -50,7 +50,7 @@
         </ol>
         <p><strong>为什么是加载阶段</strong>：iOS 使用虚拟内存，代码按页（16KB）加载。启动时如果需要的代码分散在文件各处，系统要多次从磁盘读不同的页，产生很多缺页中断（page fault），很慢。重排后，启动代码集中在前面几页，按顺序连续读几页就够了，大幅减少缺页中断。</p>
 
-        <h3>1.3 和动态链接阶段的关系</h3>
+        <h3><span class="num">1</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 和动态链接阶段的关系</h3>
         <table>
             <thead>
                 <tr>
@@ -84,9 +84,9 @@
         </table>
         <p><strong>简单理解</strong>：二进制重排把启动时需要的代码「打包」到文件前面，启动时按顺序读，减少跳来跳去读磁盘。动态链接阶段是代码已经加载到内存后，修正地址、绑定符号，让代码能跑起来。两者配合优化启动速度。</p>
 
-        <h2>2. 实操步骤</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 实操步骤</h2>
 
-        <h3>2.1 方法一：使用 Clang Sanitizer 收集数据（推荐）</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 方法一：使用 Clang Sanitizer 收集数据（推荐）</h3>
         <div class="code-block"><code><pre>步骤1：配置编译选项（启用 Sanitizer Coverage）
     ↓
 步骤2：添加收集代码（在启动入口）
@@ -99,7 +99,7 @@
     ↓
 步骤6：重新编译（链接器按顺序排列）</pre></code></div>
 
-        <h4>步骤 1：收集启动时的函数调用数据</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 步骤 1：收集启动时的函数调用数据</h4>
         <p>在 Xcode 中配置编译选项，启用 Sanitizer Coverage：</p>
         <ol>
             <li>选择 Target → Build Settings</li>
@@ -109,7 +109,7 @@
             <li>添加：<code class="highlight">-sanitize-coverage=func</code> 和 <code class="highlight">-sanitize=undefined</code></li>
         </ol>
 
-        <h4>步骤 2：在代码中收集调用信息</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 步骤 2：在代码中收集调用信息</h4>
         <p>在 App 启动入口（如 <code class="highlight">main</code> 函数或 <code class="highlight">AppDelegate</code> 的 <code class="highlight">didFinishLaunching</code>）添加收集代码：</p>
         <div class="code-block"><code><pre class="language-swift">// AppDelegate.swift
 import Foundation
@@ -129,14 +129,14 @@ func __sanitizer_cov_trace_pc_guard(_ guard: UnsafeMutablePointer&lt;UInt32&gt;)
 #endif</pre></code></div>
         <p>或者使用第三方工具如 <a href="https://github.com/yulingtianxia/AppOrderFiles">AppOrderFiles</a> 自动收集。</p>
 
-        <h4>步骤 3：运行 App，收集数据</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 步骤 3：运行 App，收集数据</h4>
         <ol>
             <li>运行 App，完成启动流程（到首屏显示）</li>
             <li>收集到的数据会记录在文件或内存中</li>
             <li>导出数据文件（通常是文本格式，每行一个函数名）</li>
         </ol>
 
-        <h4>步骤 4：生成 Order File</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">4</span><span class="dot">.</span> 步骤 4：生成 Order File</h4>
         <p>把收集到的函数名整理成 order file（<code class="highlight">.order</code> 文件），格式：</p>
         <div class="code-block"><code><pre>-[ViewController viewDidLoad]
 -[AppDelegate application:didFinishLaunchingWithOptions:]
@@ -145,18 +145,18 @@ objc_msgSend
 ...</pre></code></div>
         <p>按调用顺序或频率排序，最常用的放前面。</p>
 
-        <h4>步骤 5：在 Xcode 中配置 Order File</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">5</span><span class="dot">.</span> 步骤 5：在 Xcode 中配置 Order File</h4>
         <ol>
             <li>选择 Target → Build Settings</li>
             <li>搜索 <code class="highlight">Order File</code></li>
             <li>填入 order file 的路径（相对路径或绝对路径），例如：<code class="highlight">$(SRCROOT)/order_file.order</code></li>
         </ol>
 
-        <h4>步骤 6：重新编译</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span><span class="num">6</span><span class="dot">.</span> 步骤 6：重新编译</h4>
         <p>重新编译 App，链接器会按照 order file 的顺序排列函数/方法。</p>
 
-        <h3>2.2 方法二：手动编写 Order File（简单但不够准确）</h3>
-        <h4>步骤 1：手动编写 Order File</h4>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 方法二：手动编写 Order File（简单但不够准确）</h3>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 步骤 1：手动编写 Order File</h4>
         <p>根据代码分析，手动列出启动时可能调用的函数：</p>
         <div class="code-block"><code><pre>_main
 -[AppDelegate application:didFinishLaunchingWithOptions:]
@@ -164,18 +164,18 @@ objc_msgSend
 -[ViewController viewWillAppear:]
 ...</pre></code></div>
 
-        <h4>步骤 2：在 Xcode 中配置</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 步骤 2：在 Xcode 中配置</h4>
         <p>同方法一的步骤 5。</p>
 
-        <h4>步骤 3：验证和优化</h4>
+        <h4><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 步骤 3：验证和优化</h4>
         <ul>
             <li>运行 App，用 Instruments 的 System Trace 或 Time Profiler 验证</li>
             <li>观察缺页中断（Page Fault）数量是否减少</li>
             <li>根据实际调用情况调整 order file</li>
         </ul>
 
-        <h2>3. 验证效果</h2>
-        <h3>3.1 使用 Instruments 验证</h3>
+        <h2><span class="num">3</span><span class="dot">.</span> 验证效果</h2>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 使用 Instruments 验证</h3>
         <ol>
             <li>打开 Instruments → System Trace</li>
             <li>运行 App，记录启动过程</li>
@@ -183,13 +183,13 @@ objc_msgSend
             <li>对比启动时间：通常能缩短 100-500ms</li>
         </ol>
 
-        <h3>3.2 实际效果</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 实际效果</h3>
         <ul>
             <li>通常能减少 20-50% 的缺页中断</li>
             <li>启动时间可能缩短 100-500ms（取决于 App 大小和启动路径复杂度）</li>
         </ul>
 
-        <h2>4. 注意事项</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 注意事项</h2>
         <ul>
             <li>Order file 只影响<strong>主可执行文件</strong>的排列，不影响动态库</li>
             <li>如果 App 更新了启动流程，需要重新收集数据并更新 order file</li>

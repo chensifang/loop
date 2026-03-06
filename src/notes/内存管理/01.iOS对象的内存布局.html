@@ -63,7 +63,7 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>iOS 对象的内存布局</h1>
         
-        <h2>对象内存布局结构</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 对象内存布局结构</h2>
         
         <div class="code-block"><code><span class="keyword">@interface</span> <span class="type">Animal</span> : <span class="type">NSObject</span> {
     <span class="type">NSString</span> *_name;
@@ -77,7 +77,7 @@
         
         <div id="memory-container"></div>
         
-        <h2>内存布局说明</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 内存布局说明</h2>
         <table>
             <thead>
                 <tr>
@@ -115,10 +115,10 @@
             </tbody>
         </table>
         
-        <h2>面试题：一个 NSObject 对象占用多少字节？</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 面试题：一个 NSObject 对象占用多少字节？</h2>
         <p><strong>注意</strong>：这个问题特指 <code class="highlight">NSObject</code> 这个基类对象，<strong>不是所有继承自 NSObject 的对象</strong>。</p>
         
-        <h3>答案</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 答案</h3>
         <p>需要区分两个概念：</p>
         
         <table>
@@ -146,14 +146,14 @@
             </tbody>
         </table>
         
-        <h3>代码示例</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 代码示例</h3>
         <div class="code-block"><code><span class="type">NSObject</span> *obj = [[<span class="type">NSObject</span> <span class="keyword">alloc</span>] <span class="keyword">init</span>];
 <span class="type">size_t</span> instanceSize = <span class="function">class_getInstanceSize</span>([<span class="type">NSObject</span> <span class="keyword">class</span>]);
 <span class="type">size_t</span> mallocSize = <span class="function">malloc_size</span>((__bridge <span class="type">const</span> <span class="type">void</span> *)obj);
 <span class="function">NSLog</span>(<span class="string">@"实例大小: %zu, 分配大小: %zu"</span>, instanceSize, mallocSize);
 <span class="comment">// 输出：实例大小: 8, 分配大小: 16</span></code></div>
         
-        <h3>重要说明</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 重要说明</h3>
         <table>
             <thead>
                 <tr>

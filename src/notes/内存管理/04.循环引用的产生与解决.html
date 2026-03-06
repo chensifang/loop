@@ -16,10 +16,10 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>什么情况下会产生循环引用？如何解决？</h1>
         
-        <h2>核心概念</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 核心概念</h2>
         <p>循环引用是指两个或多个对象相互强引用，导致它们的引用计数永远无法降为 0，从而造成内存泄漏。</p>
         
-        <h2>循环引用产生的场景</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 循环引用产生的场景</h2>
         <table>
             <thead>
                 <tr>
@@ -52,7 +52,7 @@
             </tbody>
         </table>
         
-        <h3>1. 对象之间的相互引用</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 对象之间的相互引用</h3>
         <p><strong>典型场景：</strong></p>
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">Person</span> {
     <span class="keyword">var</span> apartment: <span class="type">Apartment</span>?
@@ -81,7 +81,7 @@ apartment = nil   // Apartment 引用计数 = 1（person.apartment 还在引用�
             <p>就像两个人互相拉着对方的手，谁也不肯先松手，结果两个人都走不了。</p>
         </div>
         
-        <h3>2. 闭包捕获 self</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 闭包捕获 self</h3>
         <p><strong>典型场景：</strong></p>
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">ViewController</span> {
     <span class="keyword">var</span> completionHandler: (() -&gt; <span class="type">Void</span>)?
@@ -108,7 +108,7 @@ vc = nil  // ViewController 引用计数 = 1（闭包还在引用），无法释
         <p><strong>为什么会这样？</strong></p>
         <p>闭包会捕获它内部使用的所有外部变量，如果闭包是对象的属性，而闭包内部又使用了 <code class="highlight">self</code>，就会形成循环引用。</p>
         
-        <h3>3. 代理模式（Delegate）中的循环引用</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 代理模式（Delegate）中的循环引用</h3>
         <p><strong>典型场景：</strong></p>
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">ViewController</span> {
     <span class="keyword">var</span> tableView: <span class="type">UITableView</span>?
@@ -127,7 +127,7 @@ vc = nil  // ViewController 引用计数 = 1（闭包还在引用），无法释
             <strong>注意：</strong> 实际上 <code class="highlight">UITableView.delegate</code> 是 <code class="highlight">weak</code> 引用，所以不会循环引用。但如果自己实现代理模式时用强引用，就会出问题。
         </div>
         
-        <h3>4. 父子关系中的循环引用</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">4</span><span class="dot">.</span> 父子关系中的循环引用</h3>
         <p><strong>典型场景：</strong></p>
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">Parent</span> {
     <span class="keyword">var</span> children: [<span class="type">Child</span>] = []
@@ -141,7 +141,7 @@ vc = nil  // ViewController 引用计数 = 1（闭包还在引用），无法释
 <span class="keyword">var</span> child = <span class="type">Child</span>()
 parent.children.append(child)
 child.parent = parent  <span class="comment">// 如果 parent 是强引用，就会循环引用</span></code></div>
-        <h2>如何解决循环引用</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 如何解决循环引用</h2>
         <table>
             <thead>
                 <tr>
@@ -194,7 +194,7 @@ child.parent = parent  <span class="comment">// 如果 parent 是强引用，就
             <li>这样即使对象的堆内存被回收了，weak 变量也不会指向无效的内存地址</li>
         </ul>
         
-        <h2>关键点总结</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 关键点总结</h2>
         <table>
             <thead>
                 <tr>

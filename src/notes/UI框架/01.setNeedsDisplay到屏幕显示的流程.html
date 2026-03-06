@@ -28,14 +28,14 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>1. 请详细描述从 setNeedsDisplay 被调用，到像素点真正显示在屏幕上的全过程</h1>
         
-        <h2>核心概念</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 核心概念</h2>
         <p>从调用 <code class="highlight">setNeedsDisplay</code> 到像素显示在屏幕上，是一个复杂的渲染流程，涉及应用层、系统层、GPU 和硬件显示。整个过程是异步的，不会立即执行。</p>
         
         <div class="warning">
             <strong>重要提示：</strong> 只有当你覆写了 <code class="highlight">drawRect:</code> 方法时，系统才会走 CPU 绘制流程。绝大多数情况下（如设置 <code class="highlight">backgroundColor</code> 或 <code class="highlight">UIImageView</code> 加载图片），是不走 <code class="highlight">drawRect:</code> 的。一旦覆写 <code class="highlight">drawRect:</code>，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节，这是极其耗费内存的。
         </div>
         
-        <h2>完整流程时间线</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 完整流程时间线</h2>
         
         <table id="source-table" style="display: none;">
             <thead>
@@ -387,10 +387,10 @@
         });
         </script>
         
-        <h2>关键要点总结</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 关键要点总结</h2>
         
         <div class="info">
-            <h3>1. CATransaction 的四个阶段</h3>
+            <h3><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> CATransaction 的四个阶段</h3>
             <p>CATransaction Commit 分为四个阶段：</p>
             <ul>
                 <li><strong>Layout：</strong> 调用 <code class="highlight">layoutSubviews</code> 更新布局</li>
@@ -401,20 +401,20 @@
         </div>
         
         <div class="warning">
-            <h3>2. drawRect: 的触发条件与内存代价</h3>
+            <h3><span class="num">3</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> drawRect: 的触发条件与内存代价</h3>
             <p><strong>只有覆写了 <code class="highlight">drawRect:</code> 方法时，系统才会走 CPU 绘制流程。</strong> 绝大多数情况下（如设置 <code class="highlight">backgroundColor</code> 或 <code class="highlight">UIImageView</code> 加载图片），是不走 <code class="highlight">drawRect:</code> 的。</p>
             <p>一旦覆写 <code class="highlight">drawRect:</code>，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节。这是极其耗费内存的，专家级优化通常建议<strong>尽量避免覆写 drawRect:</strong>。</p>
         </div>
         
         <div class="warning">
-            <h3>3. 图片解码是性能瓶颈（仅当有图片时）</h3>
+            <h3><span class="num">3</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 图片解码是性能瓶颈（仅当有图片时）</h3>
             <p>在 Prepare 阶段，如果 Layer 的 <code class="highlight">contents</code> 是压缩图片（JPEG、PNG），CPU 必须将图片解压成位图。这一步在主线程执行，如果图片很大或未预解码，会严重卡顿主线程，导致掉帧。这是掉帧的头号杀手。</p>
             <p><strong>重要理解：</strong> 不是所有 UI 都需要图片。纯色背景（<code class="highlight">backgroundColor</code>）、文字（<code class="highlight">UILabel</code>）、简单几何图形等，GPU 可以直接渲染，不需要图片。只有使用 <code class="highlight">UIImage</code>、覆写 <code class="highlight">drawRect:</code> 或离屏渲染时才需要图片/位图。</p>
             <p><strong>优化建议：</strong> 图片应该提前在后台线程解码，避免在 Commit 阶段阻塞主线程。</p>
         </div>
         
         <div class="info">
-            <h3>4. VSync 与掉帧机制</h3>
+            <h3><span class="num">3</span><span class="dot">.</span><span class="num">4</span><span class="dot">.</span> VSync 与掉帧机制</h3>
             <p>如果 CPU + GPU 执行的总时间超过了 16.67ms，当 VSync 信号到来时，新的一帧还没写进 Back Buffer，交换（Swap）就不会发生。此时屏幕会继续显示上一帧的内容，这在视觉上就是掉帧（Jank）。</p>
             <p><strong>跳帧补偿：</strong> 系统不会补偿错过的帧。VSync 是硬件发出的脉冲，如果没赶上这一班，就只能等下一班。被错过的帧会被直接丢弃，App 表现为直接"跳"到最新的状态。</p>
         </div>

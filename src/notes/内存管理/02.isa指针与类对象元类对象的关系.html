@@ -26,14 +26,14 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>isa 指针与类对象、元类对象的关系</h1>
         
-        <h2>1. 核心概念</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 核心概念</h2>
         <p>Objective-C 中的对象系统基于三个核心实体：<strong>实例对象</strong>、<strong>类对象</strong>和<strong>元类对象</strong>。它们通过 <code class="highlight">isa</code> 指针和 <code class="highlight">superclass</code> 指针形成复杂的关系网络。</p>
         
         <div class="info">
             <p><strong>重要说明</strong>：本文档中提到的<strong>根类（Root class）</strong>就是 <code class="highlight">NSObject</code>。NSObject 是所有 Objective-C 类的基类，它的 <code class="highlight">superclass</code> 指针指向 <code class="highlight">nil</code>，表示没有父类。所有其他类都直接或间接继承自 NSObject。</p>
         </div>
         
-        <h2>2. 三种实体类型</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 三种实体类型</h2>
         <table>
             <thead>
                 <tr>
@@ -65,7 +65,7 @@
             </tbody>
         </table>
         
-        <h2>3. 两种关键指针</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 两种关键指针</h2>
         <table>
             <thead>
                 <tr>
@@ -88,7 +88,7 @@
             </tbody>
         </table>
         
-        <h2>4. 完整关系图</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 完整关系图</h2>
         <div style="text-align: center; margin: 20px 0;">
             <img src="assets/isa-relation-diagram.png" alt="isa指针与类对象元类对象的关系图" style="max-width: 70%; height: auto; border: 1px solid #e1e4e8; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         </div>
@@ -96,8 +96,8 @@
             <strong>图例说明</strong>：实线箭头表示 <code class="highlight">superclass</code> 指针（继承关系），虚线箭头表示 <code class="highlight">isa</code> 指针（类型关系）
         </p>
         
-        <h2>5. isa 指针的指向关系</h2>
-        <h3>5.1 实例对象的 isa</h3>
+        <h2><span class="num">5</span><span class="dot">.</span> isa 指针的指向关系</h2>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 实例对象的 isa</h3>
         <table>
             <thead>
                 <tr>
@@ -125,7 +125,7 @@
             </tbody>
         </table>
         
-        <h3>5.2 类对象的 isa</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 类对象的 isa</h3>
         <table>
             <thead>
                 <tr>
@@ -153,7 +153,7 @@
             </tbody>
         </table>
         
-        <h3>5.3 元类对象的 isa</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 元类对象的 isa</h3>
         <table>
             <thead>
                 <tr>
@@ -185,8 +185,8 @@
             <p><strong>关键点</strong>：所有元类的 <code class="highlight">isa</code> 指针最终都指向根元类（根类（元类）），而根元类的 <code class="highlight">isa</code> 指向自身，形成一个闭环。这意味着根元类是所有元类的"类"。</p>
         </div>
         
-        <h2>6. superclass 指针的继承关系</h2>
-        <h3>6.1 类对象的继承链</h3>
+        <h2><span class="num">6</span><span class="dot">.</span> superclass 指针的继承关系</h2>
+        <h3><span class="num">6</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 类对象的继承链</h3>
         <table>
             <thead>
                 <tr>
@@ -214,7 +214,7 @@
             </tbody>
         </table>
         
-        <h3>6.2 元类对象的继承链</h3>
+        <h3><span class="num">6</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 元类对象的继承链</h3>
         <table>
             <thead>
                 <tr>
@@ -246,8 +246,8 @@
             <p><strong>重要特性</strong>：根元类的 <code class="highlight">superclass</code> 指向根类对象（而不是 nil），这是一个特殊设计。它允许当在元类链中找不到类方法时，可以回退到根类中查找实例方法。例如，<code class="highlight">description</code> 类方法实际上是在根类（NSObject）的实例方法中实现的。</p>
         </div>
         
-        <h2>7. 方法查找机制</h2>
-        <h3>7.1 实例方法查找</h3>
+        <h2><span class="num">7</span><span class="dot">.</span> 方法查找机制</h2>
+        <h3><span class="num">7</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 实例方法查找</h3>
         <p>当向实例对象发送消息时，查找流程如下：</p>
         <ol>
             <li>通过实例的 <code class="highlight">isa</code> 指针找到类对象</li>
@@ -263,7 +263,7 @@
 <span class="comment">// 如果 Person 中没有，继续向上查找</span>
 <span class="comment">// Person（类对象） → NSObject（类对象） → 查找 sayHello</span></code></div>
         
-        <h3>7.2 类方法查找</h3>
+        <h3><span class="num">7</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 类方法查找</h3>
         <p>当向类对象发送消息时，查找流程如下：</p>
         <ol>
             <li>通过类的 <code class="highlight">isa</code> 指针找到元类对象</li>
@@ -284,7 +284,7 @@
 <span class="comment">// NSObject（元类）(superclass) → NSObject（类对象） → 查找实例方法</span>
 <span class="comment">// 例如：[NSObject description] 实际上调用的是 NSObject 的实例方法</span></code></div>
         
-        <h2>8. 内存布局中的体现</h2>
+        <h2><span class="num">8</span><span class="dot">.</span> 内存布局中的体现</h2>
         <p>在对象的内存布局中，<code class="highlight">isa</code> 指针位于对象的第一个位置（偏移 0），占用 8 字节。这是 Objective-C 对象的基础结构。</p>
         
         <table>
@@ -314,7 +314,7 @@
             </tbody>
         </table>
         
-        <h2>9. 验证代码</h2>
+        <h2><span class="num">9</span><span class="dot">.</span> 验证代码</h2>
         <div class="code-block"><code><span class="comment">// 验证 isa 指针的指向</span>
 <span class="type">Person</span> *person = [[<span class="type">Person</span> <span class="keyword">alloc</span>] <span class="keyword">init</span>];
 
@@ -343,7 +343,7 @@
 <span class="type">Class</span> rootMetaSuperclass = <span class="function">class_getSuperclass</span>(rootMetaClass);
 <span class="function">NSLog</span>(<span class="string">@"根元类的父类: %@"</span>, rootMetaSuperclass);  <span class="comment">// NSObject (class) - 指向根类对象</span></code></div>
         
-        <h2>10. 关键要点总结</h2>
+        <h2><span class="num">10</span><span class="dot">.</span> 关键要点总结</h2>
         <table>
             <thead>
                 <tr>
@@ -379,8 +379,8 @@
             </tbody>
         </table>
         
-        <h2>11. 实际应用场景</h2>
-        <h3>11.1 方法交换（Method Swizzling）</h3>
+        <h2><span class="num">11</span><span class="dot">.</span> 实际应用场景</h2>
+        <h3><span class="num">11</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 方法交换（Method Swizzling）</h3>
         <p>理解 isa 和 superclass 的关系，有助于理解方法交换的原理：</p>
         <div class="code-block"><code><span class="comment">// 交换实例方法：在类对象的方法列表中交换</span>
 <span class="type">Method</span> originalMethod = <span class="function">class_getInstanceMethod</span>([<span class="type">Person</span> <span class="keyword">class</span>], <span class="keyword">@selector</span>(sayHello));
@@ -392,14 +392,14 @@
 <span class="type">Method</span> swizzledClassMethod = <span class="function">class_getClassMethod</span>([<span class="type">Person</span> <span class="keyword">class</span>], <span class="keyword">@selector</span>(swizzled_sharedInstance));
 <span class="function">method_exchangeImplementations</span>(originalClassMethod, swizzledClassMethod);</code></div>
         
-        <h3>11.2 动态创建类</h3>
+        <h3><span class="num">11</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 动态创建类</h3>
         <p>理解类对象和元类对象的关系，有助于理解动态创建类的过程：</p>
         <div class="code-block"><code><span class="comment">// 动态创建类时，需要同时创建类对象和元类对象</span>
 <span class="type">Class</span> newClass = <span class="function">objc_allocateClassPair</span>([<span class="type">NSObject</span> <span class="keyword">class</span>], <span class="string">"DynamicClass"</span>, <span class="number">0</span>);
 <span class="comment">// objc_allocateClassPair 会同时创建类对象和元类对象，并正确设置它们的 isa 和 superclass 指针</span>
 <span class="function">objc_registerClassPair</span>(newClass);</code></div>
         
-        <h3>11.3 KVO 实现原理</h3>
+        <h3><span class="num">11</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> KVO 实现原理</h3>
         <p>KVO 的实现依赖于动态创建子类，并修改 isa 指针的指向：</p>
         <div class="code-block"><code><span class="comment">// KVO 会动态创建一个子类（如 NSKVONotifying_Person）</span>
 <span class="comment">// 然后将原对象的 isa 指针指向这个新创建的子类</span>

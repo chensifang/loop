@@ -146,6 +146,11 @@ h2 .num, h3 .num, h4 .num {
     letter-spacing: 0;
 }
 
+/* 标题数字和点颜色（按层级） */
+h2 .num, h2 .dot { color: #0066ff; }
+h3 .num, h3 .dot { color: #00aa00; }
+h4 .num, h4 .dot { color: #ff6600; }
+
 /* 正文文本 Block - 统一样式 */
 p {
     margin-bottom: 10px;

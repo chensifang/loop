@@ -26,7 +26,7 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>iOS 程序启动流程</h1>
 
-        <h2>整体流程</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 整体流程</h2>
 
         <table>
             <thead>
@@ -67,14 +67,14 @@
             </tbody>
         </table>
 
-        <h2>关键细节说明</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 关键细节说明</h2>
 
-        <h3>Launch Closure（启动闭包）</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> Launch Closure（启动闭包）</h3>
         <p><strong>时间点</strong>：dyld 启动后，加载动态库之前</p>
         <p><strong>作用</strong>：dyld 3/4（iOS 13+）引入的优化机制。如果存在预构建的启动闭包，dyld 可以直接使用缓存的符号解析结果，跳过复杂的 Rebase & Bind 过程，大幅缩短启动时间。</p>
         <p><strong>缓存机制</strong>：启动闭包使用 SHA256 哈希作为文件名，基于主可执行文件的 inode、修改时间和系统启动时间生成。</p>
 
-        <h3>ObjC Runtime 注册</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> ObjC Runtime 注册</h3>
         <p><strong>时间点</strong>：在 +load 方法调用之前</p>
         <p><strong>流程</strong>：</p>
         <ol>
@@ -90,7 +90,7 @@
             <li>没有这一步，后续的 +load 和消息发送都无法进行</li>
         </ol>
 
-        <h3>Main Bundle 资源读取</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> Main Bundle 资源读取</h3>
         <p><strong>时间点</strong>：在 didFinishLaunching 之后，界面显示之前</p>
         <p><strong>内容</strong>：读取 Info.plist、加载 LaunchScreen.storyboard 等 Main Bundle 中的资源文件。这些 I/O 操作是 First Frame（首帧）准备的一部分。</p>
         <div class="info">

@@ -29,10 +29,10 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>weak原理</h1>
         
-        <h2>概述</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 概述</h2>
         <p>weak 关键字用于创建弱引用，不增加对象的引用计数。当对象被释放时，weak 引用会自动置为 nil。</p>
         
-        <h2>weak 引用的实现流程</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> weak 引用的实现流程</h2>
         <div class="mermaid">
 flowchart TD
     A["创建 weak 引用<br/>weak var obj = target"] --> B["objc_storeWeak"]
@@ -59,7 +59,7 @@ flowchart TD
     style K fill:#ccffcc
         </div>
         
-        <h2>关键步骤说明</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 关键步骤说明</h2>
         <table>
             <thead>
                 <tr>
@@ -97,9 +97,9 @@ flowchart TD
             </tbody>
         </table>
         
-        <h2>核心代码逻辑</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 核心代码逻辑</h2>
         
-        <h3>创建 weak 引用</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 创建 weak 引用</h3>
         <div class="code-block"><pre><code>// 伪代码：objc_storeWeak
 void objc_storeWeak(id *location, id newObj) {
     // 1. 获取对象的 SideTable
@@ -117,7 +117,7 @@ void objc_storeWeak(id *location, id newObj) {
     append_referrer(entry, location);  // location 是 weak 变量的地址
 }</code></pre></div>
         
-        <h3>对象释放时清空 weak 引用</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 对象释放时清空 weak 引用</h3>
         <div class="code-block"><pre><code>// 伪代码：对象释放时
 void objc_destructInstance(id obj) {
     // 1. 获取对象的 SideTable
@@ -138,7 +138,7 @@ void objc_destructInstance(id obj) {
     }
 }</code></pre></div>
         
-        <h2>关键理解</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 关键理解</h2>
         <ul>
             <li><strong>weak 变量地址</strong>：weak 变量本身也有内存地址，这个地址被存储在 weak_entry_t 中</li>
             <li><strong>自动置 nil</strong>：对象释放时，通过 weak_entry_t 找到所有 weak 变量的地址，将这些地址存储的值改为 nil</li>
@@ -146,7 +146,7 @@ void objc_destructInstance(id obj) {
             <li><strong>必须可选类型</strong>：因为可能为 nil，所以 weak 变量必须是可选类型</li>
         </ul>
         
-        <h2>与 SideTable 的关系</h2>
+        <h2><span class="num">6</span><span class="dot">.</span> 与 SideTable 的关系</h2>
         <p>weak 引用的实现依赖于 SideTable：</p>
         <ul>
             <li>SideTable 中的 <strong>weak_table_t</strong> 存储所有对象的 weak 引用信息</li>

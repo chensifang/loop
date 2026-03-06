@@ -109,7 +109,7 @@
             </tbody>
         </table>
 
-        <h2>Layout 和 Display 的区别</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> Layout 和 Display 的区别</h2>
 
         <table>
             <thead>
@@ -138,7 +138,7 @@
             </tbody>
         </table>
 
-        <h2>动画中为什么必须用 layoutIfNeeded()？</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 动画中为什么必须用 layoutIfNeeded()？</h2>
 
         <p>如果想做一个 <code class="highlight">NSLayoutConstraint</code> 的动画，必须先修改 constant，然后在一个 <code class="highlight">UIView.animate</code> 闭包里调用 <code class="highlight">layoutIfNeeded()</code>。如果调用 <code class="highlight">setNeedsLayout()</code>，动画会瞬间完成。</p>
 

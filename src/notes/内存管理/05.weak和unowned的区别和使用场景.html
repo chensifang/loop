@@ -16,7 +16,7 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>weak 和 unowned 的区别是什么？分别在什么场景下使用？</h1>
         
-        <h2>核心区别</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 核心区别</h2>
         <table>
             <thead>
                 <tr>
@@ -54,9 +54,9 @@
             </tbody>
         </table>
         
-        <h2>详细说明</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 详细说明</h2>
         
-        <h3>weak 的特点</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> weak 的特点</h3>
         <ul>
             <li><strong>不增加引用计数</strong>：weak 引用不会让对象的引用计数 +1</li>
             <li><strong>自动置为 nil</strong>：当对象被释放时，weak 引用会自动变为 nil</li>
@@ -77,7 +77,7 @@
             <li><strong>weak 置为 nil</strong> = 将 <code class="highlight">tenant</code> 变量存储的地址值从 <code class="highlight">0x1000</code> 改为 <code class="highlight">nil</code>（0x0），也就是<strong>清空指针</strong></li>
         </ul>
         
-        <h3>unowned 的特点</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> unowned 的特点</h3>
         <ul>
             <li><strong>不增加引用计数</strong>：unowned 引用也不会让对象的引用计数 +1</li>
             <li><strong>不会自动置为 nil</strong>：对象释放后，unowned 引用仍然指向原来的地址（无效内存）</li>
@@ -92,9 +92,9 @@
             <li>所以使用 unowned 的前提是：<strong>被引用的对象（b）一定不会先于引用者（a）释放</strong></li>
         </ul>
         
-        <h2>使用场景</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 使用场景</h2>
         
-        <h3>使用 weak 的场景</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 使用 weak 的场景</h3>
         <table>
             <thead>
                 <tr>
@@ -127,7 +127,7 @@
             </tbody>
         </table>
         
-        <h3>使用 unowned 的场景</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 使用 unowned 的场景</h3>
         <table>
             <thead>
                 <tr>
@@ -186,7 +186,7 @@ a.b = b
 b = <span class="keyword">nil</span>  <span class="comment">// b 释放了</span>
 
 <span class="keyword">print</span>(a.b)  <span class="comment">// 💥 崩溃！因为 b 已经释放，a.b 指向无效内存</span></code></div>
-                <h2>为什么实际开发中 weak 更常用？</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 为什么实际开发中 weak 更常用？</h2>
         <table>
             <thead>
                 <tr>
@@ -214,10 +214,10 @@ b = <span class="keyword">nil</span>  <span class="comment">// b 释放了</span
             </tbody>
         </table>
         
-        <h2>什么场景使用 unowned 有优势</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 什么场景使用 unowned 有优势</h2>
         <p>unowned 的优势主要体现在<strong>相互依赖初始化</strong>的场景中，因为可以使用非可选类型，带来代码简洁性和使用便利性。</p>
         
-        <h3>代码对比</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 代码对比</h3>
         
         <p><strong>用 weak（可选类型）：</strong></p>
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">Country</span> {
@@ -272,7 +272,7 @@ b = <span class="keyword">nil</span>  <span class="comment">// b 释放了</span
         <span class="keyword">return</span> country.name
     }
 }</code></div>
-                <h3>unowned 的优势</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> unowned 的优势</h3>
         <table>
             <thead>
                 <tr>
@@ -309,7 +309,7 @@ b = <span class="keyword">nil</span>  <span class="comment">// b 释放了</span
             <strong>注意：</strong> 虽然 unowned 有这些优势，但必须确保生命周期关系正确，否则会崩溃。在实际开发中，如果对生命周期关系不确定，还是优先用 weak。
         </div>
         
-        <h2>实际开发建议</h2>
+        <h2><span class="num">6</span><span class="dot">.</span> 实际开发建议</h2>
         <table>
             <thead>
                 <tr>
@@ -347,7 +347,7 @@ b = <span class="keyword">nil</span>  <span class="comment">// b 释放了</span
             </tbody>
         </table>
         
-        <h2>关键点总结</h2>
+        <h2><span class="num">7</span><span class="dot">.</span> 关键点总结</h2>
         <table>
             <thead>
                 <tr>

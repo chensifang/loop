@@ -70,7 +70,7 @@
             </tbody>
         </table>
 
-        <h2>CALayer 的 display 方法流程</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> CALayer 的 display 方法流程</h2>
 
         <p><code class="highlight">[CALayer display]</code> 方法被调用时，会根据 delegate 的实现情况，走不同的绘制路径：</p>
 
@@ -152,7 +152,7 @@ graph TD
             </li>
         </ol>
 
-        <h2>三种不同的 Display 路径</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 三种不同的 Display 路径</h2>
 
         <table>
             <thead>
@@ -185,7 +185,7 @@ graph TD
             </tbody>
         </table>
 
-        <h2>光栅化是什么？</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 光栅化是什么？</h2>
 
         <p><strong>光栅化（Rasterization）</strong>：将矢量图形转换成位图（bitmap）的过程。</p>
 
@@ -242,7 +242,7 @@ graph TD
             </tbody>
         </table>
 
-        <h2>位图和纹理的关系</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 位图和纹理的关系</h2>
 
         <table>
             <thead>
@@ -318,7 +318,7 @@ graph TD
             </tbody>
         </table>
 
-        <h2>异步绘制实现示例</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 异步绘制实现示例</h2>
 
         <p>如果 delegate 实现了 <code class="highlight">displayLayer:</code> 方法，可以自定义异步绘制逻辑：</p>
 
@@ -393,7 +393,7 @@ graph TD
 
 <span class="keyword">@end</span></code></div>
 
-        <h2>系统绘制 vs 异步绘制</h2>
+        <h2><span class="num">6</span><span class="dot">.</span> 系统绘制 vs 异步绘制</h2>
 
         <table>
             <thead>

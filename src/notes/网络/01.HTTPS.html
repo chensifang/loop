@@ -27,7 +27,7 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>HTTPS</h1>
         
-        <h2>第一层：HTTP 的问题</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 第一层：HTTP 的问题</h2>
         <p><strong>问题</strong>：HTTP 是明文传输，数据在网络上以明文形式传输，任何人都可以读取。</p>
         
         <pre class="mermaid">
@@ -50,7 +50,7 @@ sequenceDiagram
             <p><strong>问题总结</strong>：明文传输导致数据完全暴露，攻击者可以窃听、篡改、伪造数据。</p>
         </div>
 
-        <h2>第二层：对称加密解决了什么问题</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 第二层：对称加密解决了什么问题</h2>
         <p><strong>解决方案</strong>：使用对称加密加密数据，客户端和服务器共享密钥 K。</p>
         <p><strong>解决了</strong>：明文传输问题。即使被截获，攻击者没有密钥 K，无法解密。</p>
         
@@ -79,7 +79,7 @@ sequenceDiagram
             <p><strong>新问题</strong>：密钥 K 如何安全地分发给客户端和服务器？如果通过网络明文传输 K，攻击者可以截获 K，加密失效。</p>
         </div>
 
-        <h2>第三层：非对称加密解决了什么问题</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 第三层：非对称加密解决了什么问题</h2>
         <p><strong>解决方案</strong>：使用非对称加密解决密钥分发问题。服务器生成公钥 K_pub（公开）和私钥 K_priv（保密）。</p>
         <p><strong>解决了</strong>：密钥分发问题。即使攻击者截获了加密的对称密钥，没有私钥 K_priv 也无法解密。</p>
         
@@ -114,7 +114,7 @@ sequenceDiagram
             <p><strong>新问题</strong>：如何确保客户端拿到的公钥 K_pub 确实是服务器的，而不是攻击者伪造的？攻击者可以伪装成服务器，发送自己的公钥 K_attacker_pub，中间人攻击仍然存在。</p>
         </div>
 
-        <h2>第四层：数字证书解决了什么问题</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 第四层：数字证书解决了什么问题</h2>
         <p><strong>解决方案</strong>：使用数字证书验证服务器身份。CA（证书颁发机构）用私钥对服务器信息（域名、公钥等）签名，生成证书。</p>
         <p><strong>解决了</strong>：身份验证问题。攻击者无法伪造证书（没有 CA 的私钥），无法伪装成服务器。</p>
         
@@ -159,10 +159,10 @@ sequenceDiagram
             </ol>
         </div>
 
-        <h2>补充：Charles 抓 HTTPS 包的原理</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 补充：Charles 抓 HTTPS 包的原理</h2>
         <p>Charles 等抓包工具能够抓取 HTTPS 数据的关键在于：<strong>客户端信任了 Charles 的 CA 证书</strong>。</p>
 
-        <h3>Charles 抓 HTTPS 包的流程</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> Charles 抓 HTTPS 包的流程</h3>
         
         <pre class="mermaid">
 sequenceDiagram
@@ -212,7 +212,7 @@ sequenceDiagram
     Charles->>Client: E(K_session, 响应数据)
         </pre>
 
-        <h3>为什么 Charles 能抓 HTTPS 包？</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 为什么 Charles 能抓 HTTPS 包？</h3>
         <table>
             <thead>
                 <tr>
@@ -254,7 +254,7 @@ sequenceDiagram
             </ul>
         </div>
 
-        <h3>为什么 Charles 能通过验证？</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 为什么 Charles 能通过验证？</h3>
         <p><strong>关键理解</strong>：Charles 返回的不是 Charles 自己的证书，而是<strong>为被访问域名签发的证书</strong>。</p>
         
         <pre class="mermaid">
@@ -290,7 +290,7 @@ sequenceDiagram
             </ul>
         </div>
 
-        <h3>为什么攻击者无法像 Charles 一样攻击？</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">4</span><span class="dot">.</span> 为什么攻击者无法像 Charles 一样攻击？</h3>
         <p><strong>关键理解</strong>：攻击者无法为被攻击域名签发证书，只能返回自己的证书，导致域名不匹配，验证失败。</p>
         
         <pre class="mermaid">
@@ -326,7 +326,7 @@ sequenceDiagram
             </ul>
         </div>
 
-        <h3>Charles vs 真实攻击者的区别</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">5</span><span class="dot">.</span> Charles vs 真实攻击者的区别</h3>
         <table>
             <thead>
                 <tr>
@@ -369,7 +369,7 @@ sequenceDiagram
             </tbody>
         </table>
 
-        <h2>总结</h2>
+        <h2><span class="num">6</span><span class="dot">.</span> 总结</h2>
         <table>
             <thead>
                 <tr>

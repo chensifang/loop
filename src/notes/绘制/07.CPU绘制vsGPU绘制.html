@@ -26,7 +26,7 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>CPU 绘制 vs GPU 绘制：本质区别</h1>
 
-        <h2>核心理解</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 核心理解</h2>
 
         <p><strong>关键点</strong>：CPU 不能直接"画"到屏幕上，它只是在内存中生成位图数据。</p>
 
@@ -52,7 +52,7 @@
             </tbody>
         </table>
 
-        <h2>CPU "绘制"的真正含义</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> CPU "绘制"的真正含义</h2>
 
         <p>当我们说"CPU 绘制"时，实际上是指：</p>
 
@@ -65,7 +65,7 @@
 
         <p><strong>重要</strong>：此时屏幕还没有任何变化，只是内存中有了图像数据。</p>
 
-        <h2>GPU 绘制的真正含义</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> GPU 绘制的真正含义</h2>
 
         <p>GPU 绘制才是真正显示到屏幕的过程：</p>
 
@@ -76,9 +76,9 @@
             <li><strong>屏幕显示</strong>：屏幕硬件读取 FrameBuffer，显示到屏幕</li>
         </ol>
 
-        <h2>完整流程对比</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 完整流程对比</h2>
 
-        <h3>示例：drawRect 的完整流程</h3>
+        <h3><span class="num">4</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 示例：drawRect 的完整流程</h3>
 
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">RedView</span>: <span class="type">UIView</span> {
     <span class="keyword">override func</span> draw(<span class="keyword">_</span> rect: <span class="type">CGRect</span>) {
@@ -145,9 +145,9 @@
             </tbody>
         </table>
 
-        <h2>技术层面的区别</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 技术层面的区别</h2>
 
-        <h3>CPU "绘制"的本质</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> CPU "绘制"的本质</h3>
 
         <p><strong>CPU 绘制 = 在内存中生成位图数据</strong></p>
 
@@ -180,7 +180,7 @@
 
         <p><strong>关键</strong>：所有操作都在 CPU 内存中进行，屏幕没有任何变化。</p>
 
-        <h3>GPU 绘制的本质</h3>
+        <h3><span class="num">5</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> GPU 绘制的本质</h3>
 
         <p><strong>GPU 绘制 = 把位图数据渲染到屏幕</strong></p>
 
@@ -217,7 +217,7 @@
 
         <p><strong>关键</strong>：只有经过 GPU，数据才能显示到屏幕上。</p>
 
-        <h2>为什么说"CPU 绘制"？</h2>
+        <h2><span class="num">6</span><span class="dot">.</span> 为什么说"CPU 绘制"？</h2>
 
         <p>这是习惯说法，更准确的表述是：</p>
 
@@ -240,9 +240,9 @@
             </tbody>
         </table>
 
-        <h2>常见场景</h2>
+        <h2><span class="num">7</span><span class="dot">.</span> 常见场景</h2>
 
-        <h3>场景 1：drawRect（CPU 绘制）</h3>
+        <h3><span class="num">7</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 场景 1：drawRect（CPU 绘制）</h3>
 
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">CustomView</span>: <span class="type">UIView</span> {
     <span class="keyword">override func</span> draw(<span class="keyword">_</span> rect: <span class="type">CGRect</span>) {
@@ -255,14 +255,14 @@
     }
 }</code></div>
 
-        <h3>场景 2：UIImageView（不需要 CPU 绘制）</h3>
+        <h3><span class="num">7</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 场景 2：UIImageView（不需要 CPU 绘制）</h3>
 
         <div class="code-block"><code><span class="keyword">let</span> imageView = <span class="type">UIImageView</span>(image: <span class="type">UIImage</span>(named: <span class="string">"icon"</span>))
 <span class="comment">// 图片解码成位图（CPU 操作）</span>
 <span class="comment">// 位图存入 layer.contents</span>
 <span class="comment">// GPU 直接渲染位图，不需要 drawRect</span></code></div>
 
-        <h3>场景 3：UILabel（文字光栅化）</h3>
+        <h3><span class="num">7</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 场景 3：UILabel（文字光栅化）</h3>
 
         <div class="code-block"><code><span class="keyword">let</span> label = <span class="type">UILabel</span>()
 label.text = <span class="string">"Hello"</span>
@@ -271,7 +271,7 @@ label.text = <span class="string">"Hello"</span>
 <span class="comment">// 位图存入 layer.contents</span>
 <span class="comment">// GPU 直接渲染位图，不需要 drawRect</span></code></div>
 
-        <h2>总结</h2>
+        <h2><span class="num">8</span><span class="dot">.</span> 总结</h2>
 
         <table>
             <thead>

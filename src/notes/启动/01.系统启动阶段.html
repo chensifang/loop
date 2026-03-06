@@ -26,7 +26,7 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>系统启动阶段</h1>
 
-        <h2>0. 流程概述</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 流程概述</h2>
         <div class="code-block"><code><pre>用户点击 App 图标
     ↓
 1. 系统启动（内核初始化系统服务）
@@ -38,29 +38,30 @@
 dyld 动态链接器接管</pre></code></div>
 
 
-        <h3>1. 系统启动</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 系统启动</h3>
         <p>iOS 系统启动时，内核（XNU）会初始化系统服务，包括进程管理、内存管理、文件系统等。当用户点击 App 图标时，系统会触发 App 启动流程。</p>
 
-        <h3>2. 内核加载 App 可执行文件</h3>
-        <h4>2.1 Mach-O 文件格式</h4>
-        <p>iOS App 的可执行文件采用 Mach-O（Mach Object）格式，这是一种二进制文件格式，包含：</p>
-        <ul>
-            <li><strong>Header</strong>：文件头，包含架构信息（arm64、x86_64 等）、文件类型等</li>
-            <li><strong>Load Commands</strong>：加载命令，告诉系统如何加载文件，包括：
-                <ul>
-                    <li>代码段（__TEXT）的位置和大小</li>
-                    <li>数据段（__DATA）的位置和大小</li>
-                    <li>动态库依赖信息</li>
-                    <li>入口点地址</li>
-                </ul>
-            </li>
-            <li><strong>Segment/Section</strong>：实际的代码和数据</li>
-        </ul>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 内核加载 App 可执行文件</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Mach-O 文件格式</strong></td>
+                    <td>iOS App 的可执行文件采用 Mach-O（Mach Object）格式，包含：<br>• Header：文件头，包含架构信息（arm64、x86_64 等）、文件类型等<br>• Load Commands：加载命令，包括代码段/数据段位置、动态库依赖、入口点地址<br>• Segment/Section：实际的代码和数据</td>
+                </tr>
+                <tr>
+                    <td><strong>加载过程</strong></td>
+                    <td>内核读取 Mach-O 文件，解析 Load Commands，将代码段和数据段映射到进程的虚拟地址空间。此时文件还在磁盘上，采用内存映射（mmap）的方式，按需加载。</td>
+                </tr>
+            </tbody>
+        </table>
 
-        <h4>2.2 加载过程</h4>
-        <p>内核读取 Mach-O 文件，解析 Load Commands，将代码段和数据段映射到进程的虚拟地址空间。此时文件还在磁盘上，采用内存映射（mmap）的方式，按需加载。</p>
-
-        <h3>3. 创建进程</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 创建进程</h3>
         <p>内核为 App 创建独立的进程空间，包括：</p>
         <ul>
             <li><strong>进程控制块（PCB）</strong>：存储进程的基本信息</li>
@@ -70,7 +71,7 @@ dyld 动态链接器接管</pre></code></div>
         </ul>
         <p>此时进程已经创建，但还没有开始执行代码。接下来会由 dyld 动态链接器接管，进行动态链接和初始化工作。</p>
 
-        <h2>4. 关键点</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 关键点</h2>
         <ul>
             <li>这个阶段由内核完成，App 代码还没有执行</li>
             <li>采用内存映射（mmap）方式加载文件，按需加载，提高效率</li>

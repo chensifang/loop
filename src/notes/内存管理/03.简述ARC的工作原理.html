@@ -26,12 +26,12 @@
         <button class="directory-button" onclick="window.location.href='/'">目录</button>
         <h1>1. 简述 ARC（自动引用计数）的工作原理</h1>
         
-        <h2>核心概念</h2>
+        <h2><span class="num">1</span><span class="dot">.</span> 核心概念</h2>
         <p>ARC 是编译器在编译时自动插入内存管理代码（retain/release），开发者无需手动管理对象生命周期。</p>
         
-        <h2>工作原理</h2>
+        <h2><span class="num">2</span><span class="dot">.</span> 工作原理</h2>
         
-        <h3>1. 编译时自动插入代码</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 编译时自动插入代码</h3>
         <p>ARC 在编译时分析代码，在需要的地方自动插入 <code class="highlight">retain</code> 和 <code class="highlight">release</code>：</p>
         <div class="code-block"><code><span class="comment">// 你写的代码</span>
 <span class="keyword">let</span> person = <span class="type">Person</span>()
@@ -42,7 +42,7 @@
 <span class="function">objc_retain</span>(person)  <span class="comment">// ARC 自动插入</span>
 <span class="keyword">let</span> name = person.name
 <span class="function">objc_release</span>(person)  <span class="comment">// ARC 自动插入（当 person 不再使用时）</span></code></div>
-                <h3>2. 引用计数机制</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">2</span><span class="dot">.</span> 引用计数机制</h3>
         <table>
             <thead>
                 <tr>
@@ -75,7 +75,7 @@
             </tbody>
         </table>
         
-        <h3>3. 编译器如何判断插入位置</h3>
+        <h3><span class="num">2</span><span class="dot">.</span><span class="num">3</span><span class="dot">.</span> 编译器如何判断插入位置</h3>
         <table>
             <thead>
                 <tr>
@@ -108,7 +108,7 @@
             </tbody>
         </table>
         
-        <h2>通俗理解</h2>
+        <h2><span class="num">3</span><span class="dot">.</span> 通俗理解</h2>
         <div class="analogy">
             <p>就像图书馆借书系统：</p>
             <ul>
@@ -119,7 +119,7 @@
             <p>ARC 会自动完成这些登记和注销，你不需要手动写 <code class="highlight">retain</code>/<code class="highlight">release</code>。</p>
         </div>
         
-        <h3>引用计数流程图</h3>
+        <h3><span class="num">3</span><span class="dot">.</span><span class="num">1</span><span class="dot">.</span> 引用计数流程图</h3>
         <pre class="mermaid">
 graph TD
     A[创建对象] --> B[引用计数 = 1]
@@ -131,7 +131,7 @@ graph TD
     E -->|否| G[对象继续存在]
         </pre>
         
-        <h2>实际例子</h2>
+        <h2><span class="num">4</span><span class="dot">.</span> 实际例子</h2>
         <div class="code-block"><code><span class="keyword">class</span> <span class="type">Person</span> {
     <span class="keyword">var</span> name: <span class="type">String</span>
     <span class="keyword">init</span>(name: <span class="type">String</span>) {
@@ -146,7 +146,7 @@ graph TD
     <span class="comment">// person1 离开作用域，引用计数 = 1</span>
     <span class="comment">// person2 离开作用域，引用计数 = 0，对象被释放</span>
 }</code></div>
-                <h2>关键点</h2>
+        <h2><span class="num">5</span><span class="dot">.</span> 关键点</h2>
         <table>
             <thead>
                 <tr>
@@ -170,7 +170,7 @@ graph TD
             </tbody>
         </table>
         
-        <h2>ARC vs MRC（手动管理）</h2>
+        <h2><span class="num">6</span><span class="dot">.</span> ARC vs MRC（手动管理）</h2>
         <table>
             <thead>
                 <tr>
