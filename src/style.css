@@ -129,6 +129,23 @@ h3 {
     letter-spacing: -0.005em;
 }
 
+h4 {
+    color: #1a1a1a;
+    margin-top: 14px;
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+
+/* 标题数字字体样式 */
+h2 .num, h3 .num, h4 .num {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
 /* 正文文本 Block - 统一样式 */
 p {
     margin-bottom: 10px;
