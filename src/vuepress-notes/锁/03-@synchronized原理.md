@@ -47,7 +47,7 @@ objc_sync_enter(obj);
 | 数据结构 | 说明 |
 |---------|------|
 | **SyncData** | 存储锁信息的结构，包含：<br>- 指向下一个 SyncData 的指针（链表结构）<br>- 同步对象的指针（disguised pointer）<br>- 线程计数<br>- 递归互斥锁（pthread_mutex_t，支持递归加锁） |
-| **StripedMap<SyncList>** | 分片哈希表，将对象指针映射到 SyncData 链表，减少不同对象之间的锁竞争 |
+| **StripedMap&lt;SyncList&gt;** | 分片哈希表，将对象指针映射到 SyncData 链表，减少不同对象之间的锁竞争 |
 | **SyncCache** | 线程本地缓存，快速查找最近同步的对象，避免频繁的内存分配 |
 
 ### 2.4 工作流程
