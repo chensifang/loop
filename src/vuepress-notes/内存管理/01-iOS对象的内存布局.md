@@ -2,7 +2,7 @@
 
 ## 对象内存布局结构
 
-```objectivec
+```objective-c
 @interface Animal : NSObject {
     NSString *_name;
 }
@@ -13,6 +13,8 @@
 }
 @end
 ```
+
+<div id="memory-container"></div>
 
 ## 内存布局说明
 
@@ -38,7 +40,7 @@
 
 ### 代码示例
 
-```objectivec
+```objective-c
 NSObject *obj = [[NSObject alloc] init];
 size_t instanceSize = class_getInstanceSize([NSObject class]);
 size_t mallocSize = malloc_size((__bridge const void *)obj);
@@ -53,6 +55,10 @@ NSLog(@"实例大小: %zu, 分配大小: %zu", instanceSize, mallocSize);
 | **NSObject** | 8 字节 | 16 字节 |
 | **有实例变量的对象**（如 Dog） | 8 + 实例变量大小 | ≥ 实例大小（取决于分配器） |
 
-> **常见误解**：认为所有继承自 NSObject 的对象都是 16 字节。
-> 
-> **正确理解**：只有 NSObject 本身是 8 字节（实例）/ 16 字节（分配）。有实例变量的对象大小会根据实例变量变化。
+::: info 常见误解
+认为所有继承自 NSObject 的对象都是 16 字节。
+:::
+
+::: info 正确理解
+只有 NSObject 本身是 8 字节（实例）/ 16 字节（分配）。有实例变量的对象大小会根据实例变量变化。
+:::

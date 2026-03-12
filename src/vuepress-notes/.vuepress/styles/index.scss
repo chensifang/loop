@@ -1,0 +1,522 @@
+// 自定义样式 - 整体文字缩小
+:root {
+  // 基础字体大小
+  --vp-font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+// 整体文字缩小
+html {
+  font-size: 14px; // 默认 16px，缩小到 14px
+}
+
+body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #000000 !important; // 正文字体更黑
+}
+
+// 标题字体大小调整 - 缩小与正文差距
+h1 {
+  font-size: 1.5em !important;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
+  border-bottom: 1px solid #eaecef !important;
+  padding-bottom: 0.3em !important;
+  color: #000000 !important; // 黑色
+}
+
+h2 {
+  font-size: 1.3em !important;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  color: #000000 !important; // 黑色
+  
+  &::after {
+    display: none !important;
+  }
+  
+  &::before {
+    display: none !important;
+  }
+}
+
+h3 {
+  font-size: 1.15em !important;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  color: #0066ff !important; // 蓝色
+}
+
+h4 {
+  font-size: 1.08em !important;
+  margin-top: 1.2em;
+  margin-bottom: 1.2em;
+  color: #00aa00 !important; // 绿色
+}
+
+h5 {
+  font-size: 1.04em !important;
+  margin-top: 1.4em;
+  margin-bottom: 1.4em;
+  color: #ff6600 !important; // 橙色
+}
+
+h6 {
+  font-size: 1.02em !important;
+  margin-top: 1.6em;
+  margin-bottom: 1.6em;
+  color: #666666 !important; // 灰色
+}
+
+// 正文文字
+p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #000000 !important; // 正文字体更黑
+}
+
+// 列表文字
+ul, ol {
+  font-size: 14px;
+}
+
+li {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #000000 !important; // 列表文字更黑
+}
+
+// 行内代码样式 - 模仿历史样式
+:not(pre) > code {
+  background-color: rgba(27, 31, 35, 0.05);
+  padding: 2.5px 6px;
+  border-radius: 6px;
+  font-size: 85%; // 历史样式使用 85%
+  color: #d73a49; // 历史样式使用红色
+  font-family: Menlo, Monaco, 'Courier New', monospace;
+  border: none;
+  font-weight: normal;
+}
+
+// 代码块样式 - 模仿历史样式
+pre {
+  background: #f6f8fa;
+  color: #1a1a1a;
+  padding: 10px 14px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 14px 0;
+  font-family: Menlo, Monaco, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.9;
+  border: 1px solid #d1d5da;
+}
+
+// Shiki 代码块容器背景 - 确保有背景颜色
+div[class*="language-"],
+div[data-highlighter="shiki"] {
+  background: #f6f8fa !important;
+  border-radius: 4px;
+  border: 1px solid #d1d5da;
+  margin: 14px 0;
+  
+  pre {
+    background: transparent !important; // pre 背景透明，使用容器的背景
+    margin: 0;
+    border: none;
+  }
+}
+
+pre code {
+  background: transparent !important;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #1a1a1a;
+  border: none;
+}
+
+// Shiki 代码高亮颜色 - 模仿历史 highlight.js 样式
+// 确保代码块没有行号栏 - 使用更强的选择器和优先级
+div[class*="language-"].line-numbers-mode::after,
+div[class*="language-"]::after,
+div[data-highlighter="shiki"].line-numbers-mode::after,
+div[data-highlighter="shiki"]::after {
+  display: none !important;
+  border: none !important;
+  background: transparent !important;
+  content: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.line-numbers-wrapper,
+.line-numbers,
+.line-number {
+  display: none !important; // 完全隐藏行号
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+// 移除行号模式下的左边距
+div[class*="language-"].line-numbers-mode pre,
+div[class*="language-"].line-numbers-mode code {
+  margin-left: 0 !important;
+  padding-left: 10px !important;
+}
+
+// Shiki 语法高亮颜色 - 匹配历史 highlight.js 样式
+.shiki,
+pre[class*="language-"],
+code[class*="language-"] {
+  // 关键字（如 class, func, override）- 红色
+  .token.keyword,
+  .token.keyword-keyword,
+  span[style*="color: rgb(215, 58, 73)"], // Shiki github-light 的关键字颜色
+  span[style*="color:#d73a49"] {
+    color: #d73a49 !important;
+    font-weight: 500;
+  }
+  
+  // 字符串 - 深蓝色
+  .token.string,
+  span[style*="color: rgb(3, 47, 98)"],
+  span[style*="color:#032f62"] {
+    color: #032f62 !important;
+  }
+  
+  // 注释 - 灰色斜体
+  .token.comment,
+  span[style*="color: rgb(106, 115, 125)"],
+  span[style*="color:#6a737d"] {
+    color: #6a737d !important;
+    font-style: italic;
+  }
+  
+  // 类型（如 Person, UIViewController）- 紫色
+  .token.type,
+  .token.class-name,
+  span[style*="color: rgb(111, 66, 193)"],
+  span[style*="color:#6f42c1"] {
+    color: #6f42c1 !important;
+    font-weight: 500;
+  }
+  
+  // 函数/方法名 - 蓝色
+  .token.function,
+  .token.function-name,
+  span[style*="color: rgb(0, 92, 197)"],
+  span[style*="color:#005cc5"] {
+    color: #005cc5 !important;
+  }
+}
+
+// 表格样式 - 模仿历史样式
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 14px;
+}
+
+thead {
+  background: #f9fafb;
+}
+
+th {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+  border: 1px solid #d1d5da;
+  vertical-align: top;
+}
+
+td {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #1a1a1a;
+  border: 1px solid #d1d5da;
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+// 移除表格行的交替换色（斑马纹）
+tbody tr {
+  background-color: transparent !important;
+}
+
+tbody tr:nth-child(even) {
+  background-color: transparent !important;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: transparent !important;
+}
+
+// 引用块样式 - 优化显示效果
+blockquote {
+  font-size: 14px;
+  margin: 14px 0;
+  padding: 10px 16px;
+  border-left: 4px solid #d1d5da;
+  background-color: #f9fafb;
+  color: #1a1a1a;
+  border-radius: 0 4px 4px 0;
+  line-height: 1.6;
+  
+  p {
+    margin: 0.5em 0;
+    
+    &:first-child {
+      margin-top: 0;
+    }
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  ul, ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+  }
+  
+  strong {
+    color: #000000;
+    font-weight: 600;
+  }
+}
+
+// 侧边栏文字
+.sidebar {
+  font-size: 14px;
+}
+
+// 子目录左侧竖线：只匹配嵌套的子标题列表，不匹配第一层
+.vp-sidebar .vp-sidebar-children .vp-sidebar-children {
+  border-left: 1px solid var(--vp-c-divider);
+  margin-left: 1rem;
+  padding-left: 0.75rem;
+}
+
+// 导航栏文字
+.navbar {
+  font-size: 14px;
+}
+
+// 增加页面内容区域宽度，让表格能完整显示
+.theme-default-content,
+.page {
+  max-width: 1200px !important; // 默认约 740px，增加到 1200px
+}
+
+// 表格容器 - 允许横向滚动（如果表格太宽）
+.table-wrapper {
+  overflow-x: auto;
+  margin: 14px 0;
+}
+
+// 表格样式保持原有，但允许换行
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 14px;
+  word-wrap: break-word; // 允许长单词换行
+  word-break: break-word; // 允许在单词内换行（如果需要）
+  
+  // 如果表格仍然太宽，可以横向滚动
+  min-width: 100%;
+}
+
+// 组件 1: Excel 风格表格结构可视化组件样式
+.table-structure-container {
+  position: relative;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: visible;
+  max-width: 100%;
+  width: 100%;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .table-structure {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+  
+  #isa-structure {
+    margin-top: 30px;
+    position: relative;
+    flex-shrink: 0;
+  }
+}
+
+.table-structure-column {
+  flex-shrink: 0;
+  min-width: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-right: 20px;
+}
+
+.table-structure-container-hierarchical {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.table-structure-container-column {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.table-structure {
+  border: 2px solid #d1d5da;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  width: auto;
+  min-width: fit-content;
+  min-width: 200px; // 确保在手机上也有最小宽度
+}
+
+.table-structure-title {
+  display: block;
+  padding: 4px 6px;
+  background: #f6f8fa;
+  border-bottom: 2px solid #d1d5da;
+  font-weight: 600;
+  font-size: 13px;
+  color: #1a1a1a;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.table-structure-subtitle {
+  display: block;
+  padding: 2px 6px;
+  background: #f6f8fa;
+  border-bottom: 1px solid #e1e4e8;
+  font-weight: normal;
+  font-size: 11px;
+  color: #586069;
+  width: 100%;
+  box-sizing: border-box;
+  font-style: italic;
+}
+
+.table-block {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-block-header {
+  font-weight: 600;
+  color: #1a1a1a;
+  border-bottom: 2px solid #d1d5da;
+  
+  .table-offset,
+  .table-content,
+  .table-size {
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+}
+
+.table-row {
+  display: table-row;
+  border-bottom: 1px solid #e1e4e8;
+  min-height: 24px;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    // 移除悬停背景色
+  }
+}
+
+.table-row-link {
+  cursor: pointer;
+  position: relative;
+  
+  &:hover {
+    background: #e8f4f8 !important;
+  }
+}
+
+.table-offset,
+.table-content,
+.table-size {
+  display: table-cell;
+  padding: 4px 6px;
+  border-right: 1px solid #e1e4e8;
+  vertical-align: middle;
+  text-align: left;
+  white-space: nowrap;
+  
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.table-offset,
+.table-size {
+  font-family: Menlo, Monaco, 'Courier New', monospace;
+  font-size: 12px;
+  color: #24292e;
+}
+
+.table-offset {
+  font-weight: 500;
+}
+
+.table-link-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+  overflow: visible;
+  
+  path {
+    fill: none;
+    stroke: #666666;
+    stroke-width: 1;
+    marker-end: url(#arrowhead);
+  }
+}
+
+.table-link-path {
+  fill: none;
+  stroke: #666666;
+  stroke-width: 1;
+}
+
+.table-link-arrow {
+  fill: #666666;
+}
+

@@ -8,6 +8,8 @@ Side Table 是 iOS Runtime 中的一个辅助数据结构，用于存储对象�
 
 **假设场景**：对象 p1（地址 0x1，引用计数=3，2个weak指针），对象 p2（地址 0x2，引用计数=5，2个weak指针）
 
+<div id="sidetable-container"></div>
+
 ## 各层结构说明
 
 | 结构名称 | 类型 | 作用 | 层级 | Key-Value关系 |
