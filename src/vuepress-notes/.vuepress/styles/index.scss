@@ -417,77 +417,86 @@ blockquote {
 }
 
 // 页面内目录（TOC）编号 - 与页面标题编号一致
+// VuePress 默认主题的 TOC 可能使用不同的类名，使用通用选择器
 .vuepress-toc,
 .page-toc,
-.table-of-contents {
+.table-of-contents,
+aside[class*="toc"],
+nav[class*="toc"],
+.vp-page-toc,
+.vp-outline {
   counter-reset: toc-h2-counter toc-h3-counter toc-h4-counter toc-h5-counter toc-h6-counter;
   
-  // h2 级别的目录项
+  // h2 级别的目录项 - 尝试多种选择器
   .vuepress-toc-item[data-level="2"],
   .toc-item[data-level="2"],
-  li[data-level="2"] {
-    counter-increment: toc-h2-counter;
-    counter-reset: toc-h3-counter;
-    
-    &::before {
-      content: counter(toc-h2-counter) ". " !important;
-      display: inline !important;
-      margin-right: 4px;
-    }
+  li[data-level="2"],
+  a[href^="#"]:has(+ ul),
+  > ul > li:nth-child(n) {
+    // 检查是否是 h2 级别（通过嵌套层级判断）
   }
   
-  // h3 级别的目录项
-  .vuepress-toc-item[data-level="3"],
-  .toc-item[data-level="3"],
-  li[data-level="3"] {
-    counter-increment: toc-h3-counter;
-    counter-reset: toc-h4-counter;
+  // 通用方法：根据嵌套层级添加编号
+  ul {
+    counter-reset: toc-h2-counter toc-h3-counter toc-h4-counter toc-h5-counter toc-h6-counter;
     
-    &::before {
-      content: counter(toc-h2-counter) "." counter(toc-h3-counter) ". " !important;
-      display: inline !important;
-      margin-right: 4px;
-    }
-  }
-  
-  // h4 级别的目录项
-  .vuepress-toc-item[data-level="4"],
-  .toc-item[data-level="4"],
-  li[data-level="4"] {
-    counter-increment: toc-h4-counter;
-    counter-reset: toc-h5-counter;
-    
-    &::before {
-      content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) ". " !important;
-      display: inline !important;
-      margin-right: 4px;
-    }
-  }
-  
-  // h5 级别的目录项
-  .vuepress-toc-item[data-level="5"],
-  .toc-item[data-level="5"],
-  li[data-level="5"] {
-    counter-increment: toc-h5-counter;
-    counter-reset: toc-h6-counter;
-    
-    &::before {
-      content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) ". " !important;
-      display: inline !important;
-      margin-right: 4px;
-    }
-  }
-  
-  // h6 级别的目录项
-  .vuepress-toc-item[data-level="6"],
-  .toc-item[data-level="6"],
-  li[data-level="6"] {
-    counter-increment: toc-h6-counter;
-    
-    &::before {
-      content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) "." counter(toc-h6-counter) ". " !important;
-      display: inline !important;
-      margin-right: 4px;
+    // 第一层（h2）
+    > li {
+      counter-increment: toc-h2-counter;
+      counter-reset: toc-h3-counter;
+      
+      > a::before {
+        content: counter(toc-h2-counter) ". " !important;
+        display: inline !important;
+        margin-right: 4px;
+      }
+      
+      // 第二层（h3）
+      > ul > li {
+        counter-increment: toc-h3-counter;
+        counter-reset: toc-h4-counter;
+        
+        > a::before {
+          content: counter(toc-h2-counter) "." counter(toc-h3-counter) ". " !important;
+          display: inline !important;
+          margin-right: 4px;
+        }
+        
+        // 第三层（h4）
+        > ul > li {
+          counter-increment: toc-h4-counter;
+          counter-reset: toc-h5-counter;
+          
+          > a::before {
+            content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) ". " !important;
+            display: inline !important;
+            margin-right: 4px;
+          }
+          
+          // 第四层（h5）
+          > ul > li {
+            counter-increment: toc-h5-counter;
+            counter-reset: toc-h6-counter;
+            
+            > a::before {
+              content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) ". " !important;
+              display: inline !important;
+              margin-right: 4px;
+            }
+            
+            // 第五层（h6）
+            > ul > li {
+              counter-increment: toc-h6-counter;
+              
+              > a::before {
+                content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) "." counter(toc-h6-counter) ". " !important;
+                display: inline !important;
+                margin-right: 4px;
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
