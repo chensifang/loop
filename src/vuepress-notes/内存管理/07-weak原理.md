@@ -1,26 +1,42 @@
 # weak原理
 
-## 概述
+## 1. 概述
 
 weak 关键字用于创建弱引用，不增加对象的引用计数。当对象被释放时，weak 引用会自动置为 nil。
 
-## weak 引用的实现流程
+## 2. weak 引用的实现流程
 
-```mermaid
-flowchart TD
-    A["创建 weak 引用<br/>weak var obj = target"] --> B["objc_storeWeak"]
-    B --> C["查找 SideTable"]
-    C --> D["在 weak_table_t 中查找<br/>或创建 weak_entry_t"]
-    D --> E["将 weak 变量地址<br/>添加到 weak_entry_t"]
-    
-    F["对象释放"] --> G["objc_destructInstance"]
-    G --> H["查找 SideTable"]
-    H --> I["在 weak_table_t 中<br/>找到 weak_entry_t"]
-    I --> J["遍历所有 weak 变量地址"]
-    J --> K["将所有 weak 变量<br/>置为 nil"]
+```uml
+@startuml
+start
+
+partition "创建 weak 引用流程" {
+    :创建 weak 引用\nweak var obj = target;
+    :调用 objc_storeWeak;
+    :查找 SideTable;
+    if (weak_entry_t 存在?) then (否)
+        :创建新的 weak_entry_t;
+        :插入到 weak_table_t;
+    else (是)
+    endif
+    :将 weak 变量地址\n添加到 weak_entry_t;
+}
+
+partition "对象释放流程" {
+    :对象释放;
+    :调用 objc_destructInstance;
+    :查找 SideTable;
+    :在 weak_table_t 中\n找到 weak_entry_t;
+    :遍历所有 weak 变量地址;
+    :将所有 weak 变量\n置为 nil;
+    :从 weak_table_t 中移除 weak_entry_t;
+}
+
+stop
+@enduml
 ```
 
-## 关键步骤说明
+## 3. 关键步骤说明
 
 | 步骤 | 操作 | 说明 |
 |------|------|------|
@@ -30,9 +46,9 @@ flowchart TD
 | **4. 对象释放时** | objc_destructInstance | 对象释放时，查找对应的 weak_entry_t |
 | **5. 清空所有 weak 引用** | 遍历 weak 变量地址 | 遍历 weak_entry_t 中存储的所有 weak 变量地址，将它们都置为 nil |
 
-## 核心代码逻辑
+## 4. 核心代码逻辑
 
-### 创建 weak 引用
+### 4.1. 创建 weak 引用
 
 ```cpp
 // 伪代码：objc_storeWeak
@@ -53,7 +69,7 @@ void objc_storeWeak(id *location, id newObj) {
 }
 ```
 
-### 对象释放时清空 weak 引用
+### 4.2. 对象释放时清空 weak 引用
 
 ```cpp
 // 伪代码：对象释放时
@@ -77,14 +93,14 @@ void objc_destructInstance(id obj) {
 }
 ```
 
-## 关键理解
+## 5. 关键理解
 
 - **weak 变量地址**：weak 变量本身也有内存地址，这个地址被存储在 weak_entry_t 中
 - **自动置 nil**：对象释放时，通过 weak_entry_t 找到所有 weak 变量的地址，将这些地址存储的值改为 nil
 - **不增加引用计数**：weak 引用不会让对象的引用计数 +1，所以不会阻止对象释放
 - **必须可选类型**：因为可能为 nil，所以 weak 变量必须是可选类型
 
-## 与 SideTable 的关系
+## 6. 与 SideTable 的关系
 
 weak 引用的实现依赖于 SideTable：
 

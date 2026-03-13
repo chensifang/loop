@@ -2,7 +2,7 @@
 
 iOS 的图形渲染体系采用分层架构，框架像洋葱一样分层包裹。越上层越易用，越底层性能越高、控制力越强。
 
-## 四层架构概览
+## 1. 四层架构概览
 
 ```mermaid
 graph TD
@@ -12,7 +12,7 @@ graph TD
     D --> E[GPU 硬件]
 ```
 
-## 第一层：应用层（Application Layer）
+## 2. 第一层：应用层（Application Layer）
 
 **特点**：最顶层，也是平时写的最多的。这些框架是对底层渲染能力的高级封装，目的是让开发者能快速构建 UI，不需要关心像素和显卡。
 
@@ -22,7 +22,7 @@ graph TD
 | **AppKit** | NSView、NSViewController | macOS 的 UI 框架（UIKit 的 macOS 版本） | 与 UIKit 类似，但针对 macOS |
 | **SwiftUI** | View、ViewModifier | 声明式 UI 框架 | 底层混合使用 Core Animation 和 Metal |
 
-## 第二层：核心服务层（Core Services Layer）
+## 3. 第二层：核心服务层（Core Services Layer）
 
 **特点**：iOS 图形渲染的引擎，也是区分初级和高级工程师的分水岭。
 
@@ -34,7 +34,7 @@ graph TD
 | **Core Text** | CTFrame、CTLine | 文字排版引擎，处理复杂文字渲染 | CPU |
 | **TextKit** | NSLayoutManager、NSTextContainer | 高级文字排版框架（基于 Core Text） | CPU |
 
-### Core Animation 的关键作用
+### 3.1. Core Animation 的关键作用
 
 **理解 Core Animation 是精通 iOS 渲染的关键**：
 
@@ -42,7 +42,7 @@ graph TD
 - 几乎所有 iOS 动画都由它驱动
 - 性能优化的核心在于减少不必要的 Layer 创建和离屏渲染
 
-## 第三层：硬件抽象层（Hardware Abstraction Layer）
+## 4. 第三层：硬件抽象层（Hardware Abstraction Layer）
 
 **特点**：直接与 GPU（图形处理器）对话。如果你做游戏引擎、视频播放器或高性能绘图 App，才会用到这里。
 
@@ -51,7 +51,7 @@ graph TD
 | **Metal** | 现代 iOS 渲染的基石 | 低开销图形 API，直接与 GPU 对话 | ✅ 推荐使用 |
 | **OpenGL ES** | 老一代跨平台图形标准 | 跨平台图形 API | ❌ iOS 12+ 已废弃 |
 
-### Metal 的重要性
+### 4.1. Metal 的重要性
 
 Metal 是现代 iOS 渲染的基石：
 
@@ -60,7 +60,7 @@ Metal 是现代 iOS 渲染的基石：
 - UIKit、Core Animation、Core Image 底层都通过 Metal 实现
 - 从 iOS 12 开始，OpenGL ES 已被废弃，Metal 成为唯一的底层图形 API
 
-## 第四层：领域特定层（Domain Specific）
+## 5. 第四层：领域特定层（Domain Specific）
 
 **特点**：基于 Metal 或 OpenGL 封装的专用引擎。
 
@@ -70,7 +70,7 @@ Metal 是现代 iOS 渲染的基石：
 | **SpriteKit** | 2D 游戏引擎（精灵图、物理碰撞） | Metal |
 | **ARKit** | 增强现实渲染（结合摄像头和 3D 渲染） | Metal + 摄像头数据 |
 
-## 其他相关框架
+## 6. 其他相关框架
 
 | 框架 | 用途 |
 |------|------|
@@ -79,7 +79,7 @@ Metal 是现代 iOS 渲染的基石：
 | **MapKit** | 地图渲染（基于 Core Animation） |
 | **AVFoundation** | 视频渲染和播放 |
 
-## 框架依赖关系
+## 7. 框架依赖关系
 
 ```mermaid
 graph LR
@@ -95,7 +95,7 @@ graph LR
     J[ARKit] --> D
 ```
 
-## 使用场景建议
+## 8. 使用场景建议
 
 | 场景 | 推荐框架 | 说明 |
 |------|---------|------|
@@ -105,9 +105,9 @@ graph LR
 | **图片滤镜/修图** | Core Image | 高斯模糊、色彩调整 |
 | **游戏/高性能计算** | Metal 或 SpriteKit/SceneKit | 游戏引擎、高性能图形 |
 
-## 各框架的必要性
+## 9. 各框架的必要性
 
-### Core Animation：必须（对于 UIKit）
+### 9.1. Core Animation：必须（对于 UIKit）
 
 | 原因 | 说明 |
 |------|------|
@@ -116,7 +116,7 @@ graph LR
 
 **理论上可以不用**：如果不用 UIKit，直接用 Metal 渲染，但会失去 UIKit 的便利性。
 
-### Core Graphics：大多数情况不需要
+### 9.2. Core Graphics：大多数情况不需要
 
 | 原因 | 说明 |
 |------|------|
@@ -125,9 +125,9 @@ graph LR
 
 **只有一种情况需要**：当你覆写了 `drawRect:` 方法时。
 
-## 实际开发示例
+## 10. 实际开发示例
 
-### 示例 1：普通 UIView（不需要 Core Graphics）
+### 10.1. 示例 1：普通 UIView（不需要 Core Graphics）
 
 ```swift
 let view = UIView()
@@ -136,7 +136,7 @@ view.backgroundColor = UIColor.blue
 // ✅ 需要 Core Animation（CALayer）
 ```
 
-### 示例 2：UIImageView（不需要 Core Graphics）
+### 10.2. 示例 2：UIImageView（不需要 Core Graphics）
 
 ```swift
 let imageView = UIImageView(image: UIImage(named: "icon"))
@@ -145,7 +145,7 @@ let imageView = UIImageView(image: UIImage(named: "icon"))
 // 图片解码后直接存入 layer.contents
 ```
 
-### 示例 3：自定义绘制（需要 Core Graphics）
+### 10.3. 示例 3：自定义绘制（需要 Core Graphics）
 
 ```swift
 class CustomView: UIView {
@@ -157,7 +157,7 @@ class CustomView: UIView {
 }
 ```
 
-## 总结
+## 11. 总结
 
 | 框架 | 是否必须 | 使用场景 |
 |------|---------|---------|

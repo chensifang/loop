@@ -16,7 +16,7 @@
 
 `synchronized(obj)` 在编译时会被转换为对运行时函数的调用：
 
-### 2.1 编译后的代码
+### 2.1. 编译后的代码
 
 ```objective-c
 // 源代码
@@ -33,14 +33,14 @@ objc_sync_enter(obj);
 }
 ```
 
-### 2.2 核心函数
+### 2.2. 核心函数
 
 | 函数 | 作用 |
 |------|------|
 | `objc_sync_enter(obj)` | 获取与对象 obj 关联的锁，如果锁被占用则等待 |
 | `objc_sync_exit(obj)` | 释放与对象 obj 关联的锁 |
 
-### 2.3 内部数据结构
+### 2.3. 内部数据结构
 
 运行时使用以下数据结构来管理锁：
 
@@ -50,7 +50,7 @@ objc_sync_enter(obj);
 | **StripedMap&lt;SyncList&gt;** | 分片哈希表，将对象指针映射到 SyncData 链表，减少不同对象之间的锁竞争 |
 | **SyncCache** | 线程本地缓存，快速查找最近同步的对象，避免频繁的内存分配 |
 
-### 2.4 工作流程
+### 2.4. 工作流程
 
 ```mermaid
 sequenceDiagram
@@ -93,7 +93,7 @@ sequenceDiagram
     Runtime-->>Thread: 退出同步块
 ```
 
-### 2.5 关键特性
+### 2.5. 关键特性
 
 | 特性 | 说明 |
 |------|------|
@@ -106,7 +106,7 @@ sequenceDiagram
 
 这是一个常见的陷阱问题。让我们分析一下会发生什么：
 
-### 3.1 代码示例
+### 3.1. 代码示例
 
 ```objective-c
 NSObject *obj = [[NSObject alloc] init];
@@ -118,7 +118,7 @@ NSObject *obj = [[NSObject alloc] init];
 }
 ```
 
-### 3.2 会发生什么？
+### 3.2. 会发生什么？
 
 | 方面 | 说明 | 结果 |
 |------|------|------|
@@ -127,7 +127,7 @@ NSObject *obj = [[NSObject alloc] init];
 | **是否会死锁** | 当前线程已经获取锁，退出时会正常释放 | ❌ 不会死锁 |
 | **是否会崩溃** | 运行时处理 nil 对象，不会崩溃 | ❌ 不会崩溃 |
 
-### 3.3 详细分析
+### 3.3. 详细分析
 
 ```mermaid
 sequenceDiagram
@@ -164,7 +164,7 @@ sequenceDiagram
 > - **但会导致同步失效**：其他线程使用 nil 同步时，会使用不同的锁，可能导致多个线程同时执行
 > - **不会死锁或崩溃**：运行时处理 nil 对象，不会导致死锁或崩溃
 
-### 3.4 nil 对象的处理
+### 3.4. nil 对象的处理
 
 根据 Objective-C 运行时的实现，`@synchronized(nil)` 的行为：
 

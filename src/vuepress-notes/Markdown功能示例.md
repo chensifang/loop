@@ -4,7 +4,7 @@
 
 ## 1. 代码块
 
-### 基础代码块
+### 1.1. 基础代码块
 
 ```javascript
 function greet(name) {
@@ -14,7 +14,7 @@ function greet(name) {
 console.log(greet('VuePress'));
 ```
 
-### 带行号的代码块
+### 1.2. 带行号的代码块
 
 ```swift
 class ViewController: UIViewController {
@@ -29,13 +29,13 @@ class ViewController: UIViewController {
 }
 ```
 
-### 内联代码
+### 1.3. 内联代码
 
 使用 `console.log()` 可以输出信息到控制台。
 
 ## 2. 表格
 
-### 基础表格
+### 2.1. 基础表格
 
 | 功能 | 支持情况 | 说明 |
 |------|---------|------|
@@ -45,7 +45,7 @@ class ViewController: UIViewController {
 | 链接 | ✅ | 支持内部和外部链接 |
 | 图片 | ✅ | 支持相对和绝对路径 |
 
-### 对齐表格
+### 2.2. 对齐表格
 
 | 左对齐 | 居中 | 右对齐 |
 |:-------|:----:|-------:|
@@ -53,7 +53,7 @@ class ViewController: UIViewController {
 | 较长的内容 | 中间 | 数字 123 |
 | 短 | 中 | 456 |
 
-### 复杂表格
+### 2.3. 复杂表格
 
 | 图表类型 | 用途 | 特点 |
 |---------|------|------|
@@ -64,31 +64,31 @@ class ViewController: UIViewController {
 
 ## 3. 高亮块（提示框）
 
-### 信息提示
+### 3.1. 信息提示
 
 ::: info 提示信息
 这是一个信息提示框，用于展示一般性信息。
 :::
 
-### 提示（Tip）
+### 3.2. 提示（Tip）
 
 ::: tip 小贴士
 使用 VuePress 可以快速搭建文档网站，支持实时预览和热更新。
 :::
 
-### 警告
+### 3.3. 警告
 
 ::: warning 注意事项
 修改配置文件后需要重启开发服务器才能生效。
 :::
 
-### 危险警告
+### 3.4. 危险警告
 
 ::: danger 危险操作
 删除文件操作不可恢复，请谨慎操作！
 :::
 
-### 详细信息
+### 3.5. 详细信息
 
 ::: details 点击展开查看详情
 这里可以放置详细的内容，默认是折叠状态。
@@ -105,7 +105,7 @@ const example = 'Hello';
 
 ## 4. 列表
 
-### 无序列表
+### 4.1. 无序列表
 
 - 第一项
 - 第二项
@@ -113,7 +113,7 @@ const example = 'Hello';
   - 嵌套项 2
 - 第三项
 
-### 有序列表
+### 4.2. 有序列表
 
 1. 第一步：安装依赖
 2. 第二步：配置插件
@@ -121,7 +121,7 @@ const example = 'Hello';
    1. 检查端口是否被占用
    2. 运行 `npm run docs:dev`
 
-### 任务列表
+### 4.3. 任务列表
 
 - [x] 完成 VuePress 集成
 - [x] 转换所有 HTML 笔记为 Markdown
@@ -131,12 +131,12 @@ const example = 'Hello';
 
 ## 5. 引用
 
-### 单层引用
+### 5.1. 单层引用
 
 > 这是一段引用文字。
 > 可以包含多行内容。
 
-### 嵌套引用
+### 5.2. 嵌套引用
 
 > 第一层引用
 > 
@@ -156,18 +156,18 @@ const example = 'Hello';
 
 ## 7. 链接和图片
 
-### 内部链接
+### 7.1. 内部链接
 
 - [首页](/)
 - [图表示例](./图表示例.md)
 - [内存管理笔记](./内存管理/01-iOS对象的内存布局.md)
 
-### 外部链接
+### 7.2. 外部链接
 
 - [VuePress 官网](https://v2.vuepress.vuejs.org/)
 - [Vue.js 官网](https://vuejs.org/)
 
-### 图片
+### 7.3. 图片
 
 ![示例图片](https://via.placeholder.com/400x200?text=示例图片)
 
@@ -187,7 +187,7 @@ $$
 
 ## 10. 图表示例
 
-### Mermaid 流程图
+### 10.1. Mermaid 流程图
 
 ```mermaid
 graph TD
@@ -198,7 +198,7 @@ graph TD
     D --> E
 ```
 
-### Chart.js 图表
+### 10.2. Chart.js 图表
 
 ::: chartjs 示例图表
 
@@ -275,7 +275,7 @@ public class Hello {
 }
 ```
 
-## 总结
+## 16. 总结
 
 VuePress 支持丰富的 Markdown 功能，包括：
 

@@ -6,7 +6,7 @@
 | **触发时机** | RunLoop 的 `kCFRunLoopBeforeWaiting` 阶段，或者手动调用 `CATransaction.commit()` 时 |
 | **这个阶段发生了什么** | （见下方表格） |
 
-## 执行步骤
+## 1. 执行步骤
 
 | 步骤 | 操作 | 说明 |
 |------|------|------|
@@ -16,7 +16,7 @@
 | **4. 构建 Render Tree** | 构建渲染树 | 根据 Model Tree（应用层的 Layer 树）构建 Render Tree；Render Tree 包含所有需要渲染的信息：几何属性、视觉属性、层级关系 |
 | **5. 序列化 Layer 数据** | 序列化并发送 | 将 Render Tree 序列化成二进制数据；通过 IPC（进程间通信）发送到 Render Server（backboardd 进程） |
 
-## 三种 Layer 树
+## 2. 三种 Layer 树
 
 iOS 中有三种 Layer 树，它们在不同阶段发挥作用：
 
@@ -42,7 +42,7 @@ iOS 中有三种 Layer 树，它们在不同阶段发挥作用：
 - Render Server 是独立进程，与应用进程分离
 - 所有 Layer 的更新会批量提交，提高效率
 
-## 动画和 RunLoop 的关系
+## 3. 动画和 RunLoop 的关系
 
 **关键误解**：动画的每一帧渲染不是由 RunLoop 驱动的！
 
@@ -62,7 +62,7 @@ iOS 中有三种 Layer 树，它们在不同阶段发挥作用：
 | **t3** | 提交动画到 Render Server | 提交起始值、结束值、动画参数，不是提交每一帧的值 |
 | **动画开始后（Render Server 端）** | VSync 信号触发 | VSync 信号 1 → Render Server 计算第 1 帧的中间值 → GPU 渲染<br>VSync 信号 2 → Render Server 计算第 2 帧的中间值 → GPU 渲染<br>... |
 
-## Presentation Tree 的真正作用
+## 4. Presentation Tree 的真正作用
 
 **核心结论**：Render Server 才是计算中心
 
@@ -80,7 +80,7 @@ iOS 中有三种 Layer 树，它们在不同阶段发挥作用：
 | **主要用途** | 主要用于处理交互，比如一个移动的按钮，你点击时，需要知道它此刻在屏幕的什么位置 |
 | **与 Render Server 的关系** | 是 Render Server 中当前帧状态在 App 进程中的投影 |
 
-## 两种动画的本质区别
+## 5. 两种动画的本质区别
 
 | 对比项 | Core Animation 动画（显式或隐式动画） | 基于 CADisplayLink 的手动动画 |
 |--------|-------------------------------------|---------------------------|

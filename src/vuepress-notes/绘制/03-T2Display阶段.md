@@ -6,7 +6,7 @@
 | **触发时机** | RunLoop 的 `kCFRunLoopBeforeWaiting` 阶段，或者手动调用 `displayIfNeeded()` 时 |
 | **这个阶段发生了什么** | 1. 检查哪些 Layer 需要 Display（系统检查所有被标记为"需要显示"的 Layer）<br>2. CALayer 的 display 方法被调用（对于被标记的 Layer，系统会调用 `display(_:)` 方法，这个方法负责生成 bitmap 并存入 `contents`） |
 
-## CALayer 的 display 方法流程
+## 1. CALayer 的 display 方法流程
 
 `[CALayer display]` 方法被调用时，会根据 delegate 的实现情况，走不同的绘制路径：
 
@@ -68,7 +68,7 @@ graph TD
    - UIView 覆写了 `drawRect:` 方法
    - 结论：只有同时满足以上所有条件，才会调用 `drawRect:`
 
-## 三种不同的 Display 路径
+## 2. 三种不同的 Display 路径
 
 | 路径 | Layer | 显示方式 | 说明 |
 |------|-------|---------|------|
@@ -76,7 +76,7 @@ graph TD
 | **路径 B** | UIImageView 的 Layer | 图片解码成 bitmap | 图片文件（PNG/JPEG）需要解码成未压缩的 bitmap，解码后的 bitmap 赋值给 `layer.contents` |
 | **路径 C** | UILabel 的 Layer | 文字光栅化成 bitmap | Core Text 根据字体、字号、行距等属性进行排版，排版结果光栅化成 bitmap，bitmap 存入 `layer.contents` |
 
-## 光栅化是什么？
+## 3. 光栅化是什么？
 
 **光栅化（Rasterization）**：将矢量图形转换成位图（bitmap）的过程。
 
@@ -93,7 +93,7 @@ graph TD
 | **2. 光栅化** | 矢量 → 位图 | 将矢量轮廓"填充"成像素点；根据 Label 的 bounds 大小，创建一个像素网格；判断每个像素点是否在文字轮廓内；如果在轮廓内，就填充颜色（通常是黑色）；如果在轮廓边缘，可能做抗锯齿处理（半透明像素）；最终得到一个 bitmap（像素矩阵） |
 | **3. 存入 contents** | 存储位图 | 光栅化后的 bitmap 存入 `layer.contents`；GPU 可以直接读取这个 bitmap 进行渲染 |
 
-## 位图和纹理的关系
+## 4. 位图和纹理的关系
 
 | 对比项 | 位图（Bitmap） | 纹理（Texture） |
 |--------|---------------|----------------|
@@ -113,7 +113,7 @@ graph TD
 | **t4 阶段（Render Server）** | 位图上传 | 位图上传到 GPU 内存，变成纹理 |
 | **t5 阶段（GPU 渲染）** | 纹理采样 | GPU 从纹理中采样像素，进行渲染 |
 
-## 异步绘制实现示例
+## 5. 异步绘制实现示例
 
 如果 delegate 实现了 `displayLayer:` 方法，可以自定义异步绘制逻辑：
 
@@ -190,7 +190,7 @@ graph TD
 @end
 ```
 
-## 系统绘制 vs 异步绘制
+## 6. 系统绘制 vs 异步绘制
 
 | 特性 | 系统绘制（drawRect） | 异步绘制（displayLayer） |
 |------|---------------------|------------------------|

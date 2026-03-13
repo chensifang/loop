@@ -6,7 +6,7 @@
 | **触发时机** | RunLoop 的 `kCFRunLoopBeforeWaiting` 阶段，或者代码中显式调用 `view.layoutIfNeeded()` |
 | **这个阶段发生了什么** | （见下方表格） |
 
-## 执行步骤
+## 1. 执行步骤
 
 | 步骤 | 操作 | 说明 |
 |------|------|------|
@@ -22,7 +22,7 @@
 | **contents 状态** | 所有 Layer 的 `contents` 仍然没有生成 |
 | **确定内容** | 这个阶段确定的是"在哪里显示"和"显示多大" |
 
-## Layout 和 Display 的区别
+## 2. Layout 和 Display 的区别
 
 | 对比项 | Layout | Display |
 |--------|--------|---------|
@@ -30,7 +30,7 @@
 | **计算内容** | frame、bounds、center 等几何属性 | 生成 bitmap（contents） |
 | **确定内容** | "在哪里显示"、"显示多大" | "显示什么" |
 
-## 动画中为什么必须用 layoutIfNeeded()？
+## 3. 动画中为什么必须用 layoutIfNeeded()？
 
 如果想做一个 `NSLayoutConstraint` 的动画，必须先修改 constant，然后在一个 `UIView.animate` 闭包里调用 `layoutIfNeeded()`。如果调用 `setNeedsLayout()`，动画会瞬间完成。
 

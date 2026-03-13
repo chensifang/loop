@@ -1,6 +1,6 @@
 # CPU 绘制 vs GPU 绘制：本质区别
 
-## 核心理解
+## 1. 核心理解
 
 **关键点**：CPU 不能直接"画"到屏幕上，它只是在内存中生成位图数据。
 
@@ -9,7 +9,7 @@
 | **CPU "绘制"** | 在内存中生成位图数据 | CPU 内存（RAM） |
 | **GPU 绘制** | 把位图数据渲染到屏幕 | GPU 显存 → FrameBuffer → 屏幕 |
 
-## CPU "绘制"的真正含义
+## 2. CPU "绘制"的真正含义
 
 当我们说"CPU 绘制"时，实际上是指：
 
@@ -20,7 +20,7 @@
 
 **重要**：此时屏幕还没有任何变化，只是内存中有了图像数据。
 
-## GPU 绘制的真正含义
+## 3. GPU 绘制的真正含义
 
 GPU 绘制才是真正显示到屏幕的过程：
 
@@ -29,9 +29,9 @@ GPU 绘制才是真正显示到屏幕的过程：
 3. **写入 FrameBuffer**：渲染结果写入帧缓冲区
 4. **屏幕显示**：屏幕硬件读取 FrameBuffer，显示到屏幕
 
-## 完整流程对比
+## 4. 完整流程对比
 
-### 示例：drawRect 的完整流程
+### 4.1. 示例：drawRect 的完整流程
 
 ```swift
 class RedView: UIView {
@@ -55,9 +55,9 @@ class RedView: UIView {
 | **T5** | GPU 渲染到 FrameBuffer | GPU | 空白 |
 | **T6** | 屏幕显示 | 屏幕硬件 | ✅ 红色方块 |
 
-## 技术层面的区别
+## 5. 技术层面的区别
 
-### CPU "绘制"的本质
+### 5.1. CPU "绘制"的本质
 
 **CPU 绘制 = 在内存中生成位图数据**
 
@@ -70,7 +70,7 @@ class RedView: UIView {
 
 **关键**：所有操作都在 CPU 内存中进行，屏幕没有任何变化。
 
-### GPU 绘制的本质
+### 5.2. GPU 绘制的本质
 
 **GPU 绘制 = 把位图数据渲染到屏幕**
 
@@ -84,7 +84,7 @@ class RedView: UIView {
 
 **关键**：只有经过 GPU，数据才能显示到屏幕上。
 
-## 为什么说"CPU 绘制"？
+## 6. 为什么说"CPU 绘制"？
 
 这是习惯说法，更准确的表述是：
 
@@ -93,9 +93,9 @@ class RedView: UIView {
 | CPU 绘制 | CPU 生成位图数据 |
 | GPU 绘制 | GPU 渲染位图到屏幕 |
 
-## 常见场景
+## 7. 常见场景
 
-### 场景 1：drawRect（CPU 绘制）
+### 7.1. 场景 1：drawRect（CPU 绘制）
 
 ```swift
 class CustomView: UIView {
@@ -110,7 +110,7 @@ class CustomView: UIView {
 }
 ```
 
-### 场景 2：UIImageView（不需要 CPU 绘制）
+### 7.2. 场景 2：UIImageView（不需要 CPU 绘制）
 
 ```swift
 let imageView = UIImageView(image: UIImage(named: "icon"))
@@ -119,7 +119,7 @@ let imageView = UIImageView(image: UIImage(named: "icon"))
 // GPU 直接渲染位图，不需要 drawRect
 ```
 
-### 场景 3：UILabel（文字光栅化）
+### 7.3. 场景 3：UILabel（文字光栅化）
 
 ```swift
 let label = UILabel()
@@ -130,7 +130,7 @@ label.text = "Hello"
 // GPU 直接渲染位图，不需要 drawRect
 ```
 
-## 总结
+## 8. 总结
 
 | 要点 | 说明 |
 |------|------|
