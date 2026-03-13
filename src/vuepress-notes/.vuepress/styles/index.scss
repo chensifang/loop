@@ -104,10 +104,10 @@ li {
 pre {
   background: #f6f8fa;
   color: #1a1a1a;
-  padding: 8px 12px !important;
+  padding: 10px 14px;
   border-radius: 4px;
   overflow-x: auto;
-  margin: 8px 0 !important;
+  margin: 14px 0;
   font-family: Menlo, Monaco, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.9;
@@ -120,37 +120,13 @@ div[data-highlighter="shiki"] {
   background: #f6f8fa !important;
   border-radius: 4px;
   border: 1px solid #d1d5da;
-  margin: 8px 0 !important;
+  margin: 14px 0;
   
   pre {
     background: transparent !important; // pre 背景透明，使用容器的背景
-    margin: 0 !important;
+    margin: 0;
     border: none;
-    padding: 8px 12px !important;
   }
-  
-  // VuePress 的 vp-code 类 - 使用更强的选择器
-  pre.vp-code,
-  pre.shiki.vp-code,
-  pre[class*="vp-code"] {
-    padding: 8px 12px !important;
-    margin: 0 !important;
-  }
-}
-
-// 全局覆盖所有代码块的 padding 和 margin - 使用最强的选择器
-div[class*="language-"] pre,
-div[class*="language-"] pre.vp-code,
-div[class*="language-"] pre.shiki,
-div[data-highlighter="shiki"] pre,
-div[data-highlighter="shiki"] pre.vp-code,
-div[data-highlighter="shiki"] pre.shiki,
-pre.vp-code,
-pre.shiki,
-pre[class*="vp-code"],
-pre[class*="shiki"] {
-  padding: 8px 12px !important;
-  margin: 0 !important;
 }
 
 pre code {
