@@ -7,6 +7,9 @@
   --vp-layout-max-width: 1400px;
   // Notion 风格的表格颜色变量（保留）
   --notion-border: rgba(55, 53, 47, 0.09);
+  // 覆盖代码块的 padding 变量
+  --code-padding-y: 6px;
+  --code-padding-x: 12px;
 }
 
 // 整体文字缩小
@@ -123,45 +126,85 @@ li {
   font-weight: 500 !important; // 中等粗细
 }
 
-// 代码块样式 - 根据内容自适应宽度，使用 Notion 风格背景色
-pre {
+// 代码块样式 - 恢复默认宽度，使用 Notion 风格背景色
+pre:not([class*="language-"]):not([data-highlighter]),
+.theme-default-content pre:not([class*="language-"]):not([data-highlighter]),
+.page pre:not([class*="language-"]):not([data-highlighter]),
+.vp-page pre:not([class*="language-"]):not([data-highlighter]) {
   background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
   color: #1a1a1a;
-  padding: 10px 14px;
+  padding: 6px 12px !important;
   border-radius: 4px;
   overflow-x: auto;
-  margin: 14px 0;
+  margin-top: 6px !important;
+  margin-bottom: 14px !important;
   font-family: Menlo, Monaco, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.9;
   border: 1px solid var(--notion-border); // 使用 Notion 风格的边框颜色
-  width: fit-content !important; // 根据内容自适应宽度
-  min-width: 600px !important; // 最小宽度，避免太窄
+  width: 100% !important; // 恢复默认宽度：占满容器宽度
   max-width: 100%; // 最大不超过容器宽度
 }
 
 // Shiki 代码块容器背景 - 根据内容自适应宽度，使用 Notion 风格背景色
+// 使用最高优先级的选择器确保样式生效
 div[class*="language-"],
-div[data-highlighter="shiki"] {
+div[data-highlighter="shiki"],
+.theme-default-content div[class*="language-"],
+.theme-default-content div[data-highlighter="shiki"],
+.page div[class*="language-"],
+.page div[data-highlighter="shiki"],
+.vp-page div[class*="language-"],
+.vp-page div[data-highlighter="shiki"],
+#app div[class*="language-"],
+#app div[data-highlighter="shiki"],
+body div[class*="language-"],
+body div[data-highlighter="shiki"] {
   background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
-  border-radius: 4px;
-  border: 1px solid var(--notion-border); // 使用 Notion 风格的边框颜色
-  margin: 14px 0;
-  width: fit-content !important; // 根据内容自适应宽度
-  min-width: 600px !important; // 最小宽度，避免太窄
-  max-width: 100%; // 最大不超过容器宽度
-  display: inline-block !important; // 让容器根据内容调整
+  border-radius: 4px !important;
+  border: 1px solid var(--notion-border) !important; // 使用 Notion 风格的边框颜色
+  margin-top: 6px !important;
+  margin-bottom: 14px !important;
+  padding: 0 !important; // 容器不设置 padding，padding 在 code 元素上
+  // 恢复默认宽度：占满容器宽度
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important; // 恢复为块级元素
   
   pre {
     background: transparent !important; // pre 背景透明，使用容器的背景
-    margin: 0;
-    border: none;
+    margin: 0 !important;
+    border: none !important;
     width: 100% !important; // pre 占满容器宽度
-    min-width: 600px !important; // 最小宽度
+    padding: 0 !important;
+  }
+  
+  // 覆盖 base.css 中 code 元素的 padding
+  // 增加右侧 padding 为语言标签留出空间（语言标签在 right: 1em，约 16px，加上标签宽度约 40-50px）
+  pre code,
+  code {
+    padding: 6px 12px 6px 12px !important; // 上下 6px，左右 12px
+    padding-right: 50px !important; // 右侧增加 padding，避免与语言标签重叠
   }
 }
 
-pre code {
+// 全局覆盖：确保代码块内的 code 元素使用我们设置的 padding
+div[class*="language-"] pre code,
+div[data-highlighter="shiki"] pre code,
+div[class*="language-"] code,
+div[data-highlighter="shiki"] code,
+.theme-default-content div[class*="language-"] pre code,
+.theme-default-content div[data-highlighter="shiki"] pre code,
+.page div[class*="language-"] pre code,
+.page div[data-highlighter="shiki"] pre code,
+body div[class*="language-"] pre code,
+body div[data-highlighter="shiki"] pre code {
+  padding: 6px 12px 6px 12px !important; // 覆盖 base.css 中的 padding
+  padding-right: 50px !important; // 右侧增加 padding，避免与语言标签重叠
+}
+
+// 普通 pre code（不在代码块容器中的）
+pre code:not([class*="language-"]):not([data-highlighter]) {
   background: transparent !important;
   padding: 0;
   font-size: 13px;
@@ -198,13 +241,22 @@ div[data-highlighter="shiki"]::after {
 div[class*="language-"].line-numbers-mode pre,
 div[class*="language-"].line-numbers-mode code {
   margin-left: 0 !important;
-  padding-left: 10px !important;
+  padding-left: 6px !important;
 }
 
 // Shiki 语法高亮颜色 - 匹配历史 highlight.js 样式
+// 注意：padding 已经在容器 div[data-highlighter="shiki"] 上设置了
 .shiki,
 pre[class*="language-"],
-code[class*="language-"] {
+code[class*="language-"],
+.theme-default-content .shiki,
+.theme-default-content pre[class*="language-"],
+.theme-default-content code[class*="language-"],
+.page .shiki,
+.page pre[class*="language-"],
+.page code[class*="language-"] {
+  // padding 在容器上设置，这里不再设置
+  
   // 关键字（如 class, func, override）- 红色
   .token.keyword,
   .token.keyword-keyword,
