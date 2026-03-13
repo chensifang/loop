@@ -129,11 +129,22 @@ div[data-highlighter="shiki"] {
     padding: 8px 12px !important;
   }
   
-  // VuePress 的 vp-code 类
-  pre.vp-code {
+  // VuePress 的 vp-code 类 - 使用更强的选择器
+  pre.vp-code,
+  pre.shiki.vp-code,
+  pre[class*="vp-code"] {
     padding: 8px 12px !important;
     margin: 0 !important;
   }
+}
+
+// 全局覆盖所有代码块的 padding 和 margin
+div[class*="language-"] pre,
+div[data-highlighter="shiki"] pre,
+pre.vp-code,
+pre.shiki {
+  padding: 8px 12px !important;
+  margin: 0 !important;
 }
 
 pre code {
