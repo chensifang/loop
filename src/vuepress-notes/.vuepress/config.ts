@@ -73,7 +73,7 @@ export default defineUserConfig({
           text: '锁',
           collapsible: true,
           children: [
-            { text: '02-iOS中的锁概述', link: '/02-iOS中的锁概述.md' },
+            { text: '01-iOS中的锁概述', link: '/锁/01-iOS中的锁概述.md' },
             { text: '02-优先级翻转问题', link: '/锁/02-优先级翻转问题.md' },
             { text: '03-@synchronized原理', link: '/锁/03-@synchronized原理.md' },
           ],
