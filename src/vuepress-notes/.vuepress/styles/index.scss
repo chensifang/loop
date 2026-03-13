@@ -104,10 +104,10 @@ li {
 pre {
   background: #f6f8fa;
   color: #1a1a1a;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 4px;
   overflow-x: auto;
-  margin: 14px 0;
+  margin: 8px 0;
   font-family: Menlo, Monaco, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.9;
@@ -120,7 +120,7 @@ div[data-highlighter="shiki"] {
   background: #f6f8fa !important;
   border-radius: 4px;
   border: 1px solid #d1d5da;
-  margin: 14px 0;
+  margin: 8px 0;
   
   pre {
     background: transparent !important; // pre 背景透明，使用容器的背景
