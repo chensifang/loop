@@ -77,11 +77,11 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 
 ## 6. 完整关系图
 
-<div style="text-align: center; margin: 20px 0;">
+<div style="margin: 20px 0;">
     <img src="./assets/isa-relation-diagram.png" alt="isa指针与类对象元类对象的关系图" style="max-width: 70%; height: auto; border: 1px solid #e1e4e8; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
 </div>
 
-<p style="text-align: center; color: #6a737d; font-size: 13px; margin-top: 8px;">
+<p style="color: #6a737d; font-size: 13px; margin-top: 8px;">
     <strong>图例说明</strong>：实线箭头表示 <code>superclass</code> 指针（继承关系），虚线箭头表示 <code>isa</code> 指针（类型关系）
 </p>
 
