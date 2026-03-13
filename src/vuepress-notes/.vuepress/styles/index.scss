@@ -2,6 +2,11 @@
 :root {
   // 基础字体大小
   --vp-font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  // 设置内容宽度变量（如果 VuePress 2 支持）
+  --content-width: 1400px;
+  --vp-layout-max-width: 1400px;
+  // Notion 风格的表格颜色变量（保留）
+  --notion-border: rgba(55, 53, 47, 0.09);
 }
 
 // 整体文字缩小
@@ -100,9 +105,9 @@ li {
   font-weight: normal;
 }
 
-// 代码块样式 - 模仿历史样式
+// 代码块样式 - 根据内容自适应宽度，使用 Notion 风格背景色
 pre {
-  background: #f6f8fa;
+  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
   color: #1a1a1a;
   padding: 10px 14px;
   border-radius: 4px;
@@ -111,21 +116,30 @@ pre {
   font-family: Menlo, Monaco, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.9;
-  border: 1px solid #d1d5da;
+  border: 1px solid var(--notion-border); // 使用 Notion 风格的边框颜色
+  width: fit-content !important; // 根据内容自适应宽度
+  min-width: 600px !important; // 最小宽度，避免太窄
+  max-width: 100%; // 最大不超过容器宽度
 }
 
-// Shiki 代码块容器背景 - 确保有背景颜色
+// Shiki 代码块容器背景 - 根据内容自适应宽度，使用 Notion 风格背景色
 div[class*="language-"],
 div[data-highlighter="shiki"] {
-  background: #f6f8fa !important;
+  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
   border-radius: 4px;
-  border: 1px solid #d1d5da;
+  border: 1px solid var(--notion-border); // 使用 Notion 风格的边框颜色
   margin: 14px 0;
+  width: fit-content !important; // 根据内容自适应宽度
+  min-width: 600px !important; // 最小宽度，避免太窄
+  max-width: 100%; // 最大不超过容器宽度
+  display: inline-block !important; // 让容器根据内容调整
   
   pre {
     background: transparent !important; // pre 背景透明，使用容器的背景
     margin: 0;
     border: none;
+    width: 100% !important; // pre 占满容器宽度
+    min-width: 600px !important; // 最小宽度
   }
 }
 
@@ -215,16 +229,22 @@ code[class*="language-"] {
   }
 }
 
-// 表格样式 - 模仿历史样式
+// Notion 风格的表格（保留）
 table {
-  width: 100%;
+  width: fit-content !important; // 根据内容自动调整宽度，更紧凑
+  max-width: 100% !important; // 最大不超过容器宽度
   border-collapse: collapse;
   margin: 14px 0;
   font-size: 14px;
+  border: 1px solid var(--notion-border);
+  border-radius: 3px;
+  overflow: hidden;
+  table-layout: auto !important; // 使用自动布局，根据内容调整列宽
+  box-sizing: border-box !important;
 }
 
 thead {
-  background: #f9fafb;
+  background: rgba(55, 53, 47, 0.03);
 }
 
 th {
@@ -233,17 +253,27 @@ th {
   font-weight: 600;
   font-size: 14px;
   color: #1a1a1a;
-  border: 1px solid #d1d5da;
+  border: 1px solid var(--notion-border);
   vertical-align: top;
+  background: rgba(55, 53, 47, 0.03);
+  word-wrap: break-word; // 允许表头换行
+  box-sizing: border-box;
+  white-space: nowrap; // 表头不换行，保持紧凑
+  width: auto !important; // 列宽根据内容自动调整
 }
 
 td {
   padding: 8px 12px;
   font-size: 14px;
   color: #1a1a1a;
-  border: 1px solid #d1d5da;
+  border: 1px solid var(--notion-border);
   vertical-align: top;
   line-height: 1.6;
+  background: #ffffff;
+  word-wrap: break-word; // 允许单元格内容换行
+  overflow-wrap: break-word; // 允许长单词换行
+  box-sizing: border-box;
+  width: auto !important; // 列宽根据内容自动调整
 }
 
 // 移除表格行的交替换色（斑马纹）
@@ -473,29 +503,44 @@ nav[class*="toc"],
 }
 
 // 增加页面内容区域宽度，让表格能完整显示
-.theme-default-content,
-.page {
-  max-width: 1600px !important; // 默认约 740px，增加到 1600px
+// 根据屏幕实际宽度，左右留间距
+
+// VuePress 2 默认主题使用 .theme-default-content 作为主要内容容器
+.theme-default-content {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 0 2rem !important;
+}
+
+// 如果上面不生效，尝试这些选择器
+.page,
+.content-container,
+.content-wrapper {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 0 2rem !important;
+}
+
+// 使用通配符匹配
+[class*="content"],
+[class*="container"] {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
 }
 
 // 表格容器 - 允许横向滚动（如果表格太宽）
 .table-wrapper {
   overflow-x: auto;
   margin: 14px 0;
+  width: 100% !important;
+  
+  table {
+    width: 100% !important;
+    margin: 0 !important;
+  }
 }
 
-// 表格样式保持原有，但允许换行
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 14px 0;
-  font-size: 14px;
-  word-wrap: break-word; // 允许长单词换行
-  word-break: break-word; // 允许在单词内换行（如果需要）
-  
-  // 如果表格仍然太宽，可以横向滚动
-  min-width: 100%;
-}
+// 表格允许换行（已在上面的 table 样式中定义，这里删除重复）
 
 // 组件 1: Excel 风格表格结构可视化组件样式
 .table-structure-container {
@@ -550,7 +595,7 @@ table {
 }
 
 .table-structure {
-  border: 2px solid #d1d5da;
+  border: 2px solid var(--notion-border) !important; // 使用 Notion 风格的边框颜色
   border-radius: 4px;
   overflow: hidden;
   background: #fff;
@@ -564,8 +609,8 @@ table {
 .table-structure-title {
   display: block;
   padding: 4px 6px;
-  background: #f6f8fa;
-  border-bottom: 2px solid #d1d5da;
+  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
+  border-bottom: 2px solid var(--notion-border); // 使用 Notion 风格的边框颜色
   font-weight: 600;
   font-size: 13px;
   color: #1a1a1a;
@@ -576,8 +621,8 @@ table {
 .table-structure-subtitle {
   display: block;
   padding: 2px 6px;
-  background: #f6f8fa;
-  border-bottom: 1px solid #e1e4e8;
+  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
+  border-bottom: 1px solid var(--notion-border); // 使用 Notion 风格的边框颜色
   font-weight: normal;
   font-size: 11px;
   color: #586069;
