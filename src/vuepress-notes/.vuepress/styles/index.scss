@@ -416,6 +416,72 @@ blockquote {
   font-size: 14px;
 }
 
+// 侧边栏编号 - 为侧边栏项添加编号
+.vp-sidebar {
+  counter-reset: sidebar-section-counter sidebar-item-counter;
+  
+  // 第一级分组标题（如"内存管理"、"锁"等）- 尝试多种可能的选择器
+  .vp-sidebar-group > .vp-sidebar-heading,
+  .vp-sidebar-group > .vp-sidebar-group-title,
+  .vp-sidebar-group .vp-sidebar-heading,
+  .vp-sidebar-group-title {
+    counter-increment: sidebar-section-counter;
+    counter-reset: sidebar-item-counter;
+    
+    &::before {
+      content: counter(sidebar-section-counter) ". " !important;
+      display: inline !important;
+      margin-right: 4px;
+    }
+  }
+  
+  // 第二级子项（children）- 尝试多种可能的选择器
+  .vp-sidebar-item,
+  .vp-sidebar-link {
+    position: relative;
+    
+    &:not(.vp-sidebar-heading):not(.vp-sidebar-group-title) {
+      counter-increment: sidebar-item-counter;
+      
+      &::before {
+        content: counter(sidebar-section-counter) "." counter(sidebar-item-counter) ". " !important;
+        display: inline !important;
+        margin-right: 4px;
+      }
+    }
+  }
+  
+  // 重置每个分组内的子项计数器
+  .vp-sidebar-group {
+    counter-reset: sidebar-item-counter;
+    
+    // 分组标题递增分组计数器
+    > .vp-sidebar-heading,
+    > .vp-sidebar-group-title {
+      counter-increment: sidebar-section-counter;
+      counter-reset: sidebar-item-counter;
+      
+      &::before {
+        content: counter(sidebar-section-counter) ". " !important;
+        display: inline !important;
+        margin-right: 4px;
+      }
+    }
+    
+    // 分组内的子项
+    .vp-sidebar-item:not(.vp-sidebar-heading):not(.vp-sidebar-group-title),
+    .vp-sidebar-link:not(.vp-sidebar-heading):not(.vp-sidebar-group-title) {
+      counter-increment: sidebar-item-counter;
+      
+      &::before {
+        content: counter(sidebar-section-counter) "." counter(sidebar-item-counter) ". " !important;
+        display: inline !important;
+        margin-right: 4px;
+      }
+    }
+  }
+}
+
 // 子目录左侧竖线：只匹配嵌套的子标题列表，不匹配第一层
 .vp-sidebar .vp-sidebar-children .vp-sidebar-children {
   border-left: 1px solid var(--vp-c-divider);
