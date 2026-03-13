@@ -138,11 +138,17 @@ div[data-highlighter="shiki"] {
   }
 }
 
-// 全局覆盖所有代码块的 padding 和 margin
+// 全局覆盖所有代码块的 padding 和 margin - 使用最强的选择器
 div[class*="language-"] pre,
+div[class*="language-"] pre.vp-code,
+div[class*="language-"] pre.shiki,
 div[data-highlighter="shiki"] pre,
+div[data-highlighter="shiki"] pre.vp-code,
+div[data-highlighter="shiki"] pre.shiki,
 pre.vp-code,
-pre.shiki {
+pre.shiki,
+pre[class*="vp-code"],
+pre[class*="shiki"] {
   padding: 8px 12px !important;
   margin: 0 !important;
 }
