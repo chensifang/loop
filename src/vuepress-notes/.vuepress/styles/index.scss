@@ -416,68 +416,78 @@ blockquote {
   font-size: 14px;
 }
 
-// 侧边栏编号 - 为侧边栏项添加编号
-.vp-sidebar {
-  counter-reset: sidebar-section-counter sidebar-item-counter;
+// 页面内目录（TOC）编号 - 与页面标题编号一致
+.vuepress-toc,
+.page-toc,
+.table-of-contents {
+  counter-reset: toc-h2-counter toc-h3-counter toc-h4-counter toc-h5-counter toc-h6-counter;
   
-  // 第一级分组标题（如"内存管理"、"锁"等）- 尝试多种可能的选择器
-  .vp-sidebar-group > .vp-sidebar-heading,
-  .vp-sidebar-group > .vp-sidebar-group-title,
-  .vp-sidebar-group .vp-sidebar-heading,
-  .vp-sidebar-group-title {
-    counter-increment: sidebar-section-counter;
-    counter-reset: sidebar-item-counter;
+  // h2 级别的目录项
+  .vuepress-toc-item[data-level="2"],
+  .toc-item[data-level="2"],
+  li[data-level="2"] {
+    counter-increment: toc-h2-counter;
+    counter-reset: toc-h3-counter;
     
     &::before {
-      content: counter(sidebar-section-counter) ". " !important;
+      content: counter(toc-h2-counter) ". " !important;
       display: inline !important;
       margin-right: 4px;
     }
   }
   
-  // 第二级子项（children）- 尝试多种可能的选择器
-  .vp-sidebar-item,
-  .vp-sidebar-link {
-    position: relative;
+  // h3 级别的目录项
+  .vuepress-toc-item[data-level="3"],
+  .toc-item[data-level="3"],
+  li[data-level="3"] {
+    counter-increment: toc-h3-counter;
+    counter-reset: toc-h4-counter;
     
-    &:not(.vp-sidebar-heading):not(.vp-sidebar-group-title) {
-      counter-increment: sidebar-item-counter;
-      
-      &::before {
-        content: counter(sidebar-section-counter) "." counter(sidebar-item-counter) ". " !important;
-        display: inline !important;
-        margin-right: 4px;
-      }
+    &::before {
+      content: counter(toc-h2-counter) "." counter(toc-h3-counter) ". " !important;
+      display: inline !important;
+      margin-right: 4px;
     }
   }
   
-  // 重置每个分组内的子项计数器
-  .vp-sidebar-group {
-    counter-reset: sidebar-item-counter;
+  // h4 级别的目录项
+  .vuepress-toc-item[data-level="4"],
+  .toc-item[data-level="4"],
+  li[data-level="4"] {
+    counter-increment: toc-h4-counter;
+    counter-reset: toc-h5-counter;
     
-    // 分组标题递增分组计数器
-    > .vp-sidebar-heading,
-    > .vp-sidebar-group-title {
-      counter-increment: sidebar-section-counter;
-      counter-reset: sidebar-item-counter;
-      
-      &::before {
-        content: counter(sidebar-section-counter) ". " !important;
-        display: inline !important;
-        margin-right: 4px;
-      }
+    &::before {
+      content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) ". " !important;
+      display: inline !important;
+      margin-right: 4px;
     }
+  }
+  
+  // h5 级别的目录项
+  .vuepress-toc-item[data-level="5"],
+  .toc-item[data-level="5"],
+  li[data-level="5"] {
+    counter-increment: toc-h5-counter;
+    counter-reset: toc-h6-counter;
     
-    // 分组内的子项
-    .vp-sidebar-item:not(.vp-sidebar-heading):not(.vp-sidebar-group-title),
-    .vp-sidebar-link:not(.vp-sidebar-heading):not(.vp-sidebar-group-title) {
-      counter-increment: sidebar-item-counter;
-      
-      &::before {
-        content: counter(sidebar-section-counter) "." counter(sidebar-item-counter) ". " !important;
-        display: inline !important;
-        margin-right: 4px;
-      }
+    &::before {
+      content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) ". " !important;
+      display: inline !important;
+      margin-right: 4px;
+    }
+  }
+  
+  // h6 级别的目录项
+  .vuepress-toc-item[data-level="6"],
+  .toc-item[data-level="6"],
+  li[data-level="6"] {
+    counter-increment: toc-h6-counter;
+    
+    &::before {
+      content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) "." counter(toc-h6-counter) ". " !important;
+      display: inline !important;
+      margin-right: 4px;
     }
   }
 }
