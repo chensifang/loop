@@ -16,11 +16,6 @@ body {
 }
 
 // 标题字体大小调整 - 缩小与正文差距
-// 设置计数器
-body {
-  counter-reset: h2-counter;
-}
-
 h1 {
   font-size: 1.5em !important;
   margin-top: 0.67em;
@@ -28,7 +23,6 @@ h1 {
   border-bottom: 1px solid #eaecef !important;
   padding-bottom: 0.3em !important;
   color: #000000 !important; // 黑色
-  counter-reset: h2-counter; // h1 重置 h2 计数器
 }
 
 h2 {
@@ -38,17 +32,13 @@ h2 {
   border-bottom: none !important;
   padding-bottom: 0 !important;
   color: #000000 !important; // 黑色
-  counter-increment: h2-counter; // h2 递增计数器
-  counter-reset: h3-counter; // h2 重置 h3 计数器
   
   &::after {
     display: none !important;
   }
   
   &::before {
-    content: counter(h2-counter) ". " !important; // 显示 h2 编号，后面加点号
-    display: inline !important;
-    margin-right: 4px;
+    display: none !important;
   }
 }
 
@@ -57,14 +47,6 @@ h3 {
   margin-top: 1em;
   margin-bottom: 1em;
   color: #0066ff !important; // 蓝色
-  counter-increment: h3-counter; // h3 递增计数器
-  counter-reset: h4-counter; // h3 重置 h4 计数器
-  
-  &::before {
-    content: counter(h2-counter) "." counter(h3-counter) ". " !important; // 显示 h2.h3 编号，后面加点号
-    display: inline !important;
-    margin-right: 4px;
-  }
 }
 
 h4 {
@@ -72,14 +54,6 @@ h4 {
   margin-top: 1.2em;
   margin-bottom: 1.2em;
   color: #00aa00 !important; // 绿色
-  counter-increment: h4-counter; // h4 递增计数器
-  counter-reset: h5-counter; // h4 重置 h5 计数器
-  
-  &::before {
-    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) ". " !important; // 显示 h2.h3.h4 编号，后面加点号
-    display: inline !important;
-    margin-right: 4px;
-  }
 }
 
 h5 {
@@ -87,14 +61,6 @@ h5 {
   margin-top: 1.4em;
   margin-bottom: 1.4em;
   color: #ff6600 !important; // 橙色
-  counter-increment: h5-counter; // h5 递增计数器
-  counter-reset: h6-counter; // h5 重置 h6 计数器
-  
-  &::before {
-    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) ". " !important; // 显示 h2.h3.h4.h5 编号，后面加点号
-    display: inline !important;
-    margin-right: 4px;
-  }
 }
 
 h6 {
@@ -102,13 +68,6 @@ h6 {
   margin-top: 1.6em;
   margin-bottom: 1.6em;
   color: #666666 !important; // 灰色
-  counter-increment: h6-counter; // h6 递增计数器
-  
-  &::before {
-    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) "." counter(h6-counter) ". " !important; // 显示 h2.h3.h4.h5.h6 编号，后面加点号
-    display: inline !important;
-    margin-right: 4px;
-  }
 }
 
 // 正文文字
