@@ -4,7 +4,9 @@
 
 从调用 `setNeedsDisplay` 到像素显示在屏幕上，是一个复杂的渲染流程，涉及应用层、系统层、GPU 和硬件显示。整个过程是异步的，不会立即执行。
 
-> **重要提示：** 只有当你覆写了 `drawRect:` 方法时，系统才会走 CPU 绘制流程。绝大多数情况下（如设置 `backgroundColor` 或 `UIImageView` 加载图片），是不走 `drawRect:` 的。一旦覆写 `drawRect:`，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节，这是极其耗费内存的。
+::: info 重要提示：
+只有当你覆写了 `drawRect:` 方法时，系统才会走 CPU 绘制流程。绝大多数情况下（如设置 `backgroundColor` 或 `UIImageView` 加载图片），是不走 `drawRect:` 的。一旦覆写 `drawRect:`，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节，这是极其耗费内存的。
+:::
 
 ## 2. 完整流程时间线
 

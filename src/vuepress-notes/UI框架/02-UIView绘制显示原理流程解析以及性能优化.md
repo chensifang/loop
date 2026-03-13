@@ -10,7 +10,9 @@ UIView是iOS开发最基本的UI控件之一, 所有的显示控件几乎都是�
 
 ## 2. 图像绘制显示流程简图
 
-> **注意：** 原文包含流程图图片，此处保留图片引用位置。如需查看完整图片，请访问原文链接。
+::: info 注意：
+原文包含流程图图片，此处保留图片引用位置。如需查看完整图片，请访问原文链接。
+:::
 
 以显示Hello world为例, 整个绘制和显示流程大概如上图所示, 其中CPU层面, 主要负责:
 
@@ -67,9 +69,10 @@ open var contents: Any?
 
 实际上, contents 属性保存了由设备渲染流水线渲染好的位图 bitmap（通常也被称为 backing store）, 而当设备屏幕进行刷新时，会从CALayer中读取生成好的 bitmap, 进而呈现到屏幕上。
 
-> **重要说明：** 只有当你覆写了 `drawRect:` 方法时，系统才会走 CPU 绘制流程并调用 drawRect: 方法。绝大多数情况下（如设置 `backgroundColor`、使用 `UIImageView` 加载图片、设置 `UILabel` 的文本等），是不走 `drawRect:` 的。一旦覆写 `drawRect:`，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节，这是极其耗费内存的。
-
-> **注意：** 如果是View 的图层，应避免直接设置此属性的内容。视图和图层之间的相互作用通常会导致视图在后续更新期间替换此属性的内容。
+::: info 重要说明：
+只有当你覆写了 `drawRect:` 方法时，系统才会走 CPU 绘制流程并调用 drawRect: 方法。绝大多数情况下（如设置 `backgroundColor`、使用 `UIImageView` 加载图片、设置 `UILabel` 的文本等），是不走 `drawRect:` 的。一旦覆写 `drawRect:`，系统会为该 View 申请一块巨大的内存（寄宿图 Backing Store），其大小 = width × height × contentsScale² × 4 字节，这是极其耗费内存的。
+<strong>注意：</strong> 如果是View 的图层，应避免直接设置此属性的内容。视图和图层之间的相互作用通常会导致视图在后续更新期间替换此属性的内容。
+:::
 
 ## 7. CALayer的图层树 Layer-tree
 
@@ -95,7 +98,9 @@ iOS中有三种Layer tree:
 
 通过上面的介绍, 我们知道了图像的显示都是通过Layer来管理的, 但是我们在显示内容时, 却不是通过直接操作Layer层来实现, 虽然可以通过直接设置Layer的contents属性来实现, 但是比较麻烦, 比如我们要在屏幕上显示Hello world这两个单词, 我们会选择用UILabel来显示, 通过设置对应的text属性就能很快实现, 而UILabel也是继承UIView, 内部也是调用Layer的一些相关方法来实现绘制。
 
-> **注意：** 原文包含绘制流程图，此处保留图片引用位置。
+::: info 注意：
+原文包含绘制流程图，此处保留图片引用位置。
+:::
 
 绘制过程图归纳如下:
 
@@ -112,13 +117,17 @@ iOS中有三种Layer tree:
 3. 如果layer有delegate, 则调用delegate的- (void)drawLayer:(CALayer *)layer inContext:(CGContextRef)ctx方法(默认会将创建的CGContextRef传入)，否则调用-[CALayer drawInContext:]方法,进而调用[UIView drawRect:]方法, 此时已经在CGContextRef环境中, 如果在drawRect中通过UIGraphicsGetCurrentContext() 获取到的就是CALayer创建的CGContextRef。
 4. 注意drawRect方法是在CPU执行的, 在它执行完之后, 通过context将数据(通常情况下这里的最终结果会是一个bitmap, 类型是 CGImageRef)写入backing store, 通过rend server交给GPU去渲染，将backing store中的bitmap数据显示在屏幕上。
 
-> **注：** 每一个UIView的Layer都有一个对应的Backing Store作为其存储Content的实际内容, 而这些内容其实就是一个CGImage数据, 确切的说，是bitmap数据,以供GPU读取展示。
+::: info 注：
+每一个UIView的Layer都有一个对应的Backing Store作为其存储Content的实际内容, 而这些内容其实就是一个CGImage数据, 确切的说，是bitmap数据,以供GPU读取展示。
+:::
 
 ### 8.2. drawRect流程梳理
 
 系统绘制流程中, 会调用到drawRect方法, 而在开发阶段, 与我们打交道最多的也是drawRect方法, 因此这里额外再梳理下其调用流程。
 
-> **注意：** 以下流程仅适用于覆写了 `drawRect:` 方法的视图。如果没有覆写 `drawRect:`，系统会直接使用 Layer 的 `contents`（如 UIImage、backgroundColor 等），跳过 CPU 绘制流程。
+::: info 注意：
+以下流程仅适用于覆写了 `drawRect:` 方法的视图。如果没有覆写 `drawRect:`，系统会直接使用 Layer 的 `contents`（如 UIImage、backgroundColor 等），跳过 CPU 绘制流程。
+:::
 
 1. 当我们调用[UIView setNeedsDisplay], 底层会调用[CALayer setNeedsDisplay], 然后会给图层增加一个dirty标记, 但还显示原来的内容。它实际上没做任何工作，所以多次调用 -setNeedsDisplay并不会造成性能损失。
 2. 然后会触发[CALayer display]方法。
@@ -136,11 +145,15 @@ iOS中有三种Layer tree:
 4. Render::create_image
 5. ... decodeImage
 
-> **注：** UIImage其实是CGImage的一个轻量级封装, 因此在UIImageView中的UIImage对象直接将自己的CGImage图片数据作为CALayer的Content即可, 不再需要重新创建CGContetRef。
+::: info 注：
+UIImage其实是CGImage的一个轻量级封装, 因此在UIImageView中的UIImage对象直接将自己的CGImage图片数据作为CALayer的Content即可, 不再需要重新创建CGContetRef。
+:::
 
 ### 8.4. 异步绘制流程
 
-> **说明：** 以下是一个自定义异步绘制的示例代码，展示了如何通过实现CALayerDelegate的display方法来在后台线程进行绘制。注意：代码中使用了一些自定义的类（如ADLayerDelegate、ADManager等），这些不是系统API，仅作为示例参考。
+::: info 说明：
+以下是一个自定义异步绘制的示例代码，展示了如何通过实现CALayerDelegate的display方法来在后台线程进行绘制。注意：代码中使用了一些自定义的类（如ADLayerDelegate、ADManager等），这些不是系统API，仅作为示例参考。
+:::
 
 参考代码如下:
 
@@ -359,7 +372,9 @@ override func draw(_ layer: CALayer, in ctx: CGContext) {
 // Prints "draw"
 ```
 
-> **注：** 只有当系统在检测到View 的 draw(_:) 方法被实现时，才会自动调用Layer的display(_:) 或 draw(_ :in:) 方法。否则就必须通过手动调用图层的 setNeedsDisplay() 方法来调用。
+::: info 注：
+只有当系统在检测到View 的 draw(_:) 方法被实现时，才会自动调用Layer的display(_:) 或 draw(_ :in:) 方法。否则就必须通过手动调用图层的 setNeedsDisplay() 方法来调用。
+:::
 
 ### 9.3. func layerWillDraw(_ layer: CALayer)
 
@@ -445,7 +460,9 @@ App 使用 Core Graphics、Core Animation、Core Image 等框架来绘制可视�
 
 这些框架都需要通过 OpenGL 来调用 GPU 进行绘制，最终将内容显示到屏幕之上。
 
-> **注意：** 原文包含图形渲染技术栈结构图，此处保留图片引用位置。
+::: info 注意：
+原文包含图形渲染技术栈结构图，此处保留图片引用位置。
+:::
 
 #### 10.4.1. UIKit
 
@@ -498,7 +515,9 @@ iOS中应用并不负责渲染而是由专门的渲染进程负责，即Render S
 2. VSync信号主要由Render Server（backboardd进程）监听，而不是直接由App的RunLoop监听。Render Server接收到VSync信号后，会协调整个渲染流程。
 3. App的RunLoop主要负责处理应用层的事件和更新。Core Animation在RunLoop中注册了一个Observer，监听了BeforeWaiting和Exit事件，这个Observer的优先级是2000000，低于常见的其他Observer。
 
-> **注：** VSync信号主要由Render Server监听，App的RunLoop并不直接监听VSync信号。App通过Core Animation的Observer在RunLoop的BeforeWaiting阶段提交渲染数据给Render Server，Render Server再根据VSync信号协调GPU进行渲染。
+::: info 注：
+VSync信号主要由Render Server监听，App的RunLoop并不直接监听VSync信号。App通过Core Animation的Observer在RunLoop的BeforeWaiting阶段提交渲染数据给Render Server，Render Server再根据VSync信号协调GPU进行渲染。
+:::
 
 4. Core Animation在RunLoop中注册了一个Observer，监听了BeforeWaiting和Exit事件。这个Observer的优先级是2000000，低于常见的其他Observer。
 5. 当一个触摸事件到来时，RunLoop被唤醒，App中的代码会执行一些操作，比如创建和调整视图层级、设置 UIView的frame、修改CALayer的透明度、为视图添加一个动画。这些操作最终都会被CALayer捕获，并通过CATransaction提交到一个中间状态去。
@@ -509,7 +528,9 @@ iOS中应用并不负责渲染而是由专门的渲染进程负责，即Render S
 
 以屏幕显示播放视频为例, 其屏幕图形显示结构如图所示
 
-> **注意：** 原文包含屏幕图形显示结构图，此处保留图片引用位置。
+::: info 注意：
+原文包含屏幕图形显示结构图，此处保留图片引用位置。
+:::
 
 1. CPU将图形数据通过总线BUS提交至GPU
 2. GPU经过渲染处理转化为一帧帧的数据并提交至帧缓冲区
@@ -519,7 +540,9 @@ iOS中应用并不负责渲染而是由专门的渲染进程负责，即Render S
 
 为解决一个帧缓冲区效率问题(读取和写入都是一个无法有效的并发处理)，采用双缓冲机制，在这种情况下，GPU会预先渲染一帧放入一个缓冲区中，用于视频控制器的读取。当下一帧渲染完毕后，GPU 会直接把视频控制器的指针指向第二个缓冲器。
 
-> **注意：** 原文包含双缓冲机制示意图，此处保留图片引用位置。
+::: info 注意：
+原文包含双缓冲机制示意图，此处保留图片引用位置。
+:::
 
 双缓冲机制虽然提升了效率但也引入了画面撕裂问题，即当视频控制器还未读取完成时，即屏幕内容刚显示一半时，GPU将新的一帧内容提交到帧缓冲区并把两个缓冲区进行交换后，视频控制器就会把新的一帧数据的下半段显示到屏幕上，造成画面撕裂现象
 
@@ -552,7 +575,9 @@ cpu层面主要考虑降低资源消耗, 可以从以下几个方面入手
 
 如CALayer属性修改、视图层次调整、添加和移除视图等。
 
-> **注：** CALayer内部并没有属性方法，其内部是通过runtime动态接收方法resoleInstanceMethod方法为对象临时添加一个方法，并把对应属性值保存到内部的一个Dictionary字典里，同时还会通知delegate、创建动画等。UIView的关于显示相关的属性(比如frame/bounds/transform)等实际上是CALayer属性映射来的。
+::: info 注：
+CALayer内部并没有属性方法，其内部是通过runtime动态接收方法resoleInstanceMethod方法为对象临时添加一个方法，并把对应属性值保存到内部的一个Dictionary字典里，同时还会通知delegate、创建动画等。UIView的关于显示相关的属性(比如frame/bounds/transform)等实际上是CALayer属性映射来的。
+:::
 
 ### 13.3. 对象销毁
 
@@ -578,7 +603,9 @@ Auotlayout是苹果提倡的技术，可在大部分情况下能很好地提升�
 
 当使用UIImage或CGImageSource的那几个方法创建图片时，图片数据并不会立即解码。只有图片设置到UIImageView或者CALayer.contents中去，并且CALayer被提交到GPU前，CGImage中的数据才会得到解码。
 
-> **重要说明：** 如果图片未在后台线程预解码，系统会在Commit Transaction的Prepare阶段在主线程进行解码，这是性能瓶颈的关键阶段。如果图片很大或未预解码，会严重卡顿主线程，导致掉帧。
+::: info 重要说明：
+如果图片未在后台线程预解码，系统会在Commit Transaction的Prepare阶段在主线程进行解码，这是性能瓶颈的关键阶段。如果图片很大或未预解码，会严重卡顿主线程，导致掉帧。
+:::
 
 解决方法：后台线程先把图片绘制到CGBitmapContext中，然后从Bitmap直接创建图片。目前常见的网络图片库（如SDWebImage、Kingfisher）都自带这个功能，会在后台线程完成图片解码后再设置到UIImageView。
 
@@ -612,7 +639,9 @@ Auotlayout是苹果提倡的技术，可在大部分情况下能很好地提升�
 
 当一个列表视图中存在大量圆角的CALayer且快速滑动时，会消耗大量的GPU资源，进而引发界面卡顿。为避免此种情况，可以尝试开启CALayer.shouldRasterize属性，这会把离屏渲染的操作转嫁到CPU上（但会增加内存开销）；最好是尽量避免使用会触发离屏渲染的属性，或者使用预渲染的图片替代。
 
-> **注：** GPU屏幕渲染存在两种方式：
+::: info 注：
+GPU屏幕渲染存在两种方式：
+:::
 
 - **当前屏幕渲染(On-Screen Rendering)：** 正常的GPU渲染流程，GPU将渲染完成的帧放到帧缓冲区，然后显示到屏幕。
 - **离屏渲染(Off-Screen Rendering)：** 会额外创建一个离屏渲染缓冲区(如保存后续复用的数据)，渲染过程中会涉及从当前屏幕切换到离屏环境多次上下文环境切换，等到离屏渲染完成后还需要将渲染结果切换到当前屏幕环境，因此付出的代价较高。
@@ -621,4 +650,6 @@ Auotlayout是苹果提倡的技术，可在大部分情况下能很好地提升�
 
 以上就是UIView从绘制到渲染再到显示的全过程, 作为一个有追求的iOS开发工程师, 保持iOS流畅的性能是永远不变的追求。
 
-> **参考链接：** [iOS底层原理之 UIView绘制显示原理流程解析以及性能优化](https://juejin.cn/post/7081659568920461348)
+::: info 参考链接：
+[iOS底层原理之 UIView绘制显示原理流程解析以及性能优化](https://juejin.cn/post/7081659568920461348)
+:::

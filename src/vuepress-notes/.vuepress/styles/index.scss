@@ -82,6 +82,24 @@ p {
   color: #000000 !important; // 正文字体更黑
 }
 
+// 强调文字样式 - 使用加粗
+strong {
+  color: #000000 !important; // 保持黑色
+  font-weight: 600 !important; // 加粗
+}
+
+// 表格中的强调文字也使用加粗
+table td strong,
+table tbody strong {
+  color: #1a1a1a !important; // 表格中保持黑色
+  font-weight: 600 !important; // 加粗
+}
+
+// 表头文字保持加粗
+table th {
+  font-weight: 600 !important; // 表头保持加粗
+}
+
 // 列表文字
 ul, ol {
   font-size: 14px;
@@ -93,16 +111,16 @@ li {
   color: #000000 !important; // 列表文字更黑
 }
 
-// 行内代码样式 - 模仿历史样式
+// 行内代码样式 - 使用更亮的红色，与代码块关键字颜色一致
 :not(pre) > code {
   background-color: rgba(27, 31, 35, 0.05);
   padding: 2.5px 6px;
   border-radius: 6px;
   font-size: 85%; // 历史样式使用 85%
-  color: #d73a49; // 历史样式使用红色
+  color: #d73a49 !important; // 使用更亮的红色，与代码块关键字颜色一致
   font-family: Menlo, Monaco, 'Courier New', monospace;
   border: none;
-  font-weight: normal;
+  font-weight: 500 !important; // 中等粗细
 }
 
 // 代码块样式 - 根据内容自适应宽度，使用 Notion 风格背景色
@@ -276,6 +294,12 @@ td {
   width: auto !important; // 列宽根据内容自动调整
 }
 
+// 表格第一列不加粗
+table td:first-child,
+table td:first-child strong {
+  font-weight: normal !important; // 第一列不加粗
+}
+
 // 移除表格行的交替换色（斑马纹）
 tbody tr {
   background-color: transparent !important;
@@ -395,8 +419,8 @@ blockquote {
   }
   
   strong {
-    color: #000000;
-    font-weight: 600;
+    color: #000000 !important; // Info 块中的强调文字保持黑色加粗
+    font-weight: 600 !important;
   }
 }
 
