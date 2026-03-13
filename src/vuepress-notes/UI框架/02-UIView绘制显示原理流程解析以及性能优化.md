@@ -144,7 +144,7 @@ iOS中有三种Layer tree:
 
 参考代码如下:
 
-```objectivec
+```objective-c
 /**
  维护线程安全的绘制状态
  */

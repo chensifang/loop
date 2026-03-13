@@ -285,12 +285,11 @@
 <h2 id="_6-常见问题" tabindex="-1"><a class="header-anchor" href="#_6-常见问题"><span>6. 常见问题</span></a></h2>
 <h3 id="_6-1-死锁问题" tabindex="-1"><a class="header-anchor" href="#_6-1-死锁问题"><span>6.1 死锁问题</span></a></h3>
 <p><strong>原因</strong>：多个锁的加锁顺序不一致，导致循环等待</p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token comment">// 错误示例：可能导致死锁</span></span>
-<span class="line"><span class="token comment">// 线程 A：先锁 lock1，再锁 lock2</span></span>
-<span class="line"><span class="token comment">// 线程 B：先锁 lock2，再锁 lock1</span></span>
-<span class="line"><span class="token comment">// 解决方案：统一加锁顺序</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_6-2-性能问题" tabindex="-1"><a class="header-anchor" href="#_6-2-性能问题"><span>6.2 性能问题</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#6A737D">// 错误示例：可能导致死锁</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 线程 A：先锁 lock1，再锁 lock2</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 线程 B：先锁 lock2，再锁 lock1</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 解决方案：统一加锁顺序</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_6-2-性能问题" tabindex="-1"><a class="header-anchor" href="#_6-2-性能问题"><span>6.2 性能问题</span></a></h3>
 <p><strong>原因</strong>：锁的粒度太大，锁持有时间过长</p>
 <ul>
 <li>减小锁的粒度，只保护必要的代码</li>

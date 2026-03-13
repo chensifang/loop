@@ -209,14 +209,13 @@
 <li>如果找不到，通过 <code v-pre>superclass</code> 指针向上查找父类</li>
 <li>重复步骤 2-3，直到找到方法或到达 nil</li>
 </ol>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// 示例：查找实例方法</span></span>
-<span class="line">Person <span class="token operator">*</span>person <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>Person alloc<span class="token punctuation">]</span> init<span class="token punctuation">]</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token punctuation">[</span>person sayHello<span class="token punctuation">]</span><span class="token punctuation">;</span>  <span class="token comment">// 查找路径：person(isa) → Person（类对象） → 查找 sayHello</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 如果 Person 中没有，继续向上查找</span></span>
-<span class="line"><span class="token comment">// Person（类对象） → NSObject（类对象） → 查找 sayHello</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_6-2-类方法查找" tabindex="-1"><a class="header-anchor" href="#_6-2-类方法查找"><span>6.2 类方法查找</span></a></h3>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// 示例：查找实例方法</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">Person </span><span style="color:#D73A49">*</span><span style="color:#24292E">person </span><span style="color:#D73A49">=</span><span style="color:#24292E"> [[Person </span><span style="color:#005CC5">alloc</span><span style="color:#24292E">] </span><span style="color:#005CC5">init</span><span style="color:#24292E">];</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">[person </span><span style="color:#005CC5">sayHello</span><span style="color:#24292E">];  </span><span style="color:#6A737D">// 查找路径：person(isa) → Person（类对象） → 查找 sayHello</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 如果 Person 中没有，继续向上查找</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// Person（类对象） → NSObject（类对象） → 查找 sayHello</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_6-2-类方法查找" tabindex="-1"><a class="header-anchor" href="#_6-2-类方法查找"><span>6.2 类方法查找</span></a></h3>
 <p>当向类对象发送消息时，查找流程如下：</p>
 <ol>
 <li>通过类的 <code v-pre>isa</code> 指针找到元类对象</li>
@@ -225,18 +224,17 @@
 <li>重复步骤 2-3，直到找到方法或到达根元类</li>
 <li>如果根元类中也没有，通过根元类的 <code v-pre>superclass</code> 回退到根类对象查找实例方法</li>
 </ol>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// 示例：查找类方法</span></span>
-<span class="line"><span class="token punctuation">[</span>Person sharedInstance<span class="token punctuation">]</span><span class="token punctuation">;</span>  </span>
-<span class="line"><span class="token comment">// 查找路径：Person（类对象）(isa) → Person（元类） → 查找 sharedInstance</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 如果 Person（元类）中没有，继续向上查找</span></span>
-<span class="line"><span class="token comment">// Person（元类） → NSObject（元类） → 查找 sharedInstance</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 如果 NSObject（元类）中也没有，通过 superclass 回退</span></span>
-<span class="line"><span class="token comment">// NSObject（元类）(superclass) → NSObject（类对象） → 查找实例方法</span></span>
-<span class="line"><span class="token comment">// 例如：[NSObject description] 实际上调用的是 NSObject 的实例方法</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="_7-内存布局中的体现" tabindex="-1"><a class="header-anchor" href="#_7-内存布局中的体现"><span>7. 内存布局中的体现</span></a></h2>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// 示例：查找类方法</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">[Person </span><span style="color:#005CC5">sharedInstance</span><span style="color:#24292E">];  </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 查找路径：Person（类对象）(isa) → Person（元类） → 查找 sharedInstance</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 如果 Person（元类）中没有，继续向上查找</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// Person（元类） → NSObject（元类） → 查找 sharedInstance</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 如果 NSObject（元类）中也没有，通过 superclass 回退</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// NSObject（元类）(superclass) → NSObject（类对象） → 查找实例方法</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 例如：[NSObject description] 实际上调用的是 NSObject 的实例方法</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="_7-内存布局中的体现" tabindex="-1"><a class="header-anchor" href="#_7-内存布局中的体现"><span>7. 内存布局中的体现</span></a></h2>
 <p>在对象的内存布局中，<code v-pre>isa</code> 指针位于对象的第一个位置（偏移 0），占用 8 字节。这是 Objective-C 对象的基础结构。</p>
 <table>
 <thead>
@@ -265,35 +263,34 @@
 </tbody>
 </table>
 <h2 id="_8-验证代码" tabindex="-1"><a class="header-anchor" href="#_8-验证代码"><span>8. 验证代码</span></a></h2>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// 验证 isa 指针的指向</span></span>
-<span class="line">Person <span class="token operator">*</span>person <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>Person alloc<span class="token punctuation">]</span> init<span class="token punctuation">]</span><span class="token punctuation">;</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 1. 实例对象的 isa 指向类对象</span></span>
-<span class="line">Class personClass <span class="token operator">=</span> <span class="token function">object_getClass</span><span class="token punctuation">(</span>person<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"实例对象的类: %@"</span><span class="token punctuation">,</span> personClass<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// Person</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 2. 类对象的 isa 指向元类对象</span></span>
-<span class="line">Class personMetaClass <span class="token operator">=</span> <span class="token function">object_getClass</span><span class="token punctuation">(</span>personClass<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"类对象的元类: %@"</span><span class="token punctuation">,</span> personMetaClass<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// Person (meta)</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 3. 元类对象的 isa 指向根元类</span></span>
-<span class="line">Class rootMetaClass <span class="token operator">=</span> <span class="token function">object_getClass</span><span class="token punctuation">(</span>personMetaClass<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"元类对象的元类: %@"</span><span class="token punctuation">,</span> rootMetaClass<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// NSObject (meta)</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 4. 根元类的 isa 指向自身</span></span>
-<span class="line">Class rootMetaMetaClass <span class="token operator">=</span> <span class="token function">object_getClass</span><span class="token punctuation">(</span>rootMetaClass<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"根元类的元类: %@"</span><span class="token punctuation">,</span> rootMetaMetaClass<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// NSObject (meta) - 指向自身</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"是否相等: %d"</span><span class="token punctuation">,</span> rootMetaClass <span class="token operator">==</span> rootMetaMetaClass<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 1 (YES)</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 5. 验证 superclass 指针</span></span>
-<span class="line">Class personSuperclass <span class="token operator">=</span> <span class="token function">class_getSuperclass</span><span class="token punctuation">(</span>personClass<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"Person 的父类: %@"</span><span class="token punctuation">,</span> personSuperclass<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// NSObject</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 6. 验证根元类的 superclass 指向根类</span></span>
-<span class="line">Class rootMetaSuperclass <span class="token operator">=</span> <span class="token function">class_getSuperclass</span><span class="token punctuation">(</span>rootMetaClass<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"根元类的父类: %@"</span><span class="token punctuation">,</span> rootMetaSuperclass<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// NSObject (class) - 指向根类对象</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="_9-关键要点总结" tabindex="-1"><a class="header-anchor" href="#_9-关键要点总结"><span>9. 关键要点总结</span></a></h2>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// 验证 isa 指针的指向</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">Person </span><span style="color:#D73A49">*</span><span style="color:#24292E">person </span><span style="color:#D73A49">=</span><span style="color:#24292E"> [[Person </span><span style="color:#005CC5">alloc</span><span style="color:#24292E">] </span><span style="color:#005CC5">init</span><span style="color:#24292E">];</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 1. 实例对象的 isa 指向类对象</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">Class</span><span style="color:#24292E"> personClass </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> object_getClass</span><span style="color:#24292E">(person);</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"实例对象的类: </span><span style="color:#005CC5">%@</span><span style="color:#032F62">"</span><span style="color:#24292E">, personClass);  </span><span style="color:#6A737D">// Person</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 2. 类对象的 isa 指向元类对象</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">Class</span><span style="color:#24292E"> personMetaClass </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> object_getClass</span><span style="color:#24292E">(personClass);</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"类对象的元类: </span><span style="color:#005CC5">%@</span><span style="color:#032F62">"</span><span style="color:#24292E">, personMetaClass);  </span><span style="color:#6A737D">// Person (meta)</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 3. 元类对象的 isa 指向根元类</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">Class</span><span style="color:#24292E"> rootMetaClass </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> object_getClass</span><span style="color:#24292E">(personMetaClass);</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"元类对象的元类: </span><span style="color:#005CC5">%@</span><span style="color:#032F62">"</span><span style="color:#24292E">, rootMetaClass);  </span><span style="color:#6A737D">// NSObject (meta)</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 4. 根元类的 isa 指向自身</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">Class</span><span style="color:#24292E"> rootMetaMetaClass </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> object_getClass</span><span style="color:#24292E">(rootMetaClass);</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"根元类的元类: </span><span style="color:#005CC5">%@</span><span style="color:#032F62">"</span><span style="color:#24292E">, rootMetaMetaClass);  </span><span style="color:#6A737D">// NSObject (meta) - 指向自身</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"是否相等: </span><span style="color:#005CC5">%d</span><span style="color:#032F62">"</span><span style="color:#24292E">, rootMetaClass </span><span style="color:#D73A49">==</span><span style="color:#24292E"> rootMetaMetaClass);  </span><span style="color:#6A737D">// 1 (YES)</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 5. 验证 superclass 指针</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">Class</span><span style="color:#24292E"> personSuperclass </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> class_getSuperclass</span><span style="color:#24292E">(personClass);</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"Person 的父类: </span><span style="color:#005CC5">%@</span><span style="color:#032F62">"</span><span style="color:#24292E">, personSuperclass);  </span><span style="color:#6A737D">// NSObject</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 6. 验证根元类的 superclass 指向根类</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">Class</span><span style="color:#24292E"> rootMetaSuperclass </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> class_getSuperclass</span><span style="color:#24292E">(rootMetaClass);</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"根元类的父类: </span><span style="color:#005CC5">%@</span><span style="color:#032F62">"</span><span style="color:#24292E">, rootMetaSuperclass);  </span><span style="color:#6A737D">// NSObject (class) - 指向根类对象</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="_9-关键要点总结" tabindex="-1"><a class="header-anchor" href="#_9-关键要点总结"><span>9. 关键要点总结</span></a></h2>
 <table>
 <thead>
 <tr>
@@ -331,30 +328,27 @@
 <h2 id="_10-实际应用场景" tabindex="-1"><a class="header-anchor" href="#_10-实际应用场景"><span>10. 实际应用场景</span></a></h2>
 <h3 id="_10-1-方法交换-method-swizzling" tabindex="-1"><a class="header-anchor" href="#_10-1-方法交换-method-swizzling"><span>10.1 方法交换（Method Swizzling）</span></a></h3>
 <p>理解 isa 和 superclass 的关系，有助于理解方法交换的原理：</p>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// 交换实例方法：在类对象的方法列表中交换</span></span>
-<span class="line">Method originalMethod <span class="token operator">=</span> <span class="token function">class_getInstanceMethod</span><span class="token punctuation">(</span><span class="token punctuation">[</span>Person class<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">@selector</span><span class="token punctuation">(</span>sayHello<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">Method swizzledMethod <span class="token operator">=</span> <span class="token function">class_getInstanceMethod</span><span class="token punctuation">(</span><span class="token punctuation">[</span>Person class<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">@selector</span><span class="token punctuation">(</span>swizzled_sayHello<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">method_exchangeImplementations</span><span class="token punctuation">(</span>originalMethod<span class="token punctuation">,</span> swizzledMethod<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 交换类方法：在元类对象的方法列表中交换</span></span>
-<span class="line">Method originalClassMethod <span class="token operator">=</span> <span class="token function">class_getClassMethod</span><span class="token punctuation">(</span><span class="token punctuation">[</span>Person class<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">@selector</span><span class="token punctuation">(</span>sharedInstance<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">Method swizzledClassMethod <span class="token operator">=</span> <span class="token function">class_getClassMethod</span><span class="token punctuation">(</span><span class="token punctuation">[</span>Person class<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token keyword">@selector</span><span class="token punctuation">(</span>swizzled_sharedInstance<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">method_exchangeImplementations</span><span class="token punctuation">(</span>originalClassMethod<span class="token punctuation">,</span> swizzledClassMethod<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_10-2-动态创建类" tabindex="-1"><a class="header-anchor" href="#_10-2-动态创建类"><span>10.2 动态创建类</span></a></h3>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// 交换实例方法：在类对象的方法列表中交换</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">Method originalMethod </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> class_getInstanceMethod</span><span style="color:#24292E">([Person </span><span style="color:#005CC5">class</span><span style="color:#24292E">], </span><span style="color:#D73A49">@selector</span><span style="color:#24292E">(</span><span style="color:#005CC5">sayHello</span><span style="color:#24292E">));</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">Method swizzledMethod </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> class_getInstanceMethod</span><span style="color:#24292E">([Person </span><span style="color:#005CC5">class</span><span style="color:#24292E">], </span><span style="color:#D73A49">@selector</span><span style="color:#24292E">(</span><span style="color:#005CC5">swizzled_sayHello</span><span style="color:#24292E">));</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">method_exchangeImplementations</span><span style="color:#24292E">(originalMethod, swizzledMethod);</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 交换类方法：在元类对象的方法列表中交换</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">Method originalClassMethod </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> class_getClassMethod</span><span style="color:#24292E">([Person </span><span style="color:#005CC5">class</span><span style="color:#24292E">], </span><span style="color:#D73A49">@selector</span><span style="color:#24292E">(</span><span style="color:#005CC5">sharedInstance</span><span style="color:#24292E">));</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">Method swizzledClassMethod </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> class_getClassMethod</span><span style="color:#24292E">([Person </span><span style="color:#005CC5">class</span><span style="color:#24292E">], </span><span style="color:#D73A49">@selector</span><span style="color:#24292E">(</span><span style="color:#005CC5">swizzled_sharedInstance</span><span style="color:#24292E">));</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">method_exchangeImplementations</span><span style="color:#24292E">(originalClassMethod, swizzledClassMethod);</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_10-2-动态创建类" tabindex="-1"><a class="header-anchor" href="#_10-2-动态创建类"><span>10.2 动态创建类</span></a></h3>
 <p>理解类对象和元类对象的关系，有助于理解动态创建类的过程：</p>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// 动态创建类时，需要同时创建类对象和元类对象</span></span>
-<span class="line">Class newClass <span class="token operator">=</span> <span class="token function">objc_allocateClassPair</span><span class="token punctuation">(</span><span class="token punctuation">[</span>NSObject class<span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">"DynamicClass"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token comment">// objc_allocateClassPair 会同时创建类对象和元类对象，并正确设置它们的 isa 和 superclass 指针</span></span>
-<span class="line"><span class="token function">objc_registerClassPair</span><span class="token punctuation">(</span>newClass<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_10-3-kvo-实现原理" tabindex="-1"><a class="header-anchor" href="#_10-3-kvo-实现原理"><span>10.3 KVO 实现原理</span></a></h3>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// 动态创建类时，需要同时创建类对象和元类对象</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">Class</span><span style="color:#24292E"> newClass </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> objc_allocateClassPair</span><span style="color:#24292E">([</span><span style="color:#005CC5">NSObject</span><span style="color:#005CC5"> class</span><span style="color:#24292E">], </span><span style="color:#032F62">"DynamicClass"</span><span style="color:#24292E">, </span><span style="color:#005CC5">0</span><span style="color:#24292E">);</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// objc_allocateClassPair 会同时创建类对象和元类对象，并正确设置它们的 isa 和 superclass 指针</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">objc_registerClassPair</span><span style="color:#24292E">(newClass);</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_10-3-kvo-实现原理" tabindex="-1"><a class="header-anchor" href="#_10-3-kvo-实现原理"><span>10.3 KVO 实现原理</span></a></h3>
 <p>KVO 的实现依赖于动态创建子类，并修改 isa 指针的指向：</p>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// KVO 会动态创建一个子类（如 NSKVONotifying_Person）</span></span>
-<span class="line"><span class="token comment">// 然后将原对象的 isa 指针指向这个新创建的子类</span></span>
-<span class="line"><span class="token comment">// 这样在调用方法时，会先查找子类的方法（重写了 setter），实现观察者通知</span></span>
-<span class="line"><span class="token function">object_setClass</span><span class="token punctuation">(</span>person<span class="token punctuation">,</span> NSKVONotifying_Person<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 修改 isa 指针</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></div></template>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// KVO 会动态创建一个子类（如 NSKVONotifying_Person）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 然后将原对象的 isa 指针指向这个新创建的子类</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 这样在调用方法时，会先查找子类的方法（重写了 setter），实现观察者通知</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">object_setClass</span><span style="color:#24292E">(person, NSKVONotifying_Person);  </span><span style="color:#6A737D">// 修改 isa 指针</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div></div></template>
 
 

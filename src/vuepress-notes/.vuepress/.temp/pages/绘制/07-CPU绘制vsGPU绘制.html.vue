@@ -41,17 +41,16 @@
 </ol>
 <h2 id="完整流程对比" tabindex="-1"><a class="header-anchor" href="#完整流程对比"><span>完整流程对比</span></a></h2>
 <h3 id="示例-drawrect-的完整流程" tabindex="-1"><a class="header-anchor" href="#示例-drawrect-的完整流程"><span>示例：drawRect 的完整流程</span></a></h3>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">RedView</span><span class="token punctuation">:</span> <span class="token class-name">UIView</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">override</span> <span class="token keyword">func</span> <span class="token function-definition function">draw</span><span class="token punctuation">(</span><span class="token omit keyword">_</span> rect<span class="token punctuation">:</span> <span class="token class-name">CGRect</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token comment">// 步骤 1：CPU 在内存中生成位图</span></span>
-<span class="line">        <span class="token keyword">let</span> context <span class="token operator">=</span> <span class="token class-name">UIGraphicsGetCurrentContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">        context<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">setFillColor</span><span class="token punctuation">(</span><span class="token class-name">UIColor</span><span class="token punctuation">.</span>red<span class="token punctuation">.</span>cgColor<span class="token punctuation">)</span></span>
-<span class="line">        context<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">fill</span><span class="token punctuation">(</span>rect<span class="token punctuation">)</span></span>
-<span class="line">        <span class="token comment">// 此时：内存中有红色位图，屏幕还是空白</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><table>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> RedView</span><span style="color:#24292E">: </span><span style="color:#6F42C1">UIView </span><span style="color:#24292E">{</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    override</span><span style="color:#D73A49"> func</span><span style="color:#6F42C1"> draw</span><span style="color:#24292E">(</span><span style="color:#6F42C1">_</span><span style="color:#24292E"> rect: CGRect) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 步骤 1：CPU 在内存中生成位图</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">        let</span><span style="color:#24292E"> context </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UIGraphicsGetCurrentContext</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        context</span><span style="color:#D73A49">?</span><span style="color:#24292E">.</span><span style="color:#005CC5">setFillColor</span><span style="color:#24292E">(UIColor.red.cgColor)</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        context</span><span style="color:#D73A49">?</span><span style="color:#24292E">.</span><span style="color:#005CC5">fill</span><span style="color:#24292E">(rect)</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 此时：内存中有红色位图，屏幕还是空白</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><table>
 <thead>
 <tr>
 <th>时间</th>
@@ -190,32 +189,29 @@
 </table>
 <h2 id="常见场景" tabindex="-1"><a class="header-anchor" href="#常见场景"><span>常见场景</span></a></h2>
 <h3 id="场景-1-drawrect-cpu-绘制" tabindex="-1"><a class="header-anchor" href="#场景-1-drawrect-cpu-绘制"><span>场景 1：drawRect（CPU 绘制）</span></a></h3>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">CustomView</span><span class="token punctuation">:</span> <span class="token class-name">UIView</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">override</span> <span class="token keyword">func</span> <span class="token function-definition function">draw</span><span class="token punctuation">(</span><span class="token omit keyword">_</span> rect<span class="token punctuation">:</span> <span class="token class-name">CGRect</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token comment">// CPU 在内存中生成位图</span></span>
-<span class="line">        <span class="token keyword">let</span> context <span class="token operator">=</span> <span class="token class-name">UIGraphicsGetCurrentContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">        context<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">setFillColor</span><span class="token punctuation">(</span><span class="token class-name">UIColor</span><span class="token punctuation">.</span>blue<span class="token punctuation">.</span>cgColor<span class="token punctuation">)</span></span>
-<span class="line">        context<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">fillEllipse</span><span class="token punctuation">(</span><span class="token keyword">in</span><span class="token punctuation">:</span> rect<span class="token punctuation">)</span></span>
-<span class="line">        <span class="token comment">// 位图存入 layer.contents</span></span>
-<span class="line">        <span class="token comment">// 后续由 GPU 渲染到屏幕</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="场景-2-uiimageview-不需要-cpu-绘制" tabindex="-1"><a class="header-anchor" href="#场景-2-uiimageview-不需要-cpu-绘制"><span>场景 2：UIImageView（不需要 CPU 绘制）</span></a></h3>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">let</span> imageView <span class="token operator">=</span> <span class="token class-name">UIImageView</span><span class="token punctuation">(</span>image<span class="token punctuation">:</span> <span class="token class-name">UIImage</span><span class="token punctuation">(</span>named<span class="token punctuation">:</span> <span class="token string-literal"><span class="token string">"icon"</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span></span>
-<span class="line"><span class="token comment">// 图片解码成位图（CPU 操作）</span></span>
-<span class="line"><span class="token comment">// 位图存入 layer.contents</span></span>
-<span class="line"><span class="token comment">// GPU 直接渲染位图，不需要 drawRect</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="场景-3-uilabel-文字光栅化" tabindex="-1"><a class="header-anchor" href="#场景-3-uilabel-文字光栅化"><span>场景 3：UILabel（文字光栅化）</span></a></h3>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">let</span> label <span class="token operator">=</span> <span class="token class-name">UILabel</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">label<span class="token punctuation">.</span>text <span class="token operator">=</span> <span class="token string-literal"><span class="token string">"Hello"</span></span></span>
-<span class="line"><span class="token comment">// Core Text 排版（CPU 操作）</span></span>
-<span class="line"><span class="token comment">// 文字光栅化成位图（CPU 操作）</span></span>
-<span class="line"><span class="token comment">// 位图存入 layer.contents</span></span>
-<span class="line"><span class="token comment">// GPU 直接渲染位图，不需要 drawRect</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="总结" tabindex="-1"><a class="header-anchor" href="#总结"><span>总结</span></a></h2>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> CustomView</span><span style="color:#24292E">: </span><span style="color:#6F42C1">UIView </span><span style="color:#24292E">{</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    override</span><span style="color:#D73A49"> func</span><span style="color:#6F42C1"> draw</span><span style="color:#24292E">(</span><span style="color:#6F42C1">_</span><span style="color:#24292E"> rect: CGRect) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // CPU 在内存中生成位图</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">        let</span><span style="color:#24292E"> context </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UIGraphicsGetCurrentContext</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        context</span><span style="color:#D73A49">?</span><span style="color:#24292E">.</span><span style="color:#005CC5">setFillColor</span><span style="color:#24292E">(UIColor.blue.cgColor)</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        context</span><span style="color:#D73A49">?</span><span style="color:#24292E">.</span><span style="color:#005CC5">fillEllipse</span><span style="color:#24292E">(</span><span style="color:#005CC5">in</span><span style="color:#24292E">: rect)</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 位图存入 layer.contents</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 后续由 GPU 渲染到屏幕</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="场景-2-uiimageview-不需要-cpu-绘制" tabindex="-1"><a class="header-anchor" href="#场景-2-uiimageview-不需要-cpu-绘制"><span>场景 2：UIImageView（不需要 CPU 绘制）</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> imageView </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UIImageView</span><span style="color:#24292E">(</span><span style="color:#005CC5">image</span><span style="color:#24292E">: </span><span style="color:#005CC5">UIImage</span><span style="color:#24292E">(</span><span style="color:#005CC5">named</span><span style="color:#24292E">: </span><span style="color:#032F62">"icon"</span><span style="color:#24292E">))</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 图片解码成位图（CPU 操作）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 位图存入 layer.contents</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// GPU 直接渲染位图，不需要 drawRect</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="场景-3-uilabel-文字光栅化" tabindex="-1"><a class="header-anchor" href="#场景-3-uilabel-文字光栅化"><span>场景 3：UILabel（文字光栅化）</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> label </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UILabel</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">label.</span><span style="color:#005CC5">text</span><span style="color:#D73A49"> =</span><span style="color:#032F62"> "Hello"</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// Core Text 排版（CPU 操作）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 文字光栅化成位图（CPU 操作）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 位图存入 layer.contents</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// GPU 直接渲染位图，不需要 drawRect</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="总结" tabindex="-1"><a class="header-anchor" href="#总结"><span>总结</span></a></h2>
 <table>
 <thead>
 <tr>

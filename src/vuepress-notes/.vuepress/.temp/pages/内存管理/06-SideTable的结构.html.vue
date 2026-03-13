@@ -3,6 +3,7 @@
 <p>Side Table 是 iOS Runtime 中的一个辅助数据结构，用于存储对象的额外信息。当对象的 ISA 指针无法存储所有信息时（比如引用计数过大、需要 weak 引用等），系统会创建 Side Table 来存储这些信息。</p>
 <h2 id="实际存储结构" tabindex="-1"><a class="header-anchor" href="#实际存储结构"><span>实际存储结构</span></a></h2>
 <p><strong>假设场景</strong>：对象 p1（地址 0x1，引用计数=3，2个weak指针），对象 p2（地址 0x2，引用计数=5，2个weak指针）</p>
+<div id="sidetable-container"></div>
 <h2 id="各层结构说明" tabindex="-1"><a class="header-anchor" href="#各层结构说明"><span>各层结构说明</span></a></h2>
 <table>
 <thead>
@@ -139,21 +140,20 @@
 </tbody>
 </table>
 <h4 id="代码实现" tabindex="-1"><a class="header-anchor" href="#代码实现"><span>代码实现</span></a></h4>
-<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre v-pre><code class="language-cpp"><span class="line"><span class="token comment">// 实际实现（简化版）</span></span>
-<span class="line">SideTable<span class="token operator">&amp;</span> <span class="token function">tableForPointer</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>p<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token comment">// 1. 将对象地址转换为整数</span></span>
-<span class="line">    uintptr_t addr <span class="token operator">=</span> <span class="token generic-function"><span class="token function">reinterpret_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>uintptr_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token comment">// 2. 计算索引：右移4位，然后与63（0x3F）做与运算</span></span>
-<span class="line">    <span class="token comment">//    这样可以得到 0-63 之间的索引值</span></span>
-<span class="line">    size_t index <span class="token operator">=</span> <span class="token punctuation">(</span>addr <span class="token operator">>></span> <span class="token number">4</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token punctuation">(</span>STRIPED_MAP_COUNT <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">    <span class="token comment">// 等价于：index = (addr >> 4) &amp; 63;</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token comment">// 3. 返回对应的 SideTable 引用</span></span>
-<span class="line">    <span class="token keyword">return</span> SideTablesMap<span class="token punctuation">.</span>array<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h4 id="示例" tabindex="-1"><a class="header-anchor" href="#示例"><span>示例</span></a></h4>
+<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-cpp"><code><span class="line"><span class="line"><span style="color:#6A737D">// 实际实现（简化版）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">SideTable</span><span style="color:#D73A49">&#x26;</span><span style="color:#6F42C1"> tableForPointer</span><span style="color:#24292E">(</span><span style="color:#D73A49">const</span><span style="color:#D73A49"> void</span><span style="color:#D73A49"> *</span><span style="color:#E36209">p</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 1. 将对象地址转换为整数</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    uintptr_t</span><span style="color:#24292E"> addr </span><span style="color:#D73A49">=</span><span style="color:#D73A49"> reinterpret_cast&#x3C;uintptr_t></span><span style="color:#24292E">(p);</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 2. 计算索引：右移4位，然后与63（0x3F）做与运算</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    //    这样可以得到 0-63 之间的索引值</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    size_t</span><span style="color:#24292E"> index </span><span style="color:#D73A49">=</span><span style="color:#24292E"> (addr </span><span style="color:#D73A49">>></span><span style="color:#005CC5"> 4</span><span style="color:#24292E">) </span><span style="color:#D73A49">&#x26;</span><span style="color:#24292E"> (STRIPED_MAP_COUNT </span><span style="color:#D73A49">-</span><span style="color:#005CC5"> 1</span><span style="color:#24292E">);</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 等价于：index = (addr >> 4) &#x26; 63;</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 3. 返回对应的 SideTable 引用</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    return</span><span style="color:#24292E"> SideTablesMap.array[index];</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h4 id="示例" tabindex="-1"><a class="header-anchor" href="#示例"><span>示例</span></a></h4>
 <p>假设对象地址为 <code v-pre>0x100012340</code>：</p>
 <ul>
 <li>地址转整数：<code v-pre>addr = 0x100012340</code></li>
@@ -210,14 +210,13 @@
 <p>虽然多个对象可能共享同一个 SideTable，但 SideTable 内部使用哈希表存储，仍然可以快速区分不同对象的数据。</p>
 <h2 id="完整存储结构" tabindex="-1"><a class="header-anchor" href="#完整存储结构"><span>完整存储结构</span></a></h2>
 <p>Side Table 存储在全局的 <strong>StripedMap</strong> 中（包含多个 SideTable 的数组），通过对象地址的哈希值选择使用哪个 SideTable。多个对象可以共享同一个 SideTable（通过 SideTable 内的哈希表区分）。</p>
-<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre v-pre><code class="language-cpp"><span class="line"><span class="token comment">// 全局 StripedMap 实例</span></span>
-<span class="line"><span class="token keyword">static</span> StripedMap<span class="token operator">&lt;</span>SideTable<span class="token operator">></span> SideTablesMap<span class="token punctuation">;</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 获取对象的 SideTable</span></span>
-<span class="line">SideTable<span class="token operator">&amp;</span> <span class="token function">tableForPointer</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>p<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">return</span> SideTablesMap<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div></div></template>
+<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-cpp"><code><span class="line"><span class="line"><span style="color:#6A737D">// 全局 StripedMap 实例</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">static</span><span style="color:#24292E"> StripedMap</span><span style="color:#D73A49">&#x3C;</span><span style="color:#24292E">SideTable</span><span style="color:#D73A49">></span><span style="color:#24292E"> SideTablesMap;</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 获取对象的 SideTable</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">SideTable</span><span style="color:#D73A49">&#x26;</span><span style="color:#6F42C1"> tableForPointer</span><span style="color:#24292E">(</span><span style="color:#D73A49">const</span><span style="color:#D73A49"> void</span><span style="color:#D73A49"> *</span><span style="color:#E36209">p</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    return</span><span style="color:#24292E"> SideTablesMap.</span><span style="color:#6F42C1">get</span><span style="color:#24292E">(p);</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div></div></template>
 
 

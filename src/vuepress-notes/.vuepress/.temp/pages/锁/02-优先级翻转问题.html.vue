@@ -145,13 +145,12 @@
 <h2 id="_4-自旋锁的优先级翻转问题" tabindex="-1"><a class="header-anchor" href="#_4-自旋锁的优先级翻转问题"><span>4. 自旋锁的优先级翻转问题</span></a></h2>
 <h3 id="_4-1-问题场景" tabindex="-1"><a class="header-anchor" href="#_4-1-问题场景"><span>4.1 问题场景</span></a></h3>
 <p>假设系统中有两个线程：低优先级线程（L）和高优先级线程（H）。</p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token comment">// 执行流程</span></span>
-<span class="line">T1<span class="token punctuation">:</span> <span class="token class-name">L</span> 获得自旋锁，进入临界区开始执行。</span>
-<span class="line">T2<span class="token punctuation">:</span> <span class="token class-name">H</span> 被唤醒（例如处理紧急的用户交互），尝试获取同一个自旋锁。</span>
-<span class="line">T3<span class="token punctuation">:</span> 因为锁正被 <span class="token class-name">L</span> 持有，<span class="token class-name">H</span> 获取失败，开始执行 <span class="token keyword">while</span> 循环（自旋忙等）。</span>
-<span class="line">T4<span class="token punctuation">:</span> 问题发生。</span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_4-2-单核-vs-多核-关键区别" tabindex="-1"><a class="header-anchor" href="#_4-2-单核-vs-多核-关键区别"><span>4.2 单核 vs 多核：关键区别</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#6A737D">// 执行流程</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T1</span><span style="color:#D73A49">:</span><span style="color:#24292E"> L 获得自旋锁，进入临界区开始执行</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T2</span><span style="color:#D73A49">:</span><span style="color:#24292E"> H 被唤醒（例如处理紧急的用户交互），尝试获取同一个自旋锁</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T3</span><span style="color:#D73A49">:</span><span style="color:#24292E"> 因为锁正被 L 持有，H 获取失败，开始执行 </span><span style="color:#D73A49">while</span><span style="color:#24292E"> 循环（自旋忙等）</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T4</span><span style="color:#D73A49">:</span><span style="color:#24292E"> 问题发生</span><span style="color:#D73A49">。</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_4-2-单核-vs-多核-关键区别" tabindex="-1"><a class="header-anchor" href="#_4-2-单核-vs-多核-关键区别"><span>4.2 单核 vs 多核：关键区别</span></a></h3>
 <p>自旋锁的行为在单核和多核环境下完全不同：</p>
 <table>
 <thead>
@@ -245,15 +244,14 @@
 </table>
 <h3 id="_5-2-三个线程的情况-经典的优先级翻转" tabindex="-1"><a class="header-anchor" href="#_5-2-三个线程的情况-经典的优先级翻转"><span>5.2 三个线程的情况：经典的优先级翻转</span></a></h3>
 <p>互斥锁只有在引入一个**中优先级线程（M）**时，才会发生优先级翻转：</p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token comment">// 经典的 3 线程优先级翻转流程</span></span>
-<span class="line">T1<span class="token punctuation">:</span> <span class="token class-name">L</span> 获得互斥锁，开始执行。</span>
-<span class="line">T2<span class="token punctuation">:</span> <span class="token class-name">H</span> 尝试获取锁失败，进入【睡眠状态】，让出 <span class="token constant">CPU</span> 给 <span class="token class-name">L</span>。</span>
-<span class="line">T3<span class="token punctuation">:</span> 此时 <span class="token class-name">M</span>（中优先级，不需要任何锁）变为 <span class="token class-name">Runnable</span> 状态。</span>
-<span class="line">T4<span class="token punctuation">:</span> 调度器比较当前 <span class="token class-name">Runnable</span> 的线程：<span class="token class-name">M</span> 的优先级 <span class="token operator">></span> <span class="token class-name">L</span> 的优先级。因此 <span class="token constant">CPU</span> 时间片全部分给了 <span class="token class-name">M</span>。</span>
-<span class="line">T5<span class="token punctuation">:</span> <span class="token class-name">L</span> 被 <span class="token class-name">M</span> 剥夺了执行权，由于没有 <span class="token constant">CPU</span>，<span class="token class-name">L</span> 无法继续执行去释放锁。</span>
-<span class="line">T6<span class="token punctuation">:</span> 处于睡眠中的 <span class="token class-name">H</span> 只能一直等下去，直到 <span class="token class-name">M</span> 执行完毕，<span class="token class-name">L</span> 才能重新获得 <span class="token constant">CPU</span> 去释放锁。</span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#6A737D">// 经典的 3 线程优先级翻转流程</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T1</span><span style="color:#D73A49">:</span><span style="color:#24292E"> L 获得互斥锁，开始执行</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T2</span><span style="color:#D73A49">:</span><span style="color:#24292E"> H 尝试获取锁失败，进入</span><span style="color:#D73A49">【</span><span style="color:#24292E">睡眠状态</span><span style="color:#D73A49">】</span><span style="color:#24292E">，让出 CPU 给 L</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T3</span><span style="color:#D73A49">:</span><span style="color:#24292E"> 此时 M（中优先级，不需要任何锁）变为 Runnable 状态</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T4</span><span style="color:#D73A49">:</span><span style="color:#24292E"> 调度器比较当前 Runnable 的线程：M 的优先级 </span><span style="color:#D73A49">></span><span style="color:#24292E"> L 的优先级</span><span style="color:#D73A49">。</span><span style="color:#24292E">因此 CPU 时间片全部分给了 M</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T5</span><span style="color:#D73A49">:</span><span style="color:#24292E"> L 被 M 剥夺了执行权，由于没有 CPU，L 无法继续执行去释放锁</span><span style="color:#D73A49">。</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">T6</span><span style="color:#D73A49">:</span><span style="color:#24292E"> 处于睡眠中的 H 只能一直等下去，直到 M 执行完毕，L 才能重新获得 CPU 去释放锁</span><span style="color:#D73A49">。</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><blockquote>
 <p><strong>结论：H 间接等待了 M。</strong></p>
 <p>最高优先级的 H，最终等待的时间变成了：<strong>L 的剩余执行时间 + M 的全部执行时间</strong>。这就是经典的优先级翻转问题。</p>
 <p>但请注意，它<strong>不会导致活锁卡死</strong>，因为只要 M 执行完，L 总能继续执行并释放锁。系统依然是向前推进的。</p>

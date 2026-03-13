@@ -80,7 +80,7 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 3. 如果找不到，通过 `superclass` 指针向上查找父类
 4. 重复步骤 2-3，直到找到方法或到达 nil
 
-```objectivec
+```objective-c
 // 示例：查找实例方法
 Person *person = [[Person alloc] init];
 [person sayHello];  // 查找路径：person(isa) → Person（类对象） → 查找 sayHello
@@ -99,7 +99,7 @@ Person *person = [[Person alloc] init];
 4. 重复步骤 2-3，直到找到方法或到达根元类
 5. 如果根元类中也没有，通过根元类的 `superclass` 回退到根类对象查找实例方法
 
-```objectivec
+```objective-c
 // 示例：查找类方法
 [Person sharedInstance];  
 // 查找路径：Person（类对象）(isa) → Person（元类） → 查找 sharedInstance
@@ -124,7 +124,7 @@ Person *person = [[Person alloc] init];
 
 ## 8. 验证代码
 
-```objectivec
+```objective-c
 // 验证 isa 指针的指向
 Person *person = [[Person alloc] init];
 
@@ -171,7 +171,7 @@ NSLog(@"根元类的父类: %@", rootMetaSuperclass);  // NSObject (class) - 指
 
 理解 isa 和 superclass 的关系，有助于理解方法交换的原理：
 
-```objectivec
+```objective-c
 // 交换实例方法：在类对象的方法列表中交换
 Method originalMethod = class_getInstanceMethod([Person class], @selector(sayHello));
 Method swizzledMethod = class_getInstanceMethod([Person class], @selector(swizzled_sayHello));
@@ -187,7 +187,7 @@ method_exchangeImplementations(originalClassMethod, swizzledClassMethod);
 
 理解类对象和元类对象的关系，有助于理解动态创建类的过程：
 
-```objectivec
+```objective-c
 // 动态创建类时，需要同时创建类对象和元类对象
 Class newClass = objc_allocateClassPair([NSObject class], "DynamicClass", 0);
 // objc_allocateClassPair 会同时创建类对象和元类对象，并正确设置它们的 isa 和 superclass 指针
@@ -198,7 +198,7 @@ objc_registerClassPair(newClass);
 
 KVO 的实现依赖于动态创建子类，并修改 isa 指针的指向：
 
-```objectivec
+```objective-c
 // KVO 会动态创建一个子类（如 NSKVONotifying_Person）
 // 然后将原对象的 isa 指针指向这个新创建的子类
 // 这样在调用方法时，会先查找子类的方法（重写了 setter），实现观察者通知

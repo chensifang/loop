@@ -1,5 +1,5 @@
 import comp from "/Users/chensifang/code/loop/src/vuepress-notes/.vuepress/.temp/pages/绘制/05-T4RenderServer阶段.html.vue"
-const data = JSON.parse("{\"path\":\"/%E7%BB%98%E5%88%B6/05-T4RenderServer%E9%98%B6%E6%AE%B5.html\",\"title\":\"T4：Render Server 处理阶段（准备渲染）\",\"lang\":\"zh-CN\",\"frontmatter\":{},\"git\":{},\"filePathRelative\":\"绘制/05-T4RenderServer阶段.md\"}")
+const data = JSON.parse("{\"path\":\"/%E7%BB%98%E5%88%B6/05-T4RenderServer%E9%98%B6%E6%AE%B5.html\",\"title\":\"T4：Render Server 处理阶段（准备渲染）\",\"lang\":\"zh-CN\",\"frontmatter\":{},\"git\":{\"updatedTime\":1773341310000,\"contributors\":[{\"name\":\"chensifang\",\"username\":\"chensifang\",\"email\":\"chen62615@gmail.com\",\"commits\":1,\"url\":\"https://github.com/chensifang\"}],\"changelog\":[{\"hash\":\"813bdd12e8f60f10ccec884ab22015fd24333a11\",\"time\":1773341310000,\"email\":\"chen62615@gmail.com\",\"author\":\"chensifang\",\"message\":\"迁移笔记到 Markdown 格式并集成 VuePress\"}]},\"filePathRelative\":\"绘制/05-T4RenderServer阶段.md\"}")
 export { comp, data }
 
 if (import.meta.webpackHot) {

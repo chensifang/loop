@@ -1,16 +1,16 @@
 <template><div><h1 id="ios-对象的内存布局" tabindex="-1"><a class="header-anchor" href="#ios-对象的内存布局"><span>iOS 对象的内存布局</span></a></h1>
 <h2 id="对象内存布局结构" tabindex="-1"><a class="header-anchor" href="#对象内存布局结构"><span>对象内存布局结构</span></a></h2>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token keyword">@interface</span> Animal <span class="token punctuation">:</span> NSObject <span class="token punctuation">{</span></span>
-<span class="line">    NSString <span class="token operator">*</span>_name<span class="token punctuation">;</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"><span class="token keyword">@end</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">@interface</span> Dog <span class="token punctuation">:</span> Animal <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">int</span> _age<span class="token punctuation">;</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"><span class="token keyword">@end</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="内存布局说明" tabindex="-1"><a class="header-anchor" href="#内存布局说明"><span>内存布局说明</span></a></h2>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#D73A49">@interface</span><span style="color:#6F42C1"> Animal</span><span style="color:#24292E"> : </span><span style="color:#6F42C1">NSObject</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">    NSString</span><span style="color:#D73A49"> *</span><span style="color:#24292E">_name;</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">@end</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">@interface</span><span style="color:#6F42C1"> Dog</span><span style="color:#24292E"> : </span><span style="color:#6F42C1">Animal</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    int</span><span style="color:#24292E"> _age;</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">@end</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><div id="memory-container"></div>
+<h2 id="内存布局说明" tabindex="-1"><a class="header-anchor" href="#内存布局说明"><span>内存布局说明</span></a></h2>
 <table>
 <thead>
 <tr>
@@ -76,13 +76,12 @@
 </tbody>
 </table>
 <h3 id="代码示例" tabindex="-1"><a class="header-anchor" href="#代码示例"><span>代码示例</span></a></h3>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line">NSObject <span class="token operator">*</span>obj <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>NSObject alloc<span class="token punctuation">]</span> init<span class="token punctuation">]</span><span class="token punctuation">;</span></span>
-<span class="line">size_t instanceSize <span class="token operator">=</span> <span class="token function">class_getInstanceSize</span><span class="token punctuation">(</span><span class="token punctuation">[</span>NSObject class<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">size_t mallocSize <span class="token operator">=</span> <span class="token function">malloc_size</span><span class="token punctuation">(</span><span class="token punctuation">(</span>__bridge <span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span><span class="token punctuation">)</span>obj<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token function">NSLog</span><span class="token punctuation">(</span><span class="token string">@"实例大小: %zu, 分配大小: %zu"</span><span class="token punctuation">,</span> instanceSize<span class="token punctuation">,</span> mallocSize<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token comment">// 输出：实例大小: 8, 分配大小: 16</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="重要说明" tabindex="-1"><a class="header-anchor" href="#重要说明"><span>重要说明</span></a></h3>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#005CC5">NSObject</span><span style="color:#D73A49"> *</span><span style="color:#24292E">obj </span><span style="color:#D73A49">=</span><span style="color:#24292E"> [[</span><span style="color:#005CC5">NSObject</span><span style="color:#005CC5"> alloc</span><span style="color:#24292E">] </span><span style="color:#005CC5">init</span><span style="color:#24292E">];</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">size_t</span><span style="color:#24292E"> instanceSize </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> class_getInstanceSize</span><span style="color:#24292E">([</span><span style="color:#005CC5">NSObject</span><span style="color:#005CC5"> class</span><span style="color:#24292E">]);</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">size_t</span><span style="color:#24292E"> mallocSize </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> malloc_size</span><span style="color:#24292E">((__bridge </span><span style="color:#D73A49">const</span><span style="color:#D73A49"> void</span><span style="color:#D73A49"> *</span><span style="color:#24292E">)</span><span style="color:#E36209">obj</span><span style="color:#24292E">);</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">NSLog</span><span style="color:#24292E">(</span><span style="color:#032F62">@"实例大小: </span><span style="color:#005CC5">%zu</span><span style="color:#032F62">, 分配大小: </span><span style="color:#005CC5">%zu</span><span style="color:#032F62">"</span><span style="color:#24292E">, instanceSize, mallocSize);</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 输出：实例大小: 8, 分配大小: 16</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="重要说明" tabindex="-1"><a class="header-anchor" href="#重要说明"><span>重要说明</span></a></h3>
 <table>
 <thead>
 <tr>
@@ -104,10 +103,14 @@
 </tr>
 </tbody>
 </table>
-<blockquote>
-<p><strong>常见误解</strong>：认为所有继承自 NSObject 的对象都是 16 字节。</p>
-<p><strong>正确理解</strong>：只有 NSObject 本身是 8 字节（实例）/ 16 字节（分配）。有实例变量的对象大小会根据实例变量变化。</p>
-</blockquote>
+<div class="hint-container info">
+<p class="hint-container-title">常见误解</p>
+<p>认为所有继承自 NSObject 的对象都是 16 字节。</p>
+</div>
+<div class="hint-container info">
+<p class="hint-container-title">正确理解</p>
+<p>只有 NSObject 本身是 8 字节（实例）/ 16 字节（分配）。有实例变量的对象大小会根据实例变量变化。</p>
+</div>
 </div></template>
 
 

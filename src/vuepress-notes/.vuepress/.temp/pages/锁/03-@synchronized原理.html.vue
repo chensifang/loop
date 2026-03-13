@@ -1,29 +1,27 @@
 <template><div><h1 id="synchronized-原理" tabindex="-1"><a class="header-anchor" href="#synchronized-原理"><span>@synchronized 原理</span></a></h1>
 <h2 id="_1-synchronized-是什么" tabindex="-1"><a class="header-anchor" href="#_1-synchronized-是什么"><span>1. @synchronized 是什么</span></a></h2>
 <p><code v-pre>synchronized</code> 是 Objective-C 提供的同步指令，用于在多线程环境中保护代码块，确保同一时刻只有一个线程能够执行被保护的代码。</p>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// 基本用法</span></span>
-<span class="line"><span class="token operator">@</span><span class="token function">synchronized</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token comment">// 临界区代码</span></span>
-<span class="line">    <span class="token comment">// 同一时刻只有一个线程能执行这里的代码</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="_2-synchronized-的实现原理" tabindex="-1"><a class="header-anchor" href="#_2-synchronized-的实现原理"><span>2. @synchronized 的实现原理</span></a></h2>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// 基本用法</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">@synchronized</span><span style="color:#24292E">(obj) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 临界区代码</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 同一时刻只有一个线程能执行这里的代码</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="_2-synchronized-的实现原理" tabindex="-1"><a class="header-anchor" href="#_2-synchronized-的实现原理"><span>2. @synchronized 的实现原理</span></a></h2>
 <p><code v-pre>synchronized(obj)</code> 在编译时会被转换为对运行时函数的调用：</p>
 <h3 id="_2-1-编译后的代码" tabindex="-1"><a class="header-anchor" href="#_2-1-编译后的代码"><span>2.1 编译后的代码</span></a></h3>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line"><span class="token comment">// 源代码</span></span>
-<span class="line"><span class="token operator">@</span><span class="token function">synchronized</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token comment">// 代码块</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 编译后等价于</span></span>
-<span class="line"><span class="token function">objc_sync_enter</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token keyword">@try</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token comment">// 代码块</span></span>
-<span class="line"><span class="token punctuation">}</span> <span class="token keyword">@finally</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token function">objc_sync_exit</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-2-核心函数" tabindex="-1"><a class="header-anchor" href="#_2-2-核心函数"><span>2.2 核心函数</span></a></h3>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#6A737D">// 源代码</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">@synchronized</span><span style="color:#24292E">(obj) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 代码块</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 编译后等价于</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">objc_sync_enter</span><span style="color:#24292E">(obj);</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">@try</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 代码块</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">} </span><span style="color:#D73A49">@finally</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">    objc_sync_exit</span><span style="color:#24292E">(obj);</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_2-2-核心函数" tabindex="-1"><a class="header-anchor" href="#_2-2-核心函数"><span>2.2 核心函数</span></a></h3>
 <table>
 <thead>
 <tr>
@@ -57,7 +55,7 @@
 <td>存储锁信息的结构，包含：<br>- 指向下一个 SyncData 的指针（链表结构）<br>- 同步对象的指针（disguised pointer）<br>- 线程计数<br>- 递归互斥锁（pthread_mutex_t，支持递归加锁）</td>
 </tr>
 <tr>
-<td><strong>StripedMap<SyncList></strong></td>
+<td><strong>StripedMap&lt;SyncList&gt;</strong></td>
 <td>分片哈希表，将对象指针映射到 SyncData 链表，减少不同对象之间的锁竞争</td>
 </tr>
 <tr>
@@ -97,15 +95,14 @@
 <h2 id="_3-如果-obj-在同步块内部被置为-nil" tabindex="-1"><a class="header-anchor" href="#_3-如果-obj-在同步块内部被置为-nil"><span>3. 如果 obj 在同步块内部被置为 nil</span></a></h2>
 <p>这是一个常见的陷阱问题。让我们分析一下会发生什么：</p>
 <h3 id="_3-1-代码示例" tabindex="-1"><a class="header-anchor" href="#_3-1-代码示例"><span>3.1 代码示例</span></a></h3>
-<div class="language-objectivec line-numbers-mode" data-highlighter="prismjs" data-ext="objectivec"><pre v-pre><code class="language-objectivec"><span class="line">NSObject <span class="token operator">*</span>obj <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>NSObject alloc<span class="token punctuation">]</span> init<span class="token punctuation">]</span><span class="token punctuation">;</span></span>
-<span class="line"></span>
-<span class="line"><span class="token operator">@</span><span class="token function">synchronized</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token comment">// 在同步块内部将 obj 置为 nil</span></span>
-<span class="line">    obj <span class="token operator">=</span> nil<span class="token punctuation">;</span></span>
-<span class="line">    <span class="token comment">// 继续执行代码...</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-2-会发生什么" tabindex="-1"><a class="header-anchor" href="#_3-2-会发生什么"><span>3.2 会发生什么？</span></a></h3>
+<div class="language-objective-c line-numbers-mode" data-highlighter="prismjs" data-ext="objective-c"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-objective-c"><code><span class="line"><span class="line"><span style="color:#005CC5">NSObject</span><span style="color:#D73A49"> *</span><span style="color:#24292E">obj </span><span style="color:#D73A49">=</span><span style="color:#24292E"> [[</span><span style="color:#005CC5">NSObject</span><span style="color:#005CC5"> alloc</span><span style="color:#24292E">] </span><span style="color:#005CC5">init</span><span style="color:#24292E">];</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">@synchronized</span><span style="color:#24292E">(obj) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 在同步块内部将 obj 置为 nil</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    obj </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> nil</span><span style="color:#24292E">;</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 继续执行代码...</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_3-2-会发生什么" tabindex="-1"><a class="header-anchor" href="#_3-2-会发生什么"><span>3.2 会发生什么？</span></a></h3>
 <table>
 <thead>
 <tr>

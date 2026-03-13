@@ -17,7 +17,7 @@ export default defineUserConfig({
   plugins: [
     // Shiki 代码高亮插件 - 提供更好的语法高亮（禁用行号，使用历史样式）
     shikiPlugin({
-      langs: ['swift', 'objective-c', 'cpp', 'javascript', 'typescript', 'python', 'java', 'bash', 'json'],
+      langs: ['swift', 'objective-c', 'objc', 'cpp', 'c', 'javascript', 'typescript', 'python', 'java', 'bash', 'json', 'markdown'],
       theme: 'github-light', // 使用 GitHub 风格的浅色主题
       lineNumbers: false, // 禁用行号，使用历史 HTML 的简洁样式
     }),

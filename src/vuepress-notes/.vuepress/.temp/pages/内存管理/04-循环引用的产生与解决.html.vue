@@ -35,94 +35,90 @@
 </table>
 <h3 id="_1-对象之间的相互引用" tabindex="-1"><a class="header-anchor" href="#_1-对象之间的相互引用"><span>1. 对象之间的相互引用</span></a></h3>
 <p><strong>典型场景：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">Person</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> apartment<span class="token punctuation">:</span> <span class="token class-name">Apartment</span><span class="token operator">?</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">class</span> <span class="token class-name">Apartment</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> tenant<span class="token punctuation">:</span> <span class="token class-name">Person</span><span class="token operator">?</span>  <span class="token comment">// 强引用 Person</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">var</span> person<span class="token punctuation">:</span> <span class="token class-name">Person</span><span class="token operator">?</span> <span class="token operator">=</span> <span class="token class-name">Person</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line"><span class="token keyword">var</span> apartment<span class="token punctuation">:</span> <span class="token class-name">Apartment</span><span class="token operator">?</span> <span class="token operator">=</span> <span class="token class-name">Apartment</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line"></span>
-<span class="line">person<span class="token operator">?</span><span class="token punctuation">.</span>apartment <span class="token operator">=</span> apartment  <span class="token comment">// Person 强引用 Apartment</span></span>
-<span class="line">apartment<span class="token operator">?</span><span class="token punctuation">.</span>tenant <span class="token operator">=</span> person     <span class="token comment">// Apartment 强引用 Person</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 此时引用计数：</span></span>
-<span class="line"><span class="token comment">// Person: 2 (person变量 + apartment.tenant)</span></span>
-<span class="line"><span class="token comment">// Apartment: 2 (apartment变量 + person.apartment)</span></span>
-<span class="line"></span>
-<span class="line">person <span class="token operator">=</span> <span class="token nil constant">nil</span>      <span class="token comment">// Person 引用计数 = 1（apartment.tenant 还在引用）</span></span>
-<span class="line">apartment <span class="token operator">=</span> <span class="token nil constant">nil</span>   <span class="token comment">// Apartment 引用计数 = 1（person.apartment 还在引用）</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 两个对象都无法释放！内存泄漏！</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Person</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> apartment: Apartment</span><span style="color:#D73A49">?</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Apartment</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> tenant: Person</span><span style="color:#D73A49">?</span><span style="color:#6A737D">  // 强引用 Person</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">var</span><span style="color:#24292E"> person: Person</span><span style="color:#D73A49">?</span><span style="color:#D73A49"> =</span><span style="color:#005CC5"> Person</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">var</span><span style="color:#24292E"> apartment: Apartment</span><span style="color:#D73A49">?</span><span style="color:#D73A49"> =</span><span style="color:#005CC5"> Apartment</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">person</span><span style="color:#D73A49">?</span><span style="color:#24292E">.apartment </span><span style="color:#D73A49">=</span><span style="color:#24292E"> apartment  </span><span style="color:#6A737D">// Person 强引用 Apartment</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">apartment</span><span style="color:#D73A49">?</span><span style="color:#24292E">.tenant </span><span style="color:#D73A49">=</span><span style="color:#24292E"> person     </span><span style="color:#6A737D">// Apartment 强引用 Person</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 此时引用计数：</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// Person: 2 (person变量 + apartment.tenant)</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// Apartment: 2 (apartment变量 + person.apartment)</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">person </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> nil</span><span style="color:#6A737D">      // Person 引用计数 = 1（apartment.tenant 还在引用）</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">apartment </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> nil</span><span style="color:#6A737D">   // Apartment 引用计数 = 1（person.apartment 还在引用）</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 两个对象都无法释放！内存泄漏！</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><blockquote>
 <p><strong>通俗理解：</strong> 就像两个人互相拉着对方的手，谁也不肯先松手，结果两个人都走不了。</p>
 </blockquote>
 <h3 id="_2-闭包捕获-self" tabindex="-1"><a class="header-anchor" href="#_2-闭包捕获-self"><span>2. 闭包捕获 self</span></a></h3>
 <p><strong>典型场景：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">ViewController</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> completionHandler<span class="token punctuation">:</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-></span> <span class="token class-name">Void</span><span class="token punctuation">)</span><span class="token operator">?</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">func</span> <span class="token function-definition function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        completionHandler <span class="token operator">=</span> <span class="token punctuation">{</span></span>
-<span class="line">            <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">doSomething</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment">// 闭包强引用 self</span></span>
-<span class="line">        <span class="token punctuation">}</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">func</span> <span class="token function-definition function">doSomething</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"doing something"</span></span><span class="token punctuation">)</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">var</span> vc<span class="token punctuation">:</span> <span class="token class-name">ViewController</span><span class="token operator">?</span> <span class="token operator">=</span> <span class="token class-name">ViewController</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">vc<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">setup</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 此时：</span></span>
-<span class="line"><span class="token comment">// ViewController 强引用 completionHandler（闭包）</span></span>
-<span class="line"><span class="token comment">// 闭包强引用 ViewController（self）</span></span>
-<span class="line"></span>
-<span class="line">vc <span class="token operator">=</span> <span class="token nil constant">nil</span>  <span class="token comment">// ViewController 引用计数 = 1（闭包还在引用），无法释放！</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>为什么会这样？</strong></p>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> ViewController</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> completionHandler: (() </span><span style="color:#D73A49">-></span><span style="color:#005CC5"> Void</span><span style="color:#24292E">)</span><span style="color:#D73A49">?</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    func</span><span style="color:#6F42C1"> setup</span><span style="color:#24292E">() {</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        completionHandler </span><span style="color:#D73A49">=</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">            self</span><span style="color:#24292E">.</span><span style="color:#005CC5">doSomething</span><span style="color:#24292E">()  </span><span style="color:#6A737D">// 闭包强引用 self</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    func</span><span style="color:#6F42C1"> doSomething</span><span style="color:#24292E">() {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        print</span><span style="color:#24292E">(</span><span style="color:#032F62">"doing something"</span><span style="color:#24292E">)</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">var</span><span style="color:#24292E"> vc: ViewController</span><span style="color:#D73A49">?</span><span style="color:#D73A49"> =</span><span style="color:#005CC5"> ViewController</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">vc</span><span style="color:#D73A49">?</span><span style="color:#24292E">.</span><span style="color:#005CC5">setup</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 此时：</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// ViewController 强引用 completionHandler（闭包）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 闭包强引用 ViewController（self）</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">vc </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> nil</span><span style="color:#6A737D">  // ViewController 引用计数 = 1（闭包还在引用），无法释放！</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><p><strong>为什么会这样？</strong></p>
 <p>闭包会捕获它内部使用的所有外部变量，如果闭包是对象的属性，而闭包内部又使用了 <code v-pre>self</code>，就会形成循环引用。</p>
 <h3 id="_3-代理模式-delegate-中的循环引用" tabindex="-1"><a class="header-anchor" href="#_3-代理模式-delegate-中的循环引用"><span>3. 代理模式（Delegate）中的循环引用</span></a></h3>
 <p><strong>典型场景：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">ViewController</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> tableView<span class="token punctuation">:</span> <span class="token class-name">UITableView</span><span class="token operator">?</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        tableView <span class="token operator">=</span> <span class="token class-name">UITableView</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">        tableView<span class="token operator">?</span><span class="token punctuation">.</span>delegate <span class="token operator">=</span> <span class="token keyword">self</span>  <span class="token comment">// 如果 delegate 是强引用，就会循环引用</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 如果 UITableView 的 delegate 属性是强引用：</span></span>
-<span class="line"><span class="token comment">// ViewController 强引用 tableView</span></span>
-<span class="line"><span class="token comment">// tableView 强引用 ViewController（delegate）</span></span>
-<span class="line"><span class="token comment">// 形成循环引用</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><blockquote>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> ViewController</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> tableView: UITableView</span><span style="color:#D73A49">?</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">() {</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        tableView </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UITableView</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        tableView</span><span style="color:#D73A49">?</span><span style="color:#24292E">.delegate </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> self</span><span style="color:#6A737D">  // 如果 delegate 是强引用，就会循环引用</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 如果 UITableView 的 delegate 属性是强引用：</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// ViewController 强引用 tableView</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// tableView 强引用 ViewController（delegate）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 形成循环引用</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><blockquote>
 <p><strong>注意：</strong> 实际上 <code v-pre>UITableView.delegate</code> 是 <code v-pre>weak</code> 引用，所以不会循环引用。但如果自己实现代理模式时用强引用，就会出问题。</p>
 </blockquote>
 <h3 id="_4-父子关系中的循环引用" tabindex="-1"><a class="header-anchor" href="#_4-父子关系中的循环引用"><span>4. 父子关系中的循环引用</span></a></h3>
 <p><strong>典型场景：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">Parent</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> children<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token class-name">Child</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">class</span> <span class="token class-name">Child</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> parent<span class="token punctuation">:</span> <span class="token class-name">Parent</span><span class="token operator">?</span>  <span class="token comment">// 如果这里是强引用</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">var</span> parent <span class="token operator">=</span> <span class="token class-name">Parent</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line"><span class="token keyword">var</span> child <span class="token operator">=</span> <span class="token class-name">Child</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">parent<span class="token punctuation">.</span>children<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>child<span class="token punctuation">)</span></span>
-<span class="line">child<span class="token punctuation">.</span>parent <span class="token operator">=</span> parent  <span class="token comment">// 如果 parent 是强引用，就会循环引用</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="如何解决循环引用" tabindex="-1"><a class="header-anchor" href="#如何解决循环引用"><span>如何解决循环引用</span></a></h2>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Parent</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> children: [</span><span style="color:#005CC5">Child</span><span style="color:#24292E">] </span><span style="color:#D73A49">=</span><span style="color:#24292E"> []</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Child</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> parent: Parent</span><span style="color:#D73A49">?</span><span style="color:#6A737D">  // 如果这里是强引用</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">var</span><span style="color:#24292E"> parent </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> Parent</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">var</span><span style="color:#24292E"> child </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> Child</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">parent.children.</span><span style="color:#005CC5">append</span><span style="color:#24292E">(child)</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">child.parent </span><span style="color:#D73A49">=</span><span style="color:#24292E"> parent  </span><span style="color:#6A737D">// 如果 parent 是强引用，就会循环引用</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="如何解决循环引用" tabindex="-1"><a class="header-anchor" href="#如何解决循环引用"><span>如何解决循环引用</span></a></h2>
 <table>
 <thead>
 <tr>

@@ -9,7 +9,9 @@ import * as clientConfig7 from '/Users/chensifang/code/loop/src/vuepress-notes/.
 import * as clientConfig8 from '/Users/chensifang/code/loop/src/vuepress-notes/.vuepress/.temp/markdown-tab/config.js'
 import * as clientConfig9 from '/Users/chensifang/code/loop/node_modules/@vuepress/plugin-theme-data/dist/client/config.js'
 import * as clientConfig10 from '/Users/chensifang/code/loop/node_modules/@vuepress/theme-default/dist/client/config.js'
-import * as clientConfig11 from '/Users/chensifang/code/loop/src/vuepress-notes/.vuepress/.temp/markdown-chart/config.js'
+import * as clientConfig11 from '/Users/chensifang/code/loop/src/vuepress-notes/.vuepress/.temp/shiki/config.js'
+import * as clientConfig12 from '/Users/chensifang/code/loop/src/vuepress-notes/.vuepress/.temp/markdown-chart/config.js'
+import * as clientConfig13 from '/Users/chensifang/code/loop/src/vuepress-notes/.vuepress/client.ts'
 
 export const clientConfigs = [
   clientConfig0,
@@ -24,4 +26,6 @@ export const clientConfigs = [
   clientConfig9,
   clientConfig10,
   clientConfig11,
+  clientConfig12,
+  clientConfig13,
 ].map((m) => m.default).filter(Boolean)

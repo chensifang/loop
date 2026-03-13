@@ -41,45 +41,43 @@
 </table>
 <h2 id="核心代码逻辑" tabindex="-1"><a class="header-anchor" href="#核心代码逻辑"><span>核心代码逻辑</span></a></h2>
 <h3 id="创建-weak-引用" tabindex="-1"><a class="header-anchor" href="#创建-weak-引用"><span>创建 weak 引用</span></a></h3>
-<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre v-pre><code class="language-cpp"><span class="line"><span class="token comment">// 伪代码：objc_storeWeak</span></span>
-<span class="line"><span class="token keyword">void</span> <span class="token function">objc_storeWeak</span><span class="token punctuation">(</span>id <span class="token operator">*</span>location<span class="token punctuation">,</span> id newObj<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token comment">// 1. 获取对象的 SideTable</span></span>
-<span class="line">    SideTable <span class="token operator">&amp;</span>table <span class="token operator">=</span> <span class="token function">SideTables</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span>newObj<span class="token punctuation">]</span><span class="token punctuation">;</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token comment">// 2. 在 weak_table_t 中查找或创建 weak_entry_t</span></span>
-<span class="line">    weak_entry_t <span class="token operator">*</span>entry <span class="token operator">=</span> <span class="token function">weak_entry_for_referent</span><span class="token punctuation">(</span>table<span class="token punctuation">.</span>weak_table<span class="token punctuation">,</span> newObj<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>entry<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token comment">// 创建新的 weak_entry_t</span></span>
-<span class="line">        entry <span class="token operator">=</span> <span class="token function">create_weak_entry</span><span class="token punctuation">(</span>newObj<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">        <span class="token function">weak_table_insert</span><span class="token punctuation">(</span>table<span class="token punctuation">.</span>weak_table<span class="token punctuation">,</span> entry<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token comment">// 3. 将 weak 变量地址添加到 weak_entry_t</span></span>
-<span class="line">    <span class="token function">append_referrer</span><span class="token punctuation">(</span>entry<span class="token punctuation">,</span> location<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// location 是 weak 变量的地址</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="对象释放时清空-weak-引用" tabindex="-1"><a class="header-anchor" href="#对象释放时清空-weak-引用"><span>对象释放时清空 weak 引用</span></a></h3>
-<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre v-pre><code class="language-cpp"><span class="line"><span class="token comment">// 伪代码：对象释放时</span></span>
-<span class="line"><span class="token keyword">void</span> <span class="token function">objc_destructInstance</span><span class="token punctuation">(</span>id obj<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token comment">// 1. 获取对象的 SideTable</span></span>
-<span class="line">    SideTable <span class="token operator">&amp;</span>table <span class="token operator">=</span> <span class="token function">SideTables</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span>obj<span class="token punctuation">]</span><span class="token punctuation">;</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token comment">// 2. 在 weak_table_t 中查找 weak_entry_t</span></span>
-<span class="line">    weak_entry_t <span class="token operator">*</span>entry <span class="token operator">=</span> <span class="token function">weak_entry_for_referent</span><span class="token punctuation">(</span>table<span class="token punctuation">.</span>weak_table<span class="token punctuation">,</span> obj<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">    <span class="token keyword">if</span> <span class="token punctuation">(</span>entry<span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token comment">// 3. 遍历所有 weak 变量地址，将它们都置为 nil</span></span>
-<span class="line">        <span class="token keyword">for</span> <span class="token punctuation">(</span>weak_referrer_t <span class="token operator">*</span>referrer <span class="token operator">=</span> entry<span class="token operator">-></span>referrers<span class="token punctuation">;</span> </span>
-<span class="line">             referrer <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span> </span>
-<span class="line">             referrer<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">            <span class="token operator">*</span>referrer <span class="token operator">=</span> nil<span class="token punctuation">;</span>  <span class="token comment">// 将 weak 变量置为 nil</span></span>
-<span class="line">        <span class="token punctuation">}</span></span>
-<span class="line">        </span>
-<span class="line">        <span class="token comment">// 4. 从 weak_table_t 中移除该 weak_entry_t</span></span>
-<span class="line">        <span class="token function">remove_referrer</span><span class="token punctuation">(</span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="关键理解" tabindex="-1"><a class="header-anchor" href="#关键理解"><span>关键理解</span></a></h2>
+<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-cpp"><code><span class="line"><span class="line"><span style="color:#6A737D">// 伪代码：objc_storeWeak</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">void</span><span style="color:#6F42C1"> objc_storeWeak</span><span style="color:#24292E">(</span><span style="color:#6F42C1">id</span><span style="color:#D73A49"> *</span><span style="color:#E36209">location</span><span style="color:#24292E">, </span><span style="color:#6F42C1">id</span><span style="color:#E36209"> newObj</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 1. 获取对象的 SideTable</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    SideTable </span><span style="color:#D73A49">&#x26;</span><span style="color:#24292E">table </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> SideTables</span><span style="color:#24292E">()[newObj];</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 2. 在 weak_table_t 中查找或创建 weak_entry_t</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">    weak_entry_t</span><span style="color:#D73A49"> *</span><span style="color:#24292E">entry </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> weak_entry_for_referent</span><span style="color:#24292E">(table.weak_table, newObj);</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    if</span><span style="color:#24292E"> (</span><span style="color:#D73A49">!</span><span style="color:#24292E">entry) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 创建新的 weak_entry_t</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        entry </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> create_weak_entry</span><span style="color:#24292E">(newObj);</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">        weak_table_insert</span><span style="color:#24292E">(table.weak_table, entry);</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 3. 将 weak 变量地址添加到 weak_entry_t</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">    append_referrer</span><span style="color:#24292E">(entry, location);</span><span style="color:#6A737D">  // location 是 weak 变量的地址</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="对象释放时清空-weak-引用" tabindex="-1"><a class="header-anchor" href="#对象释放时清空-weak-引用"><span>对象释放时清空 weak 引用</span></a></h3>
+<div class="language-cpp line-numbers-mode" data-highlighter="prismjs" data-ext="cpp"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-cpp"><code><span class="line"><span class="line"><span style="color:#6A737D">// 伪代码：对象释放时</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">void</span><span style="color:#6F42C1"> objc_destructInstance</span><span style="color:#24292E">(</span><span style="color:#6F42C1">id</span><span style="color:#E36209"> obj</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 1. 获取对象的 SideTable</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    SideTable </span><span style="color:#D73A49">&#x26;</span><span style="color:#24292E">table </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> SideTables</span><span style="color:#24292E">()[obj];</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // 2. 在 weak_table_t 中查找 weak_entry_t</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">    weak_entry_t</span><span style="color:#D73A49"> *</span><span style="color:#24292E">entry </span><span style="color:#D73A49">=</span><span style="color:#6F42C1"> weak_entry_for_referent</span><span style="color:#24292E">(table.weak_table, obj);</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    if</span><span style="color:#24292E"> (entry) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 3. 遍历所有 weak 变量地址，将它们都置为 nil</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">        for</span><span style="color:#24292E"> (</span><span style="color:#005CC5">weak_referrer_t</span><span style="color:#D73A49"> *</span><span style="color:#24292E">referrer </span><span style="color:#D73A49">=</span><span style="color:#24292E"> entry->referrers; </span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">             referrer </span><span style="color:#D73A49">!=</span><span style="color:#005CC5"> NULL</span><span style="color:#24292E">; </span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">             referrer</span><span style="color:#D73A49">++</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">            *</span><span style="color:#24292E">referrer </span><span style="color:#D73A49">=</span><span style="color:#24292E"> nil;</span><span style="color:#6A737D">  // 将 weak 变量置为 nil</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 4. 从 weak_table_t 中移除该 weak_entry_t</span></span></span>
+<span class="line"><span class="line"><span style="color:#6F42C1">        remove_referrer</span><span style="color:#24292E">(entry);</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="关键理解" tabindex="-1"><a class="header-anchor" href="#关键理解"><span>关键理解</span></a></h2>
 <ul>
 <li><strong>weak 变量地址</strong>：weak 变量本身也有内存地址，这个地址被存储在 weak_entry_t 中</li>
 <li><strong>自动置 nil</strong>：对象释放时，通过 weak_entry_t 找到所有 weak 变量的地址，将这些地址存储的值改为 nil</li>

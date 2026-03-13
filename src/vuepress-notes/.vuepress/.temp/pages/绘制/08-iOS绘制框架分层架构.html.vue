@@ -254,27 +254,24 @@
 <p><strong>只有一种情况需要</strong>：当你覆写了 <code v-pre>drawRect:</code> 方法时。</p>
 <h2 id="实际开发示例" tabindex="-1"><a class="header-anchor" href="#实际开发示例"><span>实际开发示例</span></a></h2>
 <h3 id="示例-1-普通-uiview-不需要-core-graphics" tabindex="-1"><a class="header-anchor" href="#示例-1-普通-uiview-不需要-core-graphics"><span>示例 1：普通 UIView（不需要 Core Graphics）</span></a></h3>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">let</span> view <span class="token operator">=</span> <span class="token class-name">UIView</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">view<span class="token punctuation">.</span>backgroundColor <span class="token operator">=</span> <span class="token class-name">UIColor</span><span class="token punctuation">.</span>blue</span>
-<span class="line"><span class="token comment">// ✅ 不走 drawRect，不需要 Core Graphics</span></span>
-<span class="line"><span class="token comment">// ✅ 需要 Core Animation（CALayer）</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="示例-2-uiimageview-不需要-core-graphics" tabindex="-1"><a class="header-anchor" href="#示例-2-uiimageview-不需要-core-graphics"><span>示例 2：UIImageView（不需要 Core Graphics）</span></a></h3>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">let</span> imageView <span class="token operator">=</span> <span class="token class-name">UIImageView</span><span class="token punctuation">(</span>image<span class="token punctuation">:</span> <span class="token class-name">UIImage</span><span class="token punctuation">(</span>named<span class="token punctuation">:</span> <span class="token string-literal"><span class="token string">"icon"</span></span><span class="token punctuation">)</span><span class="token punctuation">)</span></span>
-<span class="line"><span class="token comment">// ✅ 不走 drawRect，不需要 Core Graphics</span></span>
-<span class="line"><span class="token comment">// ✅ 需要 Core Animation（CALayer）</span></span>
-<span class="line"><span class="token comment">// 图片解码后直接存入 layer.contents</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="示例-3-自定义绘制-需要-core-graphics" tabindex="-1"><a class="header-anchor" href="#示例-3-自定义绘制-需要-core-graphics"><span>示例 3：自定义绘制（需要 Core Graphics）</span></a></h3>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">CustomView</span><span class="token punctuation">:</span> <span class="token class-name">UIView</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">override</span> <span class="token keyword">func</span> <span class="token function-definition function">draw</span><span class="token punctuation">(</span><span class="token omit keyword">_</span> rect<span class="token punctuation">:</span> <span class="token class-name">CGRect</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token comment">// ❌ 只有这种情况才需要 Core Graphics</span></span>
-<span class="line">        <span class="token keyword">let</span> context <span class="token operator">=</span> <span class="token class-name">UIGraphicsGetCurrentContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">        <span class="token comment">// 绘制...</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="总结" tabindex="-1"><a class="header-anchor" href="#总结"><span>总结</span></a></h2>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> view </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UIView</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">view.backgroundColor </span><span style="color:#D73A49">=</span><span style="color:#24292E"> UIColor.blue</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// ✅ 不走 drawRect，不需要 Core Graphics</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// ✅ 需要 Core Animation（CALayer）</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="示例-2-uiimageview-不需要-core-graphics" tabindex="-1"><a class="header-anchor" href="#示例-2-uiimageview-不需要-core-graphics"><span>示例 2：UIImageView（不需要 Core Graphics）</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> imageView </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UIImageView</span><span style="color:#24292E">(</span><span style="color:#005CC5">image</span><span style="color:#24292E">: </span><span style="color:#005CC5">UIImage</span><span style="color:#24292E">(</span><span style="color:#005CC5">named</span><span style="color:#24292E">: </span><span style="color:#032F62">"icon"</span><span style="color:#24292E">))</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// ✅ 不走 drawRect，不需要 Core Graphics</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// ✅ 需要 Core Animation（CALayer）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 图片解码后直接存入 layer.contents</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="示例-3-自定义绘制-需要-core-graphics" tabindex="-1"><a class="header-anchor" href="#示例-3-自定义绘制-需要-core-graphics"><span>示例 3：自定义绘制（需要 Core Graphics）</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> CustomView</span><span style="color:#24292E">: </span><span style="color:#6F42C1">UIView </span><span style="color:#24292E">{</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    override</span><span style="color:#D73A49"> func</span><span style="color:#6F42C1"> draw</span><span style="color:#24292E">(</span><span style="color:#6F42C1">_</span><span style="color:#24292E"> rect: CGRect) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // ❌ 只有这种情况才需要 Core Graphics</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">        let</span><span style="color:#24292E"> context </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> UIGraphicsGetCurrentContext</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 绘制...</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="总结" tabindex="-1"><a class="header-anchor" href="#总结"><span>总结</span></a></h2>
 <table>
 <thead>
 <tr>

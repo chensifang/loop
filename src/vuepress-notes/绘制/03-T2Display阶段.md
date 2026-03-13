@@ -117,7 +117,7 @@ graph TD
 
 如果 delegate 实现了 `displayLayer:` 方法，可以自定义异步绘制逻辑：
 
-```objectivec
+```objective-c
 // 自定义 CALayer，实现异步绘制
 @interface AsyncLayer : CALayer
 @property (atomic, assign) BOOL isDrawing;  // 绘制状态标记

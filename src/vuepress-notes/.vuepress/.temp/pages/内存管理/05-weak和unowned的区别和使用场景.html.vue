@@ -124,44 +124,42 @@
 </tbody>
 </table>
 <p><strong>正确示例：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">Country</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> capitalCity<span class="token punctuation">:</span> <span class="token class-name">City</span><span class="token operator">!</span></span>
-<span class="line">    <span class="token keyword">var</span> name<span class="token punctuation">:</span> <span class="token class-name">String</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> capitalName<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name</span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>capitalCity <span class="token operator">=</span> <span class="token class-name">City</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> capitalName<span class="token punctuation">,</span> country<span class="token punctuation">:</span> <span class="token keyword">self</span><span class="token punctuation">)</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">class</span> <span class="token class-name">City</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">unowned</span> <span class="token keyword">let</span> country<span class="token punctuation">:</span> <span class="token class-name">Country</span>  <span class="token comment">// City 用 unowned 引用 Country</span></span>
-<span class="line">    <span class="token keyword">var</span> name<span class="token punctuation">:</span> <span class="token class-name">String</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> country<span class="token punctuation">:</span> <span class="token class-name">Country</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name</span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>country <span class="token operator">=</span> country</span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// 为什么这里可以用 unowned？</span></span>
-<span class="line"><span class="token comment">// 因为 Country 的生命周期一定比 City 长（国家比城市先存在）</span></span>
-<span class="line"><span class="token comment">// Country 释放时，City 一定已经释放了</span></span>
-<span class="line"><span class="token comment">// 所以 City 用 unowned 引用 Country 是安全的</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>错误示例：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">A</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">unowned</span> <span class="token keyword">var</span> b<span class="token punctuation">:</span> <span class="token class-name">B</span><span class="token operator">?</span>  <span class="token comment">// a.b 是 unowned</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">var</span> a <span class="token operator">=</span> <span class="token class-name">A</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line"><span class="token keyword">var</span> b <span class="token operator">=</span> <span class="token class-name">B</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line">a<span class="token punctuation">.</span>b <span class="token operator">=</span> b</span>
-<span class="line">b <span class="token operator">=</span> <span class="token nil constant">nil</span>  <span class="token comment">// b 释放了</span></span>
-<span class="line"></span>
-<span class="line"><span class="token function">print</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>b<span class="token punctuation">)</span>  <span class="token comment">// 💥 崩溃！因为 b 已经释放，a.b 指向无效内存</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="为什么实际开发中-weak-更常用" tabindex="-1"><a class="header-anchor" href="#为什么实际开发中-weak-更常用"><span>为什么实际开发中 weak 更常用？</span></a></h2>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Country</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> capitalCity: City</span><span style="color:#D73A49">!</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> name: </span><span style="color:#005CC5">String</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">(</span><span style="color:#6F42C1">name</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">, </span><span style="color:#6F42C1">capitalName</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> name</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.capitalCity </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> City</span><span style="color:#24292E">(</span><span style="color:#005CC5">name</span><span style="color:#24292E">: capitalName, </span><span style="color:#005CC5">country</span><span style="color:#24292E">: </span><span style="color:#005CC5">self</span><span style="color:#24292E">)</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> City</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    unowned</span><span style="color:#D73A49"> let</span><span style="color:#24292E"> country: Country  </span><span style="color:#6A737D">// City 用 unowned 引用 Country</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> name: </span><span style="color:#005CC5">String</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">(</span><span style="color:#6F42C1">name</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">, </span><span style="color:#6F42C1">country</span><span style="color:#24292E">: Country) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> name</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.country </span><span style="color:#D73A49">=</span><span style="color:#24292E"> country</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 为什么这里可以用 unowned？</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 因为 Country 的生命周期一定比 City 长（国家比城市先存在）</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// Country 释放时，City 一定已经释放了</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// 所以 City 用 unowned 引用 Country 是安全的</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><p><strong>错误示例：</strong></p>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> A</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    unowned</span><span style="color:#D73A49"> var</span><span style="color:#24292E"> b: B</span><span style="color:#D73A49">?</span><span style="color:#6A737D">  // a.b 是 unowned</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">var</span><span style="color:#24292E"> a </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> A</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">var</span><span style="color:#24292E"> b </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> B</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">a.b </span><span style="color:#D73A49">=</span><span style="color:#24292E"> b</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">b </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> nil</span><span style="color:#6A737D">  // b 释放了</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">print</span><span style="color:#24292E">(a.b)  </span><span style="color:#6A737D">// 💥 崩溃！因为 b 已经释放，a.b 指向无效内存</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="为什么实际开发中-weak-更常用" tabindex="-1"><a class="header-anchor" href="#为什么实际开发中-weak-更常用"><span>为什么实际开发中 weak 更常用？</span></a></h2>
 <table>
 <thead>
 <tr>
@@ -192,61 +190,59 @@
 <p>unowned 的优势主要体现在<strong>相互依赖初始化</strong>的场景中，因为可以使用非可选类型，带来代码简洁性和使用便利性。</p>
 <h3 id="代码对比" tabindex="-1"><a class="header-anchor" href="#代码对比"><span>代码对比</span></a></h3>
 <p><strong>用 weak（可选类型）：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">Country</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> capitalCity<span class="token punctuation">:</span> <span class="token class-name">City</span><span class="token operator">!</span></span>
-<span class="line">    <span class="token keyword">var</span> name<span class="token punctuation">:</span> <span class="token class-name">String</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> capitalName<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name</span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>capitalCity <span class="token operator">=</span> <span class="token class-name">City</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> capitalName<span class="token punctuation">,</span> country<span class="token punctuation">:</span> <span class="token keyword">self</span><span class="token punctuation">)</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">class</span> <span class="token class-name">City</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">weak</span> <span class="token keyword">var</span> country<span class="token punctuation">:</span> <span class="token class-name">Country</span><span class="token operator">?</span>  <span class="token comment">// 必须是可选类型</span></span>
-<span class="line">    <span class="token keyword">var</span> name<span class="token punctuation">:</span> <span class="token class-name">String</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> country<span class="token punctuation">:</span> <span class="token class-name">Country</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name</span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>country <span class="token operator">=</span> country</span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">func</span> <span class="token function-definition function">getCountryName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-></span> <span class="token class-name">String</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token comment">// 每次访问都需要解包</span></span>
-<span class="line">        <span class="token keyword">guard</span> <span class="token keyword">let</span> country <span class="token operator">=</span> country <span class="token keyword">else</span> <span class="token punctuation">{</span></span>
-<span class="line">            <span class="token keyword">return</span> <span class="token string-literal"><span class="token string">"Unknown"</span></span></span>
-<span class="line">        <span class="token punctuation">}</span></span>
-<span class="line">        <span class="token keyword">return</span> country<span class="token punctuation">.</span>name</span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><p><strong>用 unowned（非可选类型）：</strong></p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">Country</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> capitalCity<span class="token punctuation">:</span> <span class="token class-name">City</span><span class="token operator">!</span></span>
-<span class="line">    <span class="token keyword">var</span> name<span class="token punctuation">:</span> <span class="token class-name">String</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> capitalName<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name</span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>capitalCity <span class="token operator">=</span> <span class="token class-name">City</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> capitalName<span class="token punctuation">,</span> country<span class="token punctuation">:</span> <span class="token keyword">self</span><span class="token punctuation">)</span></span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">class</span> <span class="token class-name">City</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">unowned</span> <span class="token keyword">let</span> country<span class="token punctuation">:</span> <span class="token class-name">Country</span>  <span class="token comment">// 非可选类型，更简洁</span></span>
-<span class="line">    <span class="token keyword">var</span> name<span class="token punctuation">:</span> <span class="token class-name">String</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span> country<span class="token punctuation">:</span> <span class="token class-name">Country</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name</span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>country <span class="token operator">=</span> country</span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token keyword">func</span> <span class="token function-definition function">getCountryName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-></span> <span class="token class-name">String</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token comment">// 直接访问，不需要解包</span></span>
-<span class="line">        <span class="token keyword">return</span> country<span class="token punctuation">.</span>name</span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="unowned-的优势" tabindex="-1"><a class="header-anchor" href="#unowned-的优势"><span>unowned 的优势</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Country</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> capitalCity: City</span><span style="color:#D73A49">!</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> name: </span><span style="color:#005CC5">String</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">(</span><span style="color:#6F42C1">name</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">, </span><span style="color:#6F42C1">capitalName</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> name</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.capitalCity </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> City</span><span style="color:#24292E">(</span><span style="color:#005CC5">name</span><span style="color:#24292E">: capitalName, </span><span style="color:#005CC5">country</span><span style="color:#24292E">: </span><span style="color:#005CC5">self</span><span style="color:#24292E">)</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> City</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    weak</span><span style="color:#D73A49"> var</span><span style="color:#24292E"> country: Country</span><span style="color:#D73A49">?</span><span style="color:#6A737D">  // 必须是可选类型</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> name: </span><span style="color:#005CC5">String</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">(</span><span style="color:#6F42C1">name</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">, </span><span style="color:#6F42C1">country</span><span style="color:#24292E">: Country) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> name</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.country </span><span style="color:#D73A49">=</span><span style="color:#24292E"> country</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    func</span><span style="color:#6F42C1"> getCountryName</span><span style="color:#24292E">() </span><span style="color:#D73A49">-></span><span style="color:#005CC5"> String</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 每次访问都需要解包</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">        guard</span><span style="color:#D73A49"> let</span><span style="color:#24292E"> country </span><span style="color:#D73A49">=</span><span style="color:#24292E"> country </span><span style="color:#D73A49">else</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">            return</span><span style="color:#032F62"> "Unknown"</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">        }</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">        return</span><span style="color:#24292E"> country.name</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><p><strong>用 unowned（非可选类型）：</strong></p>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Country</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> capitalCity: City</span><span style="color:#D73A49">!</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> name: </span><span style="color:#005CC5">String</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">(</span><span style="color:#6F42C1">name</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">, </span><span style="color:#6F42C1">capitalName</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> name</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.capitalCity </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> City</span><span style="color:#24292E">(</span><span style="color:#005CC5">name</span><span style="color:#24292E">: capitalName, </span><span style="color:#005CC5">country</span><span style="color:#24292E">: </span><span style="color:#005CC5">self</span><span style="color:#24292E">)</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> City</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    unowned</span><span style="color:#D73A49"> let</span><span style="color:#24292E"> country: Country  </span><span style="color:#6A737D">// 非可选类型，更简洁</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> name: </span><span style="color:#005CC5">String</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">(</span><span style="color:#6F42C1">name</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">, </span><span style="color:#6F42C1">country</span><span style="color:#24292E">: Country) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> name</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.country </span><span style="color:#D73A49">=</span><span style="color:#24292E"> country</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    func</span><span style="color:#6F42C1"> getCountryName</span><span style="color:#24292E">() </span><span style="color:#D73A49">-></span><span style="color:#005CC5"> String</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">        // 直接访问，不需要解包</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">        return</span><span style="color:#24292E"> country.name</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="unowned-的优势" tabindex="-1"><a class="header-anchor" href="#unowned-的优势"><span>unowned 的优势</span></a></h3>
 <table>
 <thead>
 <tr>

@@ -4,7 +4,7 @@
 
 `synchronized` 是 Objective-C 提供的同步指令，用于在多线程环境中保护代码块，确保同一时刻只有一个线程能够执行被保护的代码。
 
-```objectivec
+```objective-c
 // 基本用法
 @synchronized(obj) {
     // 临界区代码
@@ -18,7 +18,7 @@
 
 ### 2.1 编译后的代码
 
-```objectivec
+```objective-c
 // 源代码
 @synchronized(obj) {
     // 代码块
@@ -108,7 +108,7 @@ sequenceDiagram
 
 ### 3.1 代码示例
 
-```objectivec
+```objective-c
 NSObject *obj = [[NSObject alloc] init];
 
 @synchronized(obj) {

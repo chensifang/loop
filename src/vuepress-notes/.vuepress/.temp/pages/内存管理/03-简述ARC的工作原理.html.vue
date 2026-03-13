@@ -4,17 +4,16 @@
 <h2 id="工作原理" tabindex="-1"><a class="header-anchor" href="#工作原理"><span>工作原理</span></a></h2>
 <h3 id="_1-编译时自动插入代码" tabindex="-1"><a class="header-anchor" href="#_1-编译时自动插入代码"><span>1. 编译时自动插入代码</span></a></h3>
 <p>ARC 在编译时分析代码，在需要的地方自动插入 <code v-pre>retain</code> 和 <code v-pre>release</code>：</p>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token comment">// 你写的代码</span></span>
-<span class="line"><span class="token keyword">let</span> person <span class="token operator">=</span> <span class="token class-name">Person</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line"><span class="token keyword">let</span> name <span class="token operator">=</span> person<span class="token punctuation">.</span>name</span>
-<span class="line"></span>
-<span class="line"><span class="token comment">// ARC 编译后实际生成的代码（简化示意）</span></span>
-<span class="line"><span class="token keyword">let</span> person <span class="token operator">=</span> <span class="token class-name">Person</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span>
-<span class="line"><span class="token function">objc_retain</span><span class="token punctuation">(</span>person<span class="token punctuation">)</span>  <span class="token comment">// ARC 自动插入</span></span>
-<span class="line"><span class="token keyword">let</span> name <span class="token operator">=</span> person<span class="token punctuation">.</span>name</span>
-<span class="line"><span class="token function">objc_release</span><span class="token punctuation">(</span>person<span class="token punctuation">)</span>  <span class="token comment">// ARC 自动插入（当 person 不再使用时）</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-引用计数机制" tabindex="-1"><a class="header-anchor" href="#_2-引用计数机制"><span>2. 引用计数机制</span></a></h3>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#6A737D">// 你写的代码</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> person </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> Person</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> person.name</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">// ARC 编译后实际生成的代码（简化示意）</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> person </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> Person</span><span style="color:#24292E">()</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">objc_retain</span><span style="color:#24292E">(person)  </span><span style="color:#6A737D">// ARC 自动插入</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">let</span><span style="color:#24292E"> name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> person.name</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">objc_release</span><span style="color:#24292E">(person)  </span><span style="color:#6A737D">// ARC 自动插入（当 person 不再使用时）</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h3 id="_2-引用计数机制" tabindex="-1"><a class="header-anchor" href="#_2-引用计数机制"><span>2. 引用计数机制</span></a></h3>
 <table>
 <thead>
 <tr>
@@ -87,23 +86,23 @@
 </ul>
 <p>ARC 会自动完成这些登记和注销，你不需要手动写 <code v-pre>retain</code>/<code v-pre>release</code>。</p>
 <h3 id="引用计数流程图" tabindex="-1"><a class="header-anchor" href="#引用计数流程图"><span>引用计数流程图</span></a></h3>
-<Mermaid code="eJxLL0osyFAIceFSAALH6Kcds5/u3vV0/c4XGxfGKujq2ik4RT/dM/X5lBUv1i18NnWDgq2CYSxYrRNY1rn62ZzOZ9M2PJ/V8nTPLohK+1qwAmeQgppnM9bXKLigmqENNQKi4umEZTUKrtVothhATXGBWANmuyJMdIt+2d71bMo+qEuRpMHGuUdDJJ7vXv5899qna2c8nbMilgsAdwZqug=="></Mermaid><h2 id="实际例子" tabindex="-1"><a class="header-anchor" href="#实际例子"><span>实际例子</span></a></h2>
-<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre v-pre><code class="language-swift"><span class="line"><span class="token keyword">class</span> <span class="token class-name">Person</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">var</span> name<span class="token punctuation">:</span> <span class="token class-name">String</span></span>
-<span class="line">    <span class="token keyword">init</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">        <span class="token keyword">self</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name</span>
-<span class="line">    <span class="token punctuation">}</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span>
-<span class="line"><span class="token keyword">func</span> <span class="token function-definition function">example</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span></span>
-<span class="line">    <span class="token keyword">let</span> person1 <span class="token operator">=</span> <span class="token class-name">Person</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> <span class="token string-literal"><span class="token string">"张三"</span></span><span class="token punctuation">)</span>  <span class="token comment">// 引用计数 = 1</span></span>
-<span class="line">    <span class="token keyword">let</span> person2 <span class="token operator">=</span> person1              <span class="token comment">// 引用计数 = 2（person2 也引用了）</span></span>
-<span class="line">    </span>
-<span class="line">    <span class="token comment">// person1 离开作用域，引用计数 = 1</span></span>
-<span class="line">    <span class="token comment">// person2 离开作用域，引用计数 = 0，对象被释放</span></span>
-<span class="line"><span class="token punctuation">}</span></span>
-<span class="line"></span></code></pre>
-<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="关键点" tabindex="-1"><a class="header-anchor" href="#关键点"><span>关键点</span></a></h2>
+<img src="https://www.plantuml.com/plantuml/svg/SoWkIImgAStDuNA0iy0CBgkd7REVxjxrTFtE5niNMWEvUwO-dxBYnRg5pwPkKB1LCBJcAi_8p4bLq7Wsf_FPj0tFPxKytRCBeiXUKo6p62WnOxqcbu82gavjeCRKl1IetgSJbcboPQO16QYc6m2DACb8pKCOyhAzwzcKVJ3NA2WKb-GNSANc5CCC0Ta3bdo-U_dptMkVhftnTCuAi5MPQLmEG0hiHmWD0000" alt="PlantUML Diagram">
+<h2 id="实际例子" tabindex="-1"><a class="header-anchor" href="#实际例子"><span>实际例子</span></a></h2>
+<div class="language-swift line-numbers-mode" data-highlighter="prismjs" data-ext="swift"><pre  class="shiki github-light vp-code" style="background-color:#fff;color:#24292e" v-pre=" language-swift"><code><span class="line"><span class="line"><span style="color:#D73A49">class</span><span style="color:#6F42C1"> Person</span><span style="color:#24292E"> {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    var</span><span style="color:#24292E"> name: </span><span style="color:#005CC5">String</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    init</span><span style="color:#24292E">(</span><span style="color:#6F42C1">name</span><span style="color:#24292E">: </span><span style="color:#005CC5">String</span><span style="color:#24292E">) {</span></span></span>
+<span class="line"><span class="line"><span style="color:#005CC5">        self</span><span style="color:#24292E">.name </span><span style="color:#D73A49">=</span><span style="color:#24292E"> name</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    }</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span>
+<span class="line"><span class="line"></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">func</span><span style="color:#6F42C1"> example</span><span style="color:#24292E">() {</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    let</span><span style="color:#24292E"> person1 </span><span style="color:#D73A49">=</span><span style="color:#005CC5"> Person</span><span style="color:#24292E">(</span><span style="color:#005CC5">name</span><span style="color:#24292E">: </span><span style="color:#032F62">"张三"</span><span style="color:#24292E">)  </span><span style="color:#6A737D">// 引用计数 = 1</span></span></span>
+<span class="line"><span class="line"><span style="color:#D73A49">    let</span><span style="color:#24292E"> person2 </span><span style="color:#D73A49">=</span><span style="color:#24292E"> person1              </span><span style="color:#6A737D">// 引用计数 = 2（person2 也引用了）</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">    </span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // person1 离开作用域，引用计数 = 1</span></span></span>
+<span class="line"><span class="line"><span style="color:#6A737D">    // person2 离开作用域，引用计数 = 0，对象被释放</span></span></span>
+<span class="line"><span class="line"><span style="color:#24292E">}</span></span></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"></div></div><h2 id="关键点" tabindex="-1"><a class="header-anchor" href="#关键点"><span>关键点</span></a></h2>
 <table>
 <thead>
 <tr>
