@@ -46,7 +46,7 @@ h2 {
   }
   
   &::before {
-    content: counter(h2-counter) " " !important; // 显示 h2 编号
+    content: counter(h2-counter) ". " !important; // 显示 h2 编号，后面加点号
     display: inline !important;
     margin-right: 4px;
   }
@@ -61,7 +61,7 @@ h3 {
   counter-reset: h4-counter; // h3 重置 h4 计数器
   
   &::before {
-    content: counter(h2-counter) "." counter(h3-counter) " " !important; // 显示 h2.h3 编号
+    content: counter(h2-counter) "." counter(h3-counter) ". " !important; // 显示 h2.h3 编号，后面加点号
     display: inline !important;
     margin-right: 4px;
   }
@@ -76,7 +76,7 @@ h4 {
   counter-reset: h5-counter; // h4 重置 h5 计数器
   
   &::before {
-    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) " " !important; // 显示 h2.h3.h4 编号
+    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) ". " !important; // 显示 h2.h3.h4 编号，后面加点号
     display: inline !important;
     margin-right: 4px;
   }
@@ -91,7 +91,7 @@ h5 {
   counter-reset: h6-counter; // h5 重置 h6 计数器
   
   &::before {
-    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) " " !important; // 显示 h2.h3.h4.h5 编号
+    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) ". " !important; // 显示 h2.h3.h4.h5 编号，后面加点号
     display: inline !important;
     margin-right: 4px;
   }
@@ -105,7 +105,7 @@ h6 {
   counter-increment: h6-counter; // h6 递增计数器
   
   &::before {
-    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) "." counter(h6-counter) " " !important; // 显示 h2.h3.h4.h5.h6 编号
+    content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) "." counter(h6-counter) ". " !important; // 显示 h2.h3.h4.h5.h6 编号，后面加点号
     display: inline !important;
     margin-right: 4px;
   }
