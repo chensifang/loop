@@ -333,11 +333,11 @@ blockquote {
   }
 }
 
-// Info 块样式 - 蓝色风格（匹配 VuePress 默认主题）
+// Info 块样式 - 蓝色风格（匹配历史 HTML 样式）
 .hint-container.info,
 .info {
-  background: #e7f3ff !important;           // 浅蓝色背景
-  border-left: 3px solid #0969da !important; // 左侧蓝色边框（3px）
+  background: #e8f4f8 !important;           // 浅蓝色背景
+  border-left: 3px solid #005cc5 !important; // 左侧蓝色边框（3px）
   padding: 12px 16px !important;            // 内边距
   margin: 14px 0 !important;                // 外边距
   border-radius: 4px !important;             // 圆角
