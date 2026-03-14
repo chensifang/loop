@@ -10,6 +10,12 @@ export default defineUserConfig({
   title: 'VuePress 笔记',
   description: 'iOS 开发笔记',
   
+  // Head 配置 - 添加 favicon
+  head: [
+    ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
+    ['link', { rel: 'alternate icon', href: '/favicon.ico' }],
+  ],
+  
   // 使用 Vite 作为打包工具
   bundler: viteBundler(),
   
