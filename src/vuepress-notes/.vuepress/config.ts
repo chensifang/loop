@@ -69,9 +69,17 @@ export default defineUserConfig({
         link: '/',
       },
     ],
-    // 侧边栏配置 - 标题与文件名一致，含数字
+    // 不显示笔记内的子标题（h2、h3 等）
+    sidebarDepth: 0,
+    // 侧边栏配置 - 与文档标题一致
     sidebar: {
       '/': [
+        {
+          text: '总览',
+          children: [
+            { text: 'iOS知识框架', link: '/总览/01-iOS知识框架.md' },
+          ],
+        },
         {
           text: '示例文档',
           children: [
@@ -84,51 +92,48 @@ export default defineUserConfig({
           text: '内存管理',
           collapsible: true,
           children: [
-            { text: '01-iOS对象的内存布局', link: '/内存管理/01-iOS对象的内存布局.md' },
-            { text: '02-isa指针与类对象元类对象的关系', link: '/内存管理/02-isa指针与类对象元类对象的关系.md' },
-            { text: '03-简述ARC的工作原理', link: '/内存管理/03-简述ARC的工作原理.md' },
-            { text: '04-循环引用的产生与解决', link: '/内存管理/04-循环引用的产生与解决.md' },
-            { text: '05-weak和unowned的区别和使用场景', link: '/内存管理/05-weak和unowned的区别和使用场景.md' },
-            { text: '06-SideTable的结构', link: '/内存管理/06-SideTable的结构.md' },
-            { text: '07-weak原理', link: '/内存管理/07-weak原理.md' },
+            { text: '对象内存布局', link: '/内存管理/01-iOS对象的内存布局.md' },
+            { text: '对象、类、元类', link: '/内存管理/02-isa指针与类对象元类对象的关系.md' },
+            { text: 'ARC', link: '/内存管理/03-简述ARC的工作原理.md' },
+            { text: '循环引用', link: '/内存管理/04-循环引用的产生与解决.md' },
+            { text: 'weak、unowned', link: '/内存管理/05-weak和unowned的区别和使用场景.md' },
+            { text: 'SideTable', link: '/内存管理/06-SideTable的结构.md' },
+            { text: 'weak', link: '/内存管理/07-weak原理.md' },
           ],
         },
         {
           text: '锁',
           collapsible: true,
           children: [
-            { text: '01-iOS中的锁概述', link: '/锁/01-iOS中的锁概述.md' },
-            { text: '02-优先级翻转问题', link: '/锁/02-优先级翻转问题.md' },
-            { text: '03-@synchronized原理', link: '/锁/03-@synchronized原理.md' },
+            { text: 'iOS中的锁概述', link: '/锁/01-iOS中的锁概述.md' },
+            { text: '优先级翻转问题', link: '/锁/02-优先级翻转问题.md' },
+            { text: '@synchronized原理', link: '/锁/03-@synchronized原理.md' },
           ],
         },
         {
           text: 'UI框架',
           collapsible: true,
-          children: [
-            { text: '01-setNeedsDisplay到屏幕显示的流程', link: '/UI框架/01-setNeedsDisplay到屏幕显示的流程.md' },
-            { text: '02-UIView绘制显示原理流程解析以及性能优化', link: '/UI框架/02-UIView绘制显示原理流程解析以及性能优化.md' },
-          ],
+          children: [],
         },
         {
           text: '绘制',
           collapsible: true,
           children: [
-            { text: '01-T0代码执行阶段', link: '/绘制/01-T0代码执行阶段.md' },
-            { text: '02-T1Layout阶段', link: '/绘制/02-T1Layout阶段.md' },
-            { text: '03-T2Display阶段', link: '/绘制/03-T2Display阶段.md' },
-            { text: '04-T3Commit阶段', link: '/绘制/04-T3Commit阶段.md' },
-            { text: '05-T4RenderServer阶段', link: '/绘制/05-T4RenderServer阶段.md' },
-            { text: '06-T5GPU渲染阶段', link: '/绘制/06-T5GPU渲染阶段.md' },
-            { text: '07-CPU绘制vsGPU绘制', link: '/绘制/07-CPU绘制vsGPU绘制.md' },
-            { text: '08-iOS绘制框架分层架构', link: '/绘制/08-iOS绘制框架分层架构.md' },
+            { text: 'T0代码执行阶段', link: '/绘制/01-T0代码执行阶段.md' },
+            { text: 'T1Layout阶段', link: '/绘制/02-T1Layout阶段.md' },
+            { text: 'T2Display阶段', link: '/绘制/03-T2Display阶段.md' },
+            { text: 'T3Commit阶段', link: '/绘制/04-T3Commit阶段.md' },
+            { text: 'T4RenderServer阶段', link: '/绘制/05-T4RenderServer阶段.md' },
+            { text: 'T5GPU渲染阶段', link: '/绘制/06-T5GPU渲染阶段.md' },
+            { text: 'CPU绘制vsGPU绘制', link: '/绘制/07-CPU绘制vsGPU绘制.md' },
+            { text: 'iOS绘制框架分层架构', link: '/绘制/08-iOS绘制框架分层架构.md' },
           ],
         },
         {
           text: '网络',
           collapsible: true,
           children: [
-            { text: '01-HTTPS', link: '/网络/01-HTTPS.md' },
+            { text: 'HTTPS', link: '/网络/01-HTTPS.md' },
           ],
         },
       ],

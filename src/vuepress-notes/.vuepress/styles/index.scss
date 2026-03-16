@@ -1,3 +1,10 @@
+// 强调色 - 用于高亮重要内容，使用 <span class="emphasis">...</span>
+.emphasis {
+  background-color: var(--emphasis-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 // 自定义样式 - 整体文字缩小
 :root {
   // 基础字体大小
@@ -7,6 +14,8 @@
   --vp-layout-max-width: 1400px;
   // Notion 风格的表格颜色变量（保留）
   --notion-border: rgba(55, 53, 47, 0.09);
+  // 强调色（与 info 块蓝色风格一致：背景 #e8f4f8，边框 #005cc5）
+  --emphasis-bg: rgba(0, 92, 197, 0.15);
   // 覆盖代码块的 padding 变量
   --code-padding-y: 6px;
   --code-padding-x: 12px;
@@ -518,8 +527,7 @@ aside.vp-sidebar {
   -ms-overflow-style: none !important;
 }
 
-// 页面内目录（TOC）编号 - 与页面标题编号一致
-// VuePress 默认主题的 TOC 可能使用不同的类名，使用通用选择器
+// 隐藏页面内的子标题目录（只显示笔记名，不显示 h2/h3 等）
 .vuepress-toc,
 .page-toc,
 .table-of-contents,
@@ -527,69 +535,37 @@ aside[class*="toc"],
 nav[class*="toc"],
 .vp-page-toc,
 .vp-outline {
-  counter-reset: toc-h2-counter toc-h3-counter toc-h4-counter toc-h5-counter toc-h6-counter;
-  
-  // 通用方法：根据嵌套层级添加编号
-  ul {
-    counter-reset: toc-h2-counter toc-h3-counter toc-h4-counter toc-h5-counter toc-h6-counter;
-    
-    // 第一层（h2）
-    > li {
-      counter-increment: toc-h2-counter;
-      counter-reset: toc-h3-counter;
-      
-      > a::before {
-        content: counter(toc-h2-counter) ". " !important;
-        display: inline !important;
-        margin-right: 4px;
-      }
-      
-      // 第二层（h3）
-      > ul > li {
-        counter-increment: toc-h3-counter;
-        counter-reset: toc-h4-counter;
-        
-        > a::before {
-          content: counter(toc-h2-counter) "." counter(toc-h3-counter) ". " !important;
-          display: inline !important;
-          margin-right: 4px;
-        }
-        
-        // 第三层（h4）
-        > ul > li {
-          counter-increment: toc-h4-counter;
-          counter-reset: toc-h5-counter;
-          
-          > a::before {
-            content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) ". " !important;
-            display: inline !important;
-            margin-right: 4px;
-          }
-          
-          // 第四层（h5）
-          > ul > li {
-            counter-increment: toc-h5-counter;
-            counter-reset: toc-h6-counter;
-            
-            > a::before {
-              content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) ". " !important;
-              display: inline !important;
-              margin-right: 4px;
-            }
-            
-            // 第五层（h6）
-            > ul > li {
-              counter-increment: toc-h6-counter;
-              
-              > a::before {
-                content: counter(toc-h2-counter) "." counter(toc-h3-counter) "." counter(toc-h4-counter) "." counter(toc-h5-counter) "." counter(toc-h6-counter) ". " !important;
-                display: inline !important;
-                margin-right: 4px;
-              }
-            }
-          }
-        }
-      }
+  display: none !important;
+}
+
+// 侧边栏可折叠项：箭头改为左侧三角形，展开时旋转
+.vp-sidebar .vp-sidebar-heading.collapsible {
+  display: flex !important;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+
+  .arrow {
+    flex-shrink: 0;
+    // 隐藏默认箭头，用 CSS 三角形替代
+    background: none !important;
+    background-image: none !important;
+    width: 0;
+    height: 0;
+    margin: 0;
+    border-left: 5px solid currentColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: transform 0.25s ease;
+
+    // 收起：向右
+    &.right {
+      transform: rotate(0deg);
+    }
+    // 展开：向下
+    &.down {
+      transform: rotate(90deg);
     }
   }
 }
@@ -634,9 +610,16 @@ nav[class*="toc"],
 
 
 // 组件 1: Excel 风格表格结构可视化组件样式
+// 组件容器与上方标题的间距
+#memory-container,
+#sidetable-container,
+#entity-structure-container {
+  padding-top: 24px;
+}
+
 .table-structure-container {
   position: relative;
-  margin: 12px 0;
+  margin: 24px 0 16px 0;
   display: flex;
   flex-direction: row;
   align-items: flex-start;

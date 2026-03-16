@@ -1,4 +1,4 @@
-# weak 和 unowned 的区别是什么？分别在什么场景下使用？
+# weak、unowned
 
 ## 1. 核心区别
 

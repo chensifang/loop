@@ -1,0 +1,24 @@
+---
+description: 笔记格式与样式规范
+globs: src/vuepress-notes/**/*.md
+alwaysApply: false
+---
+
+# 笔记格式规范
+
+## 强调色
+
+对于需要着重、注意的内容，多用强调色。
+
+**用法**：使用 `<span class="emphasis">...</span>` 包裹需要强调的文本。
+
+**示例**：
+```markdown
+Side Table 是辅助数据结构，用于<span class="emphasis">存储对象的额外信息。当 ISA 指针无法存储所有信息时，系统会创建 Side Table。</span>
+```
+
+**适用场景**：
+- 核心定义、关键概念
+- 容易误解的要点
+- 需要特别记忆的内容
+- 面试常考的重点

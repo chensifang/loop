@@ -6,6 +6,10 @@
 
 ## 目录
 
+### 总览
+
+- [iOS知识框架](./总览/01-iOS知识框架.md)
+
 ### 内存管理
 
 - [iOS对象的内存布局](./内存管理/01-iOS对象的内存布局.md)
@@ -23,9 +27,6 @@
 - [@synchronized原理](./锁/03-@synchronized原理.md)
 
 ### UI框架
-
-- [setNeedsDisplay到屏幕显示的流程](./UI框架/01-setNeedsDisplay到屏幕显示的流程.md)
-- [UIView绘制显示原理流程解析以及性能优化](./UI框架/02-UIView绘制显示原理流程解析以及性能优化.md)
 
 ### 绘制
 

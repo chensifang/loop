@@ -30,6 +30,74 @@ export const memoryData = {
   ],
 }
 
+// 三种实体（实例对象、类对象、元类对象）内部结构
+export const entityStructureData = {
+  blocks: [
+    {
+      id: 'instance',
+      title: '实例对象（Instance）',
+      subtitle: 'struct objc_object，实际创建的对象',
+      headers: [
+        { type: 'offset', text: '偏移' },
+        { type: 'content', text: '内容' },
+        { type: 'size', text: '说明' },
+      ],
+      rows: [
+        { offset: '0', name: 'isa', type: '指针', size: '指向类对象', linkTo: 'class' },
+        { offset: '8', desc: '实例变量 1', size: '父类 ivar' },
+        { offset: '...', desc: '实例变量 2、3...', size: '本类 ivar' },
+      ],
+    },
+    {
+      id: 'class',
+      title: '类对象（Class）',
+      subtitle: 'struct objc_class，描述实例的结构',
+      headers: [
+        { type: 'offset', text: '偏移' },
+        { type: 'content', text: '字段' },
+        { type: 'size', text: '说明' },
+      ],
+      rows: [
+        { offset: '0', name: 'isa', type: '指针', size: '指向元类对象', linkTo: 'metaclass' },
+        { offset: '8', name: 'superclass', type: '指针', size: '指向父类对象' },
+        { offset: '16', name: 'cache', type: 'objc_cache', size: '方法缓存，加速查找' },
+        { offset: '24', name: 'bits', type: '指针', size: '指向 class_rw_t', linkTo: 'class-rw' },
+      ],
+    },
+    {
+      id: 'metaclass',
+      title: '元类对象（Meta-class）',
+      subtitle: 'struct objc_class，描述类对象的结构',
+      headers: [
+        { type: 'offset', text: '偏移' },
+        { type: 'content', text: '字段' },
+        { type: 'size', text: '说明' },
+      ],
+      rows: [
+        { offset: '0', name: 'isa', type: '指针', size: '指向根元类（或自身）' },
+        { offset: '8', name: 'superclass', type: '指针', size: '指向父元类（根元类→根类）' },
+        { offset: '16', name: 'cache', type: 'objc_cache', size: '类方法缓存' },
+        { offset: '24', name: 'bits', type: '指针', size: '类方法列表等' },
+      ],
+    },
+    {
+      id: 'class-rw',
+      title: 'class_rw_t（bits 指向）',
+      subtitle: '类对象中的方法、属性、协议等',
+      headers: [
+        { type: 'offset', text: '内容' },
+        { type: 'size', text: '说明' },
+      ],
+      rows: [
+        { offset: 'method_list_t', size: '实例方法列表' },
+        { offset: 'property_list_t', size: '属性列表' },
+        { offset: 'protocol_list_t', size: '协议列表' },
+        { offset: 'class_ro_t', size: '只读数据（类名、ivar 布局等）' },
+      ],
+    },
+  ],
+}
+
 export const sideTableData = {
   blocks: [
     {

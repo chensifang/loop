@@ -1,4 +1,4 @@
-# isa 指针与类对象、元类对象的关系
+# 对象、类、元类
 
 ## 1. 核心概念
 
@@ -16,16 +16,20 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 | **类对象（Class）** | 描述实例的结构 | 实例方法列表、属性列表、协议列表等 | `[Person class]` |
 | **元类对象（Meta-class）** | 描述类对象的结构 | 类方法列表 | 通过 `object_getClass([Person class])` 获取 |
 
-## 3. 两种关键指针
+## 3. 三种实体内部结构
+
+<div id="entity-structure-container"></div>
+
+## 4. 两种关键指针
 
 | 指针类型 | 作用 | 指向关系 |
 |---------|------|---------|
 | **isa 指针** | 指向对象的类型（类或元类） | 实例 → 类，类 → 元类，元类 → 根元类 |
 | **superclass 指针** | 指向父类（继承关系） | 子类 → 父类 → 根类 → nil |
 
-## 4. isa 指针的指向关系
+## 5. isa 指针的指向关系
 
-### 4.1. 实例对象的 isa
+### 5.1. 实例对象的 isa
 
 | 对象 | isa 指向 | 作用 |
 |------|---------|------|
@@ -33,7 +37,7 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 | 父类实例 | 父类（类对象） | 通过 isa 找到类对象，查找实例方法 |
 | 根类实例 | 根类（类对象） | 通过 isa 找到类对象，查找实例方法 |
 
-### 4.2. 类对象的 isa
+### 5.2. 类对象的 isa
 
 | 类对象 | isa 指向 | 作用 |
 |--------|---------|------|
@@ -41,7 +45,7 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 | 父类（类对象） | 父类（元类） | 通过 isa 找到元类对象，查找类方法 |
 | 根类（类对象） | 根类（元类） | 通过 isa 找到元类对象，查找类方法 |
 
-### 4.3. 元类对象的 isa
+### 5.3. 元类对象的 isa
 
 | 元类对象 | isa 指向 | 作用 |
 |---------|---------|------|
@@ -53,9 +57,9 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 所有元类的 `isa` 指针最终都指向根元类（根类（元类）），而根元类的 `isa` 指向自身，形成一个闭环。这意味着根元类是所有元类的"类"。
 :::
 
-## 5. superclass 指针的继承关系
+## 6. superclass 指针的继承关系
 
-### 5.1. 类对象的继承链
+### 6.1. 类对象的继承链
 
 | 类对象 | superclass 指向 | 说明 |
 |--------|----------------|------|
@@ -63,7 +67,7 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 | 父类（类对象） | 根类（类对象） | 父类的父类 |
 | 根类（类对象） | **nil** | 根类没有父类 |
 
-### 5.2. 元类对象的继承链
+### 6.2. 元类对象的继承链
 
 | 元类对象 | superclass 指向 | 说明 |
 |---------|----------------|------|
@@ -75,7 +79,7 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
 根元类的 `superclass` 指向根类对象（而不是 nil），这是一个特殊设计。它允许当在元类链中找不到类方法时，可以回退到根类中查找实例方法。例如，`description` 类方法实际上是在根类（NSObject）的实例方法中实现的。
 :::
 
-## 6. 完整关系图
+## 7. 完整关系图
 
 <div style="margin: 20px 0;">
     <img src="./assets/isa-relation-diagram.png" alt="isa指针与类对象元类对象的关系图" style="max-width: 70%; height: auto; border: 1px solid #e1e4e8; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -85,9 +89,9 @@ Objective-C 中的对象系统基于三个核心实体：**实例对象**、**�
     <strong>图例说明</strong>：实线箭头表示 <code>superclass</code> 指针（继承关系），虚线箭头表示 <code>isa</code> 指针（类型关系）
 </p>
 
-## 7. 方法查找机制
+## 8. 方法查找机制
 
-### 7.1. 实例方法查找
+### 8.1. 实例方法查找
 
 当向实例对象发送消息时，查找流程如下：
 
@@ -105,7 +109,7 @@ Person *person = [[Person alloc] init];
 // Person（类对象） → NSObject（类对象） → 查找 sayHello
 ```
 
-### 7.2. 类方法查找
+### 8.2. 类方法查找
 
 当向类对象发送消息时，查找流程如下：
 
@@ -128,7 +132,7 @@ Person *person = [[Person alloc] init];
 // 例如：[NSObject description] 实际上调用的是 NSObject 的实例方法
 ```
 
-## 8. 内存布局中的体现
+## 9. 内存布局中的体现
 
 在对象的内存布局中，`isa` 指针位于对象的第一个位置（偏移 0），占用 8 字节。这是 Objective-C 对象的基础结构。
 
@@ -138,7 +142,7 @@ Person *person = [[Person alloc] init];
 | 类对象 | isa 指针（指向元类对象） | 通过 isa 找到元类对象，查找类方法 |
 | 元类对象 | isa 指针（指向根元类） | 通过 isa 找到根元类，继续查找类方法 |
 
-## 9. 验证代码
+## 10. 验证代码
 
 ```objc
 // 验证 isa 指针的指向
@@ -170,7 +174,7 @@ Class rootMetaSuperclass = class_getSuperclass(rootMetaClass);
 NSLog(@"根元类的父类: %@", rootMetaSuperclass);  // NSObject (class) - 指向根类对象
 ```
 
-## 10. 关键要点总结
+## 11. 关键要点总结
 
 | 要点 | 说明 |
 |------|------|
@@ -181,9 +185,9 @@ NSLog(@"根元类的父类: %@", rootMetaSuperclass);  // NSObject (class) - 指
 | **方法查找路径** | 实例方法：isa → 类 → superclass 链；类方法：isa → 元类 → superclass 链 → 根类 |
 | **内存布局** | 所有对象（实例、类、元类）的第一个字段都是 isa 指针，偏移为 0 |
 
-## 11. 实际应用场景
+## 12. 实际应用场景
 
-### 11.1. 方法交换（Method Swizzling）
+### 12.1. 方法交换（Method Swizzling）
 
 理解 isa 和 superclass 的关系，有助于理解方法交换的原理：
 
@@ -199,7 +203,7 @@ Method swizzledClassMethod = class_getClassMethod([Person class], @selector(swiz
 method_exchangeImplementations(originalClassMethod, swizzledClassMethod);
 ```
 
-### 11.2. 动态创建类
+### 12.2. 动态创建类
 
 理解类对象和元类对象的关系，有助于理解动态创建类的过程：
 
@@ -210,7 +214,7 @@ Class newClass = objc_allocateClassPair([NSObject class], "DynamicClass", 0);
 objc_registerClassPair(newClass);
 ```
 
-### 11.3. KVO 实现原理
+### 12.3. KVO 实现原理
 
 KVO 的实现依赖于动态创建子类，并修改 isa 指针的指向：
 

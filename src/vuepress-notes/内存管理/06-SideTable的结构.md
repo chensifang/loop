@@ -2,7 +2,7 @@
 
 ## 1. 概述
 
-Side Table 是 iOS Runtime 中的一个辅助数据结构，用于存储对象的额外信息。当对象的 ISA 指针无法存储所有信息时（比如引用计数过大、需要 weak 引用等），系统会创建 Side Table 来存储这些信息。
+Side Table 是 iOS Runtime 中的一个辅助数据结构，用于<span class="emphasis">存储对象的额外信息。当对象的 ISA 指针无法存储所有信息时（比如引用计数过大、需要 weak 引用等），系统会创建 Side Table 来存储这些信息。</span>
 
 ## 2. 实际存储结构
 
