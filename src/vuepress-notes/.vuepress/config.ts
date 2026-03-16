@@ -43,10 +43,10 @@ export default defineUserConfig({
       flowchart: true,   // Flowchart 流程图
       markmap: true,     // Markmap 思维导图
       plantuml: [
-        // PlantUML UML 图表 - 支持多种代码块标识符
-        { name: 'uml', type: 'fence', fence: 'uml' },
-        { name: 'plantuml', type: 'fence', fence: 'plantuml' },
-        { name: 'puml', type: 'fence', fence: 'puml' },
+        // PlantUML - 使用 phase-6 替代 plantuml.com（后者在国内部分请求易失败）
+        { name: 'uml', type: 'fence', fence: 'uml', server: 'https://plantuml.phase-6.com', format: 'svg' },
+        { name: 'plantuml', type: 'fence', fence: 'plantuml', server: 'https://plantuml.phase-6.com', format: 'svg' },
+        { name: 'puml', type: 'fence', fence: 'puml', server: 'https://plantuml.phase-6.com', format: 'svg' },
       ],
     }),
   ],
@@ -127,6 +127,14 @@ export default defineUserConfig({
             { text: 'T5GPU渲染阶段', link: '/绘制/06-T5GPU渲染阶段.md' },
             { text: 'CPU绘制vsGPU绘制', link: '/绘制/07-CPU绘制vsGPU绘制.md' },
             { text: 'iOS绘制框架分层架构', link: '/绘制/08-iOS绘制框架分层架构.md' },
+          ],
+        },
+        {
+          text: 'RunLoop',
+          collapsible: true,
+          children: [
+            { text: 'RunLoop 原理', link: '/RunLoop/01-RunLoop原理.md' },
+            { text: 'RunLoop 深入理解', link: '/RunLoop/02-RunLoop深入理解.md' },
           ],
         },
         {

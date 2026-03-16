@@ -5,8 +5,14 @@
   border-radius: 4px;
 }
 
-// 自定义样式 - 整体文字缩小
+// 自定义样式 - 整体文字缩小 + Notion 风格配色
 :root {
+  // Notion 高亮色 #F7F6F4（仅用于高亮区域，不用于页面背景）
+  --notion-highlight: #f7f6f4;
+  // 代码块背景色 #F9F8F7
+  --code-bg: #f9f8f7;
+  // 行内代码背景色 #E8E7E4
+  --code-inline-bg: #e8e7e4;
   // 基础字体大小
   --vp-font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   // 设置内容宽度变量（如果 VuePress 2 支持）
@@ -14,8 +20,8 @@
   --vp-layout-max-width: 1400px;
   // Notion 风格的表格颜色变量（保留）
   --notion-border: rgba(55, 53, 47, 0.09);
-  // 强调色（与 info 块蓝色风格一致：背景 #e8f4f8，边框 #005cc5）
-  --emphasis-bg: rgba(0, 92, 197, 0.15);
+  // 强调色（红色高亮）
+  --emphasis-bg: rgba(215, 58, 73, 0.28);
   // 覆盖代码块的 padding 变量
   --code-padding-y: 6px;
   --code-padding-x: 12px;
@@ -27,7 +33,7 @@ html {
 }
 
 body {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: #000000 !important; // 正文字体更黑
 }
@@ -37,7 +43,7 @@ h1 {
   font-size: 1.5em !important;
   margin-top: 0.67em;
   margin-bottom: 0.67em;
-  border-bottom: 1px solid #eaecef !important;
+  border-bottom: 1px solid var(--notion-border) !important;
   padding-bottom: 0.3em !important;
   color: #000000 !important; // 黑色
 }
@@ -89,7 +95,7 @@ h6 {
 
 // 正文文字
 p {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: #000000 !important; // 正文字体更黑
 }
@@ -112,20 +118,30 @@ table th {
   font-weight: 600 !important; // 表头保持加粗
 }
 
-// 列表文字
+// 列表文字（有序、无序列表项间距稍大）
 ul, ol {
-  font-size: 14px;
+  font-size: 15px;
 }
 
-li {
-  font-size: 14px;
+ul li,
+ol li {
+  font-size: 15px;
   line-height: 1.6;
   color: #000000 !important; // 列表文字更黑
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+
+  &:first-child {
+    margin-top: 0;
+  }
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
-// 行内代码样式 - 使用更亮的红色，与代码块关键字颜色一致
+// 行内代码样式 - 使用行内代码背景色
 :not(pre) > code {
-  background-color: rgba(27, 31, 35, 0.05);
+  background-color: var(--code-inline-bg);
   padding: 2.5px 6px;
   border-radius: 6px;
   font-size: 85%; // 历史样式使用 85%
@@ -140,7 +156,7 @@ pre:not([class*="language-"]):not([data-highlighter]),
 .theme-default-content pre:not([class*="language-"]):not([data-highlighter]),
 .page pre:not([class*="language-"]):not([data-highlighter]),
 .vp-page pre:not([class*="language-"]):not([data-highlighter]) {
-  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
+  background: var(--code-bg) !important;
   color: #1a1a1a;
   padding: 6px 12px !important;
   border-radius: 4px;
@@ -169,7 +185,7 @@ div[data-highlighter="shiki"],
 #app div[data-highlighter="shiki"],
 body div[class*="language-"],
 body div[data-highlighter="shiki"] {
-  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
+  background: var(--code-bg) !important;
   border-radius: 4px !important;
   border: 1px solid var(--notion-border) !important; // 使用 Notion 风格的边框颜色
   margin-top: 6px !important;
@@ -323,7 +339,7 @@ table {
 }
 
 thead {
-  background: rgba(55, 53, 47, 0.03);
+  background: var(--notion-highlight);
 }
 
 th {
@@ -334,7 +350,7 @@ th {
   color: #1a1a1a;
   border: 1px solid var(--notion-border);
   vertical-align: top;
-  background: rgba(55, 53, 47, 0.03);
+  background: var(--notion-highlight);
   word-wrap: break-word; // 允许表头换行
   box-sizing: border-box;
   white-space: nowrap; // 表头不换行，保持紧凑
@@ -494,6 +510,14 @@ blockquote {
 .vp-sidebar,
 aside.vp-sidebar {
   border-inline-end-color: rgba(0, 0, 0, 0.08) !important;
+
+  // 侧边栏链接 hover/active 使用 Notion 高亮色
+  .vp-sidebar-link:hover {
+    background-color: var(--notion-highlight) !important;
+  }
+  .vp-sidebar-link.active {
+    background-color: var(--notion-highlight) !important;
+  }
   
   // 隐藏侧边栏的滚动条
   &::-webkit-scrollbar {
@@ -683,7 +707,7 @@ nav[class*="toc"],
 .table-structure-title {
   display: block;
   padding: 4px 6px;
-  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
+  background: var(--notion-highlight) !important;
   border-bottom: 2px solid var(--notion-border); // 使用 Notion 风格的边框颜色
   font-weight: 600;
   font-size: 13px;
@@ -695,7 +719,7 @@ nav[class*="toc"],
 .table-structure-subtitle {
   display: block;
   padding: 2px 6px;
-  background: rgba(55, 53, 47, 0.03) !important; // Notion 风格背景色（表格表头颜色）
+  background: var(--notion-highlight) !important;
   border-bottom: 1px solid var(--notion-border); // 使用 Notion 风格的边框颜色
   font-weight: normal;
   font-size: 11px;
@@ -739,7 +763,7 @@ nav[class*="toc"],
   position: relative;
   
   &:hover {
-    background: #e8f4f8 !important;
+    background: var(--notion-highlight) !important;
   }
 }
 
