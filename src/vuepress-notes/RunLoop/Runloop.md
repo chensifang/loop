@@ -1,6 +1,13 @@
-# RunLoop 深入理解
+# Runloop
 
-本文整理自 [ibireme 深入理解 RunLoop](https://blog.ibireme.com/2015/05/18/runloop/)、掘金、千行等高质量文章，对难懂之处适度加入白话解释。源码部分引自 ibireme 对 CFRunLoop 源码的整理。
+本文整理自以下高质量文章，对难懂之处适度加入白话解释。源码部分引自 ibireme 对 CFRunLoop 源码的整理。
+
+- [ibireme 深入理解 RunLoop](https://blog.ibireme.com/2015/05/18/runloop/)
+- [千行：从源码读懂 Runloop](https://kikido.github.io/2020/05/24/%E4%BB%8E%E6%BA%90%E7%A0%81%E8%AF%BB%E6%87%82-Runloop/)
+- [掘金：深入解析 iOS-RunLoop：事件驱动的核心机制](https://juejin.cn/post/7484060429617381426)
+- [掘金：iOS八股文（二十）Runloop探究](https://juejin.cn/post/7120430430846713863)
+- [掘金：iOS 底层原理： Runloop 详解](https://juejin.cn/post/7011446603185651720)
+- [掘金：15-探究iOS底层原理 RunLoop](https://juejin.cn/post/7116515606597206030)
 
 ## 概述
 
@@ -80,39 +87,19 @@ CFRunLoopRef CFRunLoopGetCurrent() {
 
 ## 核心数据结构
 
-```uml
-@startuml
-class CFRunLoop {
-  -_commonModes: Set
-  -_commonModeItems: Set
-  -_currentMode: CFRunLoopModeRef
-  -_modes: Set
-}
+<div id="runloop-structure-container"></div>
 
-class CFRunLoopMode {
-  -_name: String
-  -_sources0: Set
-  -_sources1: Set
-  -_observers: Array
-  -_timers: Array
-}
-
-class CFRunLoopSourceRef
-class CFRunLoopTimerRef
-class CFRunLoopObserverRef
-
-CFRunLoop "1" --> "*" CFRunLoopMode : _modes
-CFRunLoop --> CFRunLoopMode : _currentMode
-CFRunLoopMode --> "*" CFRunLoopSourceRef : _sources0
-CFRunLoopMode --> "*" CFRunLoopSourceRef : _sources1
-CFRunLoopMode --> "*" CFRunLoopTimerRef : _timers
-CFRunLoopMode --> "*" CFRunLoopObserverRef : _observers
-@enduml
-```
-
-- **CFRunLoop**：管理多个 Mode，维护 `_commonModes` 和 `_commonModeItems`
-- **CFRunLoopMode**：每个 Mode 包含 Source0、Source1、Timer、Observer 四类 mode item
-- **一次只能跑一个 Mode**：切换需退出当前 Mode 再进入新 Mode，这样不同组的 Source/Timer/Observer 互不影响
+| 结构 | 字段 | 说明 |
+|------|------|------|
+| CFRunLoop | _commonModes | Set，标记为 Common 的 Mode 名称集合 |
+| CFRunLoop | _commonModeItems | Set，自动同步到所有 Common Mode 的 Source/Observer/Timer |
+| CFRunLoop | _currentMode | 当前运行的 Mode |
+| CFRunLoop | _modes | Set，所有 Mode 的集合 |
+| CFRunLoopMode | _name | Mode 名称，如 kCFRunLoopDefaultMode、UITrackingRunLoopMode |
+| CFRunLoopMode | _sources0 | Set，非 port 的 Source，需手动 Signal + WakeUp |
+| CFRunLoopMode | _sources1 | Set，基于 mach_port 的 Source，可主动唤醒 RunLoop |
+| CFRunLoopMode | _timers | Array，定时器，与 NSTimer toll-free bridged |
+| CFRunLoopMode | _observers | Array，观察者，监听 Entry/BeforeTimers/BeforeSources/BeforeWaiting/AfterWaiting/Exit |
 
 **CFRunLoopObserverRef** 可观测的时间点：
 

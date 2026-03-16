@@ -1,5 +1,52 @@
 // 表格结构数据 - 由 client.ts 在找到容器后直接调用 renderTableStructure
 
+// RunLoop 核心数据结构
+export const runLoopData = {
+  blocks: [
+    {
+      id: 'cfrunloop',
+      title: 'CFRunLoop',
+      rows: [
+        { offset: '_commonModes' },
+        { offset: '_commonModeItems' },
+        { offset: '_currentMode', linkTo: 'cfrunloopmode' },
+        { offset: '_modes', linkTo: 'cfrunloopmode' },
+      ],
+    },
+    {
+      id: 'cfrunloopmode',
+      title: 'CFRunLoopMode',
+      rows: [
+        { offset: '_name' },
+        { offset: '_sources0', linkTo: 'source0' },
+        { offset: '_sources1', linkTo: 'source1' },
+        { offset: '_timers', linkTo: 'timer' },
+        { offset: '_observers', linkTo: 'observer' },
+      ],
+    },
+    {
+      id: 'source0',
+      title: 'CFRunLoopSourceRef (Source0)',
+      rows: [],
+    },
+    {
+      id: 'source1',
+      title: 'CFRunLoopSourceRef (Source1)',
+      rows: [],
+    },
+    {
+      id: 'timer',
+      title: 'CFRunLoopTimerRef',
+      rows: [],
+    },
+    {
+      id: 'observer',
+      title: 'CFRunLoopObserverRef',
+      rows: [],
+    },
+  ],
+}
+
 export const memoryData = {
   blocks: [
     {

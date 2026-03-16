@@ -1,5 +1,5 @@
 import { defineClientConfig } from '@vuepress/client'
-import { memoryData, sideTableData, entityStructureData } from './table-structure-data'
+import { memoryData, sideTableData, entityStructureData, runLoopData } from './table-structure-data'
 
 declare global {
   interface Window {
@@ -14,6 +14,7 @@ const TABLE_CONFIG: Record<
   'memory-container': { data: memoryData },
   'sidetable-container': { data: sideTableData, options: { layout: 'hierarchical' } },
   'entity-structure-container': { data: entityStructureData, options: { layout: 'hierarchical' } },
+  'runloop-structure-container': { data: runLoopData, options: { layout: 'hierarchical' } },
 }
 
 function runTableStructureScripts() {

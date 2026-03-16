@@ -637,13 +637,14 @@ nav[class*="toc"],
 // 组件容器与上方标题的间距
 #memory-container,
 #sidetable-container,
-#entity-structure-container {
+#entity-structure-container,
+#runloop-structure-container {
   padding-top: 24px;
 }
 
 .table-structure-container {
   position: relative;
-  margin: 24px 0 16px 0;
+  margin: 32px 0 16px 0;
   display: flex;
   flex-direction: row;
   align-items: flex-start;

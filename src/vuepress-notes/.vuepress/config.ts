@@ -133,8 +133,7 @@ export default defineUserConfig({
           text: 'RunLoop',
           collapsible: true,
           children: [
-            { text: 'RunLoop 原理', link: '/RunLoop/01-RunLoop原理.md' },
-            { text: 'RunLoop 深入理解', link: '/RunLoop/02-RunLoop深入理解.md' },
+            { text: 'Runloop', link: '/RunLoop/Runloop.md' },
           ],
         },
         {
