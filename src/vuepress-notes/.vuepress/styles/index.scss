@@ -485,6 +485,37 @@ blockquote {
 .vp-sidebar,
 aside.vp-sidebar {
   border-inline-end-color: rgba(0, 0, 0, 0.08) !important;
+  
+  // 隐藏侧边栏的滚动条
+  &::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  // Firefox 隐藏滚动条
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important; /* IE and Edge */
+  
+  // 隐藏侧边栏内部容器的滚动条
+  * {
+    &::-webkit-scrollbar {
+      display: none !important;
+    }
+    
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+}
+
+// 隐藏侧边栏内容区域的滚动条
+.vp-sidebar-content,
+.vp-sidebar-group,
+.vp-sidebar-items {
+  &::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 // 页面内目录（TOC）编号 - 与页面标题编号一致
@@ -497,15 +528,6 @@ nav[class*="toc"],
 .vp-page-toc,
 .vp-outline {
   counter-reset: toc-h2-counter toc-h3-counter toc-h4-counter toc-h5-counter toc-h6-counter;
-  
-  // h2 级别的目录项 - 尝试多种选择器
-  .vuepress-toc-item[data-level="2"],
-  .toc-item[data-level="2"],
-  li[data-level="2"],
-  a[href^="#"]:has(+ ul),
-  > ul > li:nth-child(n) {
-    // 检查是否是 h2 级别（通过嵌套层级判断）
-  }
   
   // 通用方法：根据嵌套层级添加编号
   ul {
@@ -610,19 +632,6 @@ nav[class*="toc"],
   margin: 0 auto !important;
 }
 
-// 表格容器 - 允许横向滚动（如果表格太宽）
-.table-wrapper {
-  overflow-x: auto;
-  margin: 14px 0;
-  width: 100% !important;
-  
-  table {
-    width: 100% !important;
-    margin: 0 !important;
-  }
-}
-
-// 表格允许换行（已在上面的 table 样式中定义，这里删除重复）
 
 // 组件 1: Excel 风格表格结构可视化组件样式
 .table-structure-container {
@@ -739,10 +748,6 @@ nav[class*="toc"],
   
   &:last-child {
     border-bottom: none;
-  }
-  
-  &:hover {
-    // 移除悬停背景色
   }
 }
 
