@@ -21,6 +21,15 @@ export default defineUserConfig({
   
   // 插件配置 - 启用所有图表功能（和 Plume 主题一样）
   plugins: [
+    // 禁用上一篇/下一篇链接
+    {
+      name: 'disable-prev-next',
+      extendsPageOptions: (pageOptions) => {
+        pageOptions.frontmatter = pageOptions.frontmatter ?? {}
+        pageOptions.frontmatter.prev = false
+        pageOptions.frontmatter.next = false
+      },
+    },
     // Shiki 代码高亮插件 - 提供更好的语法高亮（禁用行号，使用历史样式）
     shikiPlugin({
       langs: ['swift', 'objective-c', 'objc', 'cpp', 'c', 'javascript', 'typescript', 'python', 'java', 'bash', 'json', 'markdown'],
@@ -44,6 +53,15 @@ export default defineUserConfig({
   
   // 主题配置
   theme: defaultTheme({
+    // 禁用悬浮返回顶部按钮和顶部滚动进度条
+    themePlugins: {
+      backToTop: false,
+      nprogress: false,
+    },
+    // 禁用最近更新时间
+    lastUpdated: false,
+    // 禁用贡献者列表
+    contributors: false,
     // 导航栏
     navbar: [
       {

@@ -2,6 +2,17 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "docs:dev",
+      "type": "shell",
+      "command": "npm run docs:dev",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    },
+    {
       "label": "Preview HTML",
       "type": "shell",
       "command": "open",
@@ -11,10 +22,6 @@
         "reveal": "never",
         "panel": "shared",
         "close": true
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
       }
     }
   ]

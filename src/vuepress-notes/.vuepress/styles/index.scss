@@ -481,6 +481,12 @@ blockquote {
   font-size: 14px;
 }
 
+// 目录与笔记之间的竖线 - 更浅
+.vp-sidebar,
+aside.vp-sidebar {
+  border-inline-end-color: rgba(0, 0, 0, 0.08) !important;
+}
+
 // 页面内目录（TOC）编号 - 与页面标题编号一致
 // VuePress 默认主题的 TOC 可能使用不同的类名，使用通用选择器
 .vuepress-toc,
