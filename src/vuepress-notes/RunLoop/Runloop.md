@@ -87,7 +87,53 @@ CFRunLoopRef CFRunLoopGetCurrent() {
 
 ## 核心数据结构
 
+### 源码（CFRunLoop.c / CFRunLoop.m）
+
+```c
+// __CFRunLoop：RunLoop 本体
+struct __CFRunLoop {
+    CFRuntimeBase _base;
+    pthread_mutex_t _lock;              // 访问 mode 列表的锁
+    __CFPort _wakeUpPort;               // 用于 CFRunLoopWakeUp 唤醒
+    Boolean _unused;
+    volatile _per_run_data *_perRunData; // 每次运行时的数据
+    pthread_t _pthread;                 // 绑定的线程
+    uint32_t _winthread;
+    CFMutableSetRef _commonModes;       // 标记为 Common 的 Mode 名称集合
+    CFMutableSetRef _commonModeItems;   // 自动同步到所有 Common Mode 的 Source/Observer/Timer
+    CFRunLoopModeRef _currentMode;      // 当前运行的 Mode
+    CFMutableSetRef _modes;             // 所有 Mode 的集合
+    struct _block_item *_blocks_head;   // CFRunLoopPerformBlock 的 block 链表
+    struct _block_item *_blocks_tail;
+    CFTypeRef _counterpart;
+};
+typedef struct __CFRunLoop * CFRunLoopRef;
+
+// __CFRunLoopMode：每个 Mode 管理一组事件源
+struct __CFRunLoopMode {
+    CFRuntimeBase _base;
+    pthread_mutex_t _lock;
+    CFStringRef _name;                  // Mode 名称，如 kCFRunLoopDefaultMode
+    Boolean _stopped;
+    CFMutableSetRef _sources0;          // 非 port 的 Source，需手动 Signal + WakeUp
+    CFMutableSetRef _sources1;           // 基于 mach_port 的 Source，可主动唤醒
+    CFMutableArrayRef _observers;       // 观察者
+    CFMutableArrayRef _timers;          // 定时器，与 NSTimer toll-free bridged
+    CFMutableDictionaryRef _portToV1SourceMap;  // port 到 Source1 的映射
+    __CFPortSet _portSet;               // 需要监听的 port 集合
+    mach_port_t _timerPort;             // 定时器端口
+};
+typedef struct __CFRunLoopMode * CFRunLoopModeRef;
+
+// 相关类型
+typedef struct __CFRunLoopSource * CFRunLoopSourceRef;
+typedef struct __CFRunLoopObserver * CFRunLoopObserverRef;
+typedef struct __CFRunLoopTimer * CFRunLoopTimerRef;
+```
+
 <div id="runloop-structure-container"></div>
+
+### 字段说明
 
 | 结构 | 字段 | 说明 |
 |------|------|------|
@@ -95,11 +141,14 @@ CFRunLoopRef CFRunLoopGetCurrent() {
 | CFRunLoop | _commonModeItems | Set，自动同步到所有 Common Mode 的 Source/Observer/Timer |
 | CFRunLoop | _currentMode | 当前运行的 Mode |
 | CFRunLoop | _modes | Set，所有 Mode 的集合 |
+| CFRunLoop | _wakeUpPort | 用于 `CFRunLoopWakeUp()` 唤醒休眠中的 RunLoop |
+| CFRunLoop | _blocks_head/_blocks_tail | `CFRunLoopPerformBlock` 加入的 block 链表 |
 | CFRunLoopMode | _name | Mode 名称，如 kCFRunLoopDefaultMode、UITrackingRunLoopMode |
 | CFRunLoopMode | _sources0 | Set，非 port 的 Source，需手动 Signal + WakeUp |
 | CFRunLoopMode | _sources1 | Set，基于 mach_port 的 Source，可主动唤醒 RunLoop |
 | CFRunLoopMode | _timers | Array，定时器，与 NSTimer toll-free bridged |
 | CFRunLoopMode | _observers | Array，观察者，监听 Entry/BeforeTimers/BeforeSources/BeforeWaiting/AfterWaiting/Exit |
+| CFRunLoopMode | _portSet | 所有需要监听的 mach port 集合，休眠时等待这些 port 的消息 |
 
 **CFRunLoopObserverRef** 可观测的时间点：
 
@@ -112,32 +161,18 @@ CFRunLoopRef CFRunLoopGetCurrent() {
 | kCFRunLoopAfterWaiting | 刚从休眠中唤醒 |
 | kCFRunLoopExit | 即将退出 Loop |
 
-::: details struct 定义（可选）
-```c
-struct __CFRunLoopMode {
-  CFStringRef _name;
-  CFMutableSetRef _sources0;
-  CFMutableSetRef _sources1;
-  CFMutableArrayRef _observers;
-  CFMutableArrayRef _timers;
-  ...
-};
-
-struct __CFRunLoop {
-  CFMutableSetRef _commonModes;
-  CFMutableSetRef _commonModeItems;
-  CFRunLoopModeRef _currentMode;
-  CFMutableSetRef _modes;
-  ...
-};
-```
-:::
-
 ::: tip 白话理解
 Mode 像「场景」——默认场景处理日常事件，滑动场景只处理滑动。不同场景监听不同事件，互不干扰。
 :::
 
 ## RunLoop 的 Mode
+
+### Mode 数量
+
+| 类型 | 数量 | 说明 |
+|------|------|------|
+| **可运行的 Mode** | 4 个 | DefaultMode、TrackingMode、UIInitializationRunLoopMode、GSEventReceiveRunLoopMode |
+| **特殊占位** | 1 个 | CommonModes，不是真正的 Mode，用于操作 commonModeItems |
 
 | Mode | 说明 |
 |------|------|
@@ -147,9 +182,30 @@ Mode 像「场景」——默认场景处理日常事件，滑动场景只处理
 | **GSEventReceiveRunLoopMode** | 接受系统事件的内部 Mode |
 | **kCFRunLoopCommonModes** | 占位 Mode，没有实际作用，用于操作 commonModeItems |
 
-**CommonModes 机制**：一个 Mode 可以标记为 "Common"（将其 name 加入 RunLoop 的 `_commonModes`）。每当 RunLoop 内容变化时，`_commonModeItems` 里的 Source/Observer/Timer 会自动同步到所有标记为 Common 的 Mode。
+### CommonModes 机制
 
-应用场景：主线程的 DefaultMode 和 TrackingMode 都标记为 Common。当你把 Timer 加到 DefaultMode 时，滑动 TableView 会切换 Mode，Timer 就不会被回调。若把 Timer 加到 `_commonModeItems`（即 NSRunLoopCommonModes），则两种 Mode 下都会触发。
+**一句话**：把 Source/Timer/Observer 同步到所有被标记为 Common 的 Mode 里，这样无论 RunLoop 切到 DefaultMode 还是 TrackingMode，这些事件源都会在当前 Mode 里，都能被处理。
+
+**触发条件**：加到 CommonModes 的 item 只会在 `_commonModes` 里的 Mode 下触发。即：只有当前 Mode 在 `_commonModes` 里时，加到 CommonModes 的 Timer 才会触发。
+
+| 条件 | 说明 |
+|------|------|
+| **Timer 加到 `_commonModeItems`** | 用 `addTimer:forMode:NSRunLoopCommonModes` 时，Timer 会进 `_commonModeItems` |
+| **当前 Mode 在 `_commonModes` 里** | 系统会把 `_commonModeItems` 里的 Timer 同步到 `_commonModes` 中的每一个 Mode |
+| **结果** | Timer 会出现在 DefaultMode 和 TrackingMode 的 `_timers` 里，所以在这两个 Mode 下都会触发 |
+
+**`_commonModes` 默认内容**：系统默认把 DefaultMode 和 TrackingMode 加入，无需手动添加。可用 `CFRunLoopAddCommonMode(runLoop, modeName)` 把自定义 Mode 也标记为 Common。
+
+**滑动时 Timer 不触发的详细流程**：
+
+| 时刻 | 发生的事 | Timer 会触发吗？ |
+|------|----------|-----------------|
+| T1 | 手指按下，开始滑动 TableView | Mode 切到 TrackingMode |
+| T2 | 1 秒到了，Timer 该触发 | ❌ 不触发，因为 Timer 在 DefaultMode，当前是 TrackingMode |
+| T3 | 手指松开，停止滑动 | Mode 切回 DefaultMode |
+| T4 | 回到 DefaultMode 后 | Timer 才会继续触发 |
+
+**加到 CommonModes 后**：Timer 被同步到 DefaultMode 和 TrackingMode 的 `_timers`，无论当前是哪个 Mode，Timer 都在当前 Mode 里，滑动时也会触发。
 
 ## Source0 与 Source1
 
