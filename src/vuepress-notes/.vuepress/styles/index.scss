@@ -822,3 +822,10 @@ nav[class*="toc"],
   fill: #666666;
 }
 
+// 隐藏 Mermaid 图表下方可能出现的错误文案或版本号
+.mermaid-wrapper + [class*="error"],
+.mermaid-content [class*="error"],
+.mermaid-wrapper .mermaid-error {
+  display: none !important;
+}
+

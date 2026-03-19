@@ -1,5 +1,9 @@
 import { defineClientConfig } from '@vuepress/client'
+import { defineMermaidConfig } from '@vuepress/plugin-markdown-chart/client'
 import { memoryData, sideTableData, entityStructureData, runLoopData } from './table-structure-data'
+
+// 隐藏 Mermaid 渲染失败时插入 DOM 的错误文案（如 "Error in ..." "11.13.0" 等）
+defineMermaidConfig({ suppressErrorRendering: true })
 
 declare global {
   interface Window {

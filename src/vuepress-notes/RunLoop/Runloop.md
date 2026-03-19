@@ -490,23 +490,7 @@ App 启动后，苹果在主线程 RunLoop 注册了两个 Observer，回调都�
 
 ### 界面更新
 
-当改变 Frame、更新 UIView/CALayer 层次、或调用 setNeedsLayout/setNeedsDisplay 后，UIView/CALayer 被标记为待处理并提交到全局容器。Observer 监听 BeforeWaiting 和 Exit，回调 `_ZN2CA11Transaction17observer_callbackEP19__CFRunLoopObservermPv`，内部会遍历所有待处理的 UIView/CALayer 执行 layout 和 display，并更新界面。
-
-这个函数内部的调用栈大概是这样的：
-
-```
-_ZN2CA11Transaction17observer_callbackEP19__CFRunLoopObservermPv()
-QuartzCore:CA::Transaction::observer_callback:
-CA::Transaction::commit();
-CA::Context::commit_transaction();
-CA::Layer::layout_and_display_if_needed();
-CA::Layer::layout_if_needed();
-[CALayer layoutSublayers];
-[UIView layoutSubviews];
-CA::Layer::display_if_needed();
-[CALayer display];
-[UIView drawRect];
-```
+RunLoop 在 BeforeWaiting 阶段通过 Observer 触发 layout 和 display，详见 [Runloop 与绘制](./02-Runloop与绘制.md)。
 
 ### 定时器
 
